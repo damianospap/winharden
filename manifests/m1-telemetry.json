@@ -1,0 +1,385 @@
+{
+  "module": "m1-telemetry",
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "tel-001-diagnostic-data-required",
+      "module": "m1-telemetry",
+      "title": "Pin diagnostic data to Required",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Windows 11 Home offers only Required and Optional diagnostic data and cannot switch collection off. Pinning the Allow Diagnostic Data policy to 1 (Required) keeps Optional data off. Level 0 is not used: Microsoft documents it as honoured only on Enterprise, Education and Server editions and equal to 1 elsewhere.",
+      "impact": "The Optional diagnostic data switch in Settings becomes locked and may show a managed-by-your-organization notice. Windows Insider enrollment, which needs Optional data, is blocked.",
+      "apply": [
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection", "name": "AllowTelemetry", "kind": "DWord", "data": 1, "scope": "machine" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection' -Name AllowTelemetry -ErrorAction SilentlyContinue).AllowTelemetry", "expected": "1" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP System, AllowTelemetry (read 2026-11-10)", "claim": "Documented for Pro, Enterprise, Education and IoT only; Home is not listed. Level 0 applies only to Enterprise, Education, IoT and Server and is equivalent to 1 on other devices." },
+        { "grade": "ms-doc", "source": "learn.microsoft.com Windows Error Reporting enablement guidance (read 2026-11-10)", "claim": "On Windows 11 the Allow Diagnostic Data policy is where 'Send optional diagnostic data' is chosen; the registry key is HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection." },
+        { "grade": "ms-doc", "source": "learn.microsoft.com Configure Windows diagnostic data in your organization (research phase)", "claim": "Windows 11 has two diagnostic data levels, Required and Optional; there is no Enhanced level." },
+        { "grade": "third-party", "source": "CIS Microsoft Windows 11 benchmark audit item (Tenable)", "claim": "CIS audits AllowTelemetry at 1 (Required); at that value the Optional control in Settings is reported to be locked." }
+      ],
+      "references": [
+        { "title": "Policy CSP - System (AllowTelemetry)", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-system" },
+        { "title": "Configure Windows diagnostic data in your organization", "url": "https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization" },
+        { "title": "Windows Error Reporting and diagnostics enablement guidance", "url": "https://learn.microsoft.com/en-us/troubleshoot/windows-client/system-management-components/windows-error-reporting-diagnostics-enablement-guidance" },
+        { "title": "CIS Windows 11 audit item for Allow Telemetry (Tenable)", "url": "https://tenable.com/audits/items/CIS_Microsoft_Windows_11_Enterprise_v3.0.0_L1.audit:fdf560adf4b37478064e2ddda26074c6" }
+      ],
+      "notes": "Not VM-verified. After applying on a Home VM, confirm in Settings > Privacy & security > Diagnostics & feedback that 'Send optional diagnostic data' is off and locked, then record build and date under 'verified'."
+    },
+    {
+      "id": "tel-002-feedback-prompts-off",
+      "module": "m1-telemetry",
+      "title": "Stop Windows feedback prompts",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Feedback prompts are a solicitation channel tied to diagnostic data. The device policy suppresses feedback notifications; the per-user Siuf value is the one the Feedback frequency setting writes when set to Never.",
+      "impact": "No more feedback toasts or questions. The Feedback Hub still works when opened manually.",
+      "apply": [
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection", "name": "DoNotShowFeedbackNotifications", "kind": "DWord", "data": 1, "scope": "machine" },
+        { "type": "registry", "hive": "HKCU", "path": "SOFTWARE\\Microsoft\\Siuf\\Rules", "name": "NumberOfSIUFInPeriod", "kind": "DWord", "data": 0, "scope": "user" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection' -Name DoNotShowFeedbackNotifications -ErrorAction SilentlyContinue).DoNotShowFeedbackNotifications", "expected": "1" },
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Microsoft\\Siuf\\Rules' -Name NumberOfSIUFInPeriod -ErrorAction SilentlyContinue).NumberOfSIUFInPeriod", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP Experience, DoNotShowFeedbackNotifications (read 2026-11-10)", "claim": "Device-scope policy, Pro, Enterprise, Education and IoT; Home not listed. Key Software\\Policies\\Microsoft\\Windows\\DataCollection, value DoNotShowFeedbackNotifications, 1 = feedback notifications disabled." },
+        { "grade": "background", "source": "prior knowledge, not re-verified", "claim": "NumberOfSIUFInPeriod = 0 under HKCU Siuf\\Rules is the per-user value behind Feedback frequency = Never." }
+      ],
+      "references": [
+        { "title": "Policy CSP - Experience (DoNotShowFeedbackNotifications)", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience" }
+      ],
+      "notes": "The HKCU audit reads the invoking user only; the engine verifies every profile hive itself. Confirm the Siuf value by flipping Feedback frequency in Settings on a Home VM and diffing HKCU."
+    },
+    {
+      "id": "tel-003-tailored-experiences-off",
+      "module": "m1-telemetry",
+      "title": "Turn off tailored experiences from diagnostic data",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Tailored experiences use your diagnostic data to personalise tips, recommendations and promotions. Turning them off removes that use of the data; it does not reduce collection itself.",
+      "impact": "Fewer personalised tips and suggestions in Windows. No functional loss.",
+      "apply": [
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Privacy", "name": "TailoredExperiencesWithDiagnosticDataEnabled", "kind": "DWord", "data": 0, "scope": "user" },
+        { "type": "registry", "hive": "HKCU", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent", "name": "DisableTailoredExperiencesWithDiagnosticData", "kind": "DWord", "data": 1, "scope": "user" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Privacy' -Name TailoredExperiencesWithDiagnosticDataEnabled -ErrorAction SilentlyContinue).TailoredExperiencesWithDiagnosticDataEnabled", "expected": "0" },
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent' -Name DisableTailoredExperiencesWithDiagnosticData -ErrorAction SilentlyContinue).DisableTailoredExperiencesWithDiagnosticData", "expected": "1" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP Experience, AllowTailoredExperiencesWithDiagnosticData (read 2026-11-10)", "claim": "User-scope policy, Pro, Enterprise, Education and IoT; Home not listed. Key Software\\Policies\\Microsoft\\Windows\\CloudContent, value DisableTailoredExperiencesWithDiagnosticData; 0 in the CSP means not allowed." },
+        { "grade": "background", "source": "prior knowledge, not re-verified", "claim": "Privacy\\TailoredExperiencesWithDiagnosticDataEnabled is the value behind Settings > Privacy & security > Diagnostics & feedback > Tailored experiences." }
+      ],
+      "references": [
+        { "title": "Policy CSP - Experience (AllowTailoredExperiencesWithDiagnosticData)", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience" }
+      ],
+      "notes": "Confirm the Settings-backing value by flipping the toggle on a Home VM and diffing HKCU."
+    },
+    {
+      "id": "tel-004-advertising-id-off",
+      "module": "m1-telemetry",
+      "title": "Turn off the advertising ID",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "The advertising ID lets apps build a cross-app profile for ad targeting. Microsoft documents turning it off through the Settings toggle or through two registry values; turning it off disables the ID rather than merely resetting it.",
+      "impact": "Apps can no longer use a per-user advertising ID. Ads inside apps become less targeted, not fewer.",
+      "apply": [
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo", "name": "Enabled", "kind": "DWord", "data": 0, "scope": "machine" },
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo", "name": "DisabledByGroupPolicy", "kind": "DWord", "data": 1, "scope": "machine" },
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo", "name": "Enabled", "kind": "DWord", "data": 0, "scope": "user" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo' -Name Enabled -ErrorAction SilentlyContinue).Enabled", "expected": "0" },
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo' -Name DisabledByGroupPolicy -ErrorAction SilentlyContinue).DisabledByGroupPolicy", "expected": "1" },
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo' -Name Enabled -ErrorAction SilentlyContinue).Enabled", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com manage connections, Server/Enterprise editions, section 18.1 (page dated 2026-02-12)", "claim": "Lists HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo Enabled = 0 and HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo DisabledByGroupPolicy = 1; turning the ID off in the UI disables it, not just resets it." },
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP Privacy, DisableAdvertisingId (read 2026-11-10)", "claim": "Device-scope policy, Pro, Enterprise, Education and IoT; Home not listed. Key Software\\Policies\\Microsoft\\Windows\\AdvertisingInfo, value DisabledByGroupPolicy." },
+        { "grade": "background", "source": "prior knowledge, not re-verified", "claim": "The per-user HKCU AdvertisingInfo\\Enabled value is what the Settings toggle writes." }
+      ],
+      "references": [
+        { "title": "Manage connections from Windows components to Microsoft services (Server/Enterprise)", "url": "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services" },
+        { "title": "Policy CSP - Privacy (DisableAdvertisingId)", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy" }
+      ],
+      "notes": "The first two values are the pair Microsoft documents; the HKCU value is added because it is what the Settings toggle writes on Home. Not VM-verified: on a Home VM, flip the advertising ID toggle under Settings > Privacy & security > General, diff the registry to confirm the HKCU value, then record build and date under 'verified'."
+    },
+    {
+      "id": "tel-005-inking-typing-personalization-off",
+      "module": "m1-telemetry",
+      "title": "Turn off inking and typing personalization",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "settings-backing",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Inking and typing personalization collects samples of what you write to build a local and cloud language profile. Turning it off stops that collection without touching speech recognition.",
+      "impact": "Autocorrect and suggestions rely less on your own writing history. No loss of core typing or handwriting recognition.",
+      "apply": [
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\InputPersonalization", "name": "RestrictImplicitInkCollection", "kind": "DWord", "data": 1, "scope": "user" },
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\InputPersonalization", "name": "RestrictImplicitTextCollection", "kind": "DWord", "data": 1, "scope": "user" },
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Input\\TIPC", "name": "Enabled", "kind": "DWord", "data": 0, "scope": "user" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\InputPersonalization' -Name RestrictImplicitInkCollection -ErrorAction SilentlyContinue).RestrictImplicitInkCollection", "expected": "1" },
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\InputPersonalization' -Name RestrictImplicitTextCollection -ErrorAction SilentlyContinue).RestrictImplicitTextCollection", "expected": "1" },
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Input\\TIPC' -Name Enabled -ErrorAction SilentlyContinue).Enabled", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "background", "source": "prior knowledge of Windows privacy settings, not re-verified in 2026", "claim": "RestrictImplicit*Collection are the older per-user inking and typing values; Input\\TIPC\\Enabled backs 'Improve inking and typing' under Diagnostics & feedback." }
+      ],
+      "references": [
+        { "title": "Policy CSP - Privacy (AllowInputPersonalization, context)", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy" }
+      ],
+      "notes": "Value names come from prior knowledge. Before promoting past unverified, flip the toggle in Settings on a Home VM and diff HKCU to see which values it writes; remove any value that turns out to be vestigial on 25H2 and 26H2."
+    },
+    {
+      "id": "tel-006-service-diagtrack-disabled",
+      "module": "m1-telemetry",
+      "title": "Disable the DiagTrack telemetry service",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Home cannot lower diagnostic data below Required, and Required data is still collected and uploaded by the Connected User Experiences and Telemetry service (DiagTrack). Disabling the service stops that collection locally. The service is disabled, never deleted.",
+      "impact": "Required diagnostic data collection and upload stop. The Diagnostic Data Viewer shows nothing, and Insider or Feedback Hub features that depend on diagnostic data may degrade.",
+      "apply": [
+        { "type": "service", "name": "DiagTrack", "startup": "Disabled", "stop": true }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-Service -Name DiagTrack -ErrorAction SilentlyContinue).StartType", "expected": "Disabled" },
+          { "command": "(Get-Service -Name DiagTrack -ErrorAction SilentlyContinue).Status", "expected": "Stopped" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "medium",
+      "evidence": [
+        { "grade": "ms-doc", "source": "learn.microsoft.com endpoints for non-Enterprise editions (research phase, page dated Nov 2025)", "claim": "Windows 11 Home contacts v10.events.data.microsoft.com for diagnostic data in a lab test with a local account." },
+        { "grade": "third-party", "source": "winhelponline.com DiagTrack article", "claim": "DiagTrack was renamed Connected User Experiences and Telemetry; its data is stored under %ProgramData%\\Microsoft\\Diagnosis (ETLLogs\\AutoLogger and RtBackup)." },
+        { "grade": "community", "source": "debloat community practice", "claim": "Disabling the service is the usual way to stop Required-level collection on Home; Microsoft does not describe it as supported there." }
+      ],
+      "references": [
+        { "title": "Windows 11 connection endpoints for non-Enterprise editions", "url": "https://learn.microsoft.com/en-us/windows/privacy/windows-11-endpoints-non-enterprise-editions" },
+        { "title": "DiagTrack: Connected User Experiences and Telemetry service (winhelponline)", "url": "https://www.winhelponline.com/blog/diagtrack-connected-user-experiences-and-telemetry-service/" }
+      ],
+      "notes": "Never delete the service: it was reported (not re-verified) that tools which removed it broke Windows 10 ESU enrollment. Feature updates may reset the startup type, which the verify step reports as drift."
+    },
+    {
+      "id": "tel-007-task-ceip-disabled",
+      "module": "m1-telemetry",
+      "title": "Disable CEIP, program inventory and feedback tasks",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "These scheduled tasks gather Customer Experience Improvement Program data, program inventory and Insider feedback data. They duplicate collection that the diagnostic data policy already limits and nothing the user sees depends on them. Tasks that do not exist on a given build are skipped.",
+      "impact": "CEIP, program inventory and Insider feedback collection by these tasks stops. No user-visible feature depends on them.",
+      "apply": [
+        { "type": "scheduled_task", "path": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\", "name": "Consolidator", "state": "Disabled", "if_missing": "skip" },
+        { "type": "scheduled_task", "path": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\", "name": "UsbCeip", "state": "Disabled", "if_missing": "skip" },
+        { "type": "scheduled_task", "path": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\", "name": "KernelCeipTask", "state": "Disabled", "if_missing": "skip" },
+        { "type": "scheduled_task", "path": "\\Microsoft\\Windows\\Application Experience\\", "name": "ProgramDataUpdater", "state": "Disabled", "if_missing": "skip" },
+        { "type": "scheduled_task", "path": "\\Microsoft\\Windows\\Feedback\\Siuf\\", "name": "DmClient", "state": "Disabled", "if_missing": "skip" },
+        { "type": "scheduled_task", "path": "\\Microsoft\\Windows\\Feedback\\Siuf\\", "name": "DmClientOnScenarioDownload", "state": "Disabled", "if_missing": "skip" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Customer Experience Improvement Program\\' -TaskName 'Consolidator','UsbCeip','KernelCeipTask' -ErrorAction SilentlyContinue | Where-Object State -ne 'Disabled' | Measure-Object | Select-Object -ExpandProperty Count", "expected": "0" },
+          { "command": "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Application Experience\\' -TaskName 'ProgramDataUpdater' -ErrorAction SilentlyContinue | Where-Object State -ne 'Disabled' | Measure-Object | Select-Object -ExpandProperty Count", "expected": "0" },
+          { "command": "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Feedback\\Siuf\\' -TaskName 'DmClient','DmClientOnScenarioDownload' -ErrorAction SilentlyContinue | Where-Object State -ne 'Disabled' | Measure-Object | Select-Object -ExpandProperty Count", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com manage connections, Server/Enterprise editions (page dated 2026-02-12)", "claim": "The page covers Customer Experience Improvement Program and Application Impact Telemetry for Server and Enterprise editions; its task list was not re-read in this session." },
+        { "grade": "background", "source": "prior knowledge of Windows scheduled tasks, not re-verified on 25H2 or 26H2", "claim": "Consolidator, UsbCeip and KernelCeipTask (CEIP), ProgramDataUpdater (program inventory) and Siuf DmClient tasks (Insider feedback) exist on recent Windows builds." }
+      ],
+      "references": [
+        { "title": "Manage connections from Windows components to Microsoft services (Server/Enterprise)", "url": "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services" }
+      ],
+      "notes": "Missing tasks are skipped, and the audit treats an absent task as compliant. Task names and presence per build must be confirmed on the Home VMs. Tasks are reported to re-enable themselves after some updates, which verify reports as drift."
+    },
+    {
+      "id": "tel-008-task-appraiser-disabled",
+      "module": "m1-telemetry",
+      "title": "Disable the Microsoft Compatibility Appraiser task",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "cmdlet",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "flags": { "servicing_adjacent": true },
+      "rationale": "The Appraiser inventories apps, drivers and hardware and sends compatibility telemetry; it is the heaviest scheduled telemetry collector. It is servicing-adjacent because Windows Update uses its output for upgrade compatibility decisions, so it sits in Deep (profile 3) behind an explicit flag.",
+      "impact": "Compatibility inventory stops. Feature-update compatibility checks may use stale data, and Microsoft may hold back or misjudge feature update offers (unverified). The task is reported to re-enable itself, so verify may report drift.",
+      "apply": [
+        { "type": "scheduled_task", "path": "\\Microsoft\\Windows\\Application Experience\\", "name": "Microsoft Compatibility Appraiser", "state": "Disabled", "if_missing": "skip" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Application Experience\\' -TaskName 'Microsoft Compatibility Appraiser' -ErrorAction SilentlyContinue | Where-Object State -ne 'Disabled' | Measure-Object | Select-Object -ExpandProperty Count", "expected": "0" },
+          { "command": "(Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Application Experience\\' -TaskName 'Microsoft Compatibility Appraiser' -ErrorAction SilentlyContinue).Actions.Execute -match 'compattelrunner\\.exe$'", "expected": "True" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "high",
+      "evidence": [
+        { "grade": "third-party", "source": "Elastic detection rule: persistence via TelemetryController scheduled task hijack", "claim": "The Appraiser task launches CompatTelRunner.exe, which runs commands listed under the TelemetryController registry key; this is a known persistence technique, hence the second audit check on the task action." },
+        { "grade": "community", "source": "debloat community reports (research phase)", "claim": "The task is reported to re-enable itself after updates." },
+        { "grade": "background", "source": "prior knowledge, not verified", "claim": "Compatibility data feeds feature-update offers; the effect of disabling the task on Home update offers has not been tested." }
+      ],
+      "references": [
+        { "title": "Persistence via TelemetryController scheduled task hijack (Elastic)", "url": "https://www.elastic.co/guide/en/security/8.17/persistence-via-telemetrycontroller-scheduled-task-hijack.html" }
+      ],
+      "notes": "Candidate to drop from Deep if the VM protocol shows any change in feature-update offers. A missing task is skipped; the audit treats that as not applicable."
+    },
+    {
+      "id": "tel-009-service-whesvc-disabled",
+      "module": "m1-telemetry",
+      "title": "Disable the Windows Health and Optimized Experiences service",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "cmdlet",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "whesvc runs local performance and health tracing and carries a privileged scripting engine. It is not spyware: the viral claim that it uploads data every 15 minutes was denied, and its traces stay local under %SystemRoot%\\Temp\\DiagOutputDir\\Whesvc. It is attack surface with little visible value, so it is disabled in Deep only.",
+      "impact": "Local health and optimization tracing stops. Which Settings recommendations or troubleshooters depend on the service is not documented (unverified).",
+      "apply": [
+        { "type": "service", "name": "whesvc", "startup": "Disabled", "stop": true }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-Service -Name whesvc -ErrorAction SilentlyContinue).StartType", "expected": "Disabled" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "medium",
+      "evidence": [
+        { "grade": "third-party", "source": "Neowin report on the viral whesvc claim", "claim": "whesvc is the Windows Health and Optimized Experiences service; the viral claim is explained and the traces are local." },
+        { "grade": "community", "source": "WindowsForum thread", "claim": "whesvc is not uploading data every 15 minutes." },
+        { "grade": "third-party", "source": "PCWorld report on Microsoft's denial", "claim": "Microsoft denied the rumor that Windows 11 spies on users every 15 minutes." },
+        { "grade": "background", "source": "reported in the research phase, not re-verified", "claim": "CVE-2025-59241, an elevation-of-privilege flaw, was reported in the service." }
+      ],
+      "references": [
+        { "title": "What is the viral whesvc service and should you disable it (Neowin)", "url": "https://www.neowin.net/reports/what-is-the-viral-whesvc-service-and-should-you-disable-it/" },
+        { "title": "Windows 11 whesvc is not uploading data every 15 minutes (WindowsForum)", "url": "https://windowsforum.com/news/windows-11-whesvc-is-not-uploading-data-every-15-minutes.443556/" },
+        { "title": "Microsoft denies viral rumor of Windows 11 spying on you every 15 minutes (PCWorld)", "url": "https://www.pcworld.com/article/3206170/microsoft-denies-viral-rumor-of-windows-11-spying-on-you-every-15-minutes.html" }
+      ],
+      "notes": "The service does not exist on older builds; a missing service is skipped. Not VM-verified: confirm on a Home VM that the service is Disabled and that Windows Update still scans normally, then record build and date under 'verified'."
+    },
+    {
+      "id": "tel-010-wer-disabled",
+      "module": "m1-telemetry",
+      "title": "Turn off Windows Error Reporting",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Windows Error Reporting uploads crash and problem reports, which can include memory dumps, to watson.telemetry.microsoft.com and related endpoints. The two documented machine policies turn it off while leaving local crash handling and event logs alone.",
+      "impact": "No crash or problem reports are sent to Microsoft and 'check for solutions' stops working. Local event logs and crash dumps are separate settings and are not changed by this entry.",
+      "apply": [
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Error Reporting", "name": "Disabled", "kind": "DWord", "data": 1, "scope": "machine" },
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\PCHealth\\ErrorReporting", "name": "DoReport", "kind": "DWord", "data": 0, "scope": "machine" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Error Reporting' -Name Disabled -ErrorAction SilentlyContinue).Disabled", "expected": "1" },
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\PCHealth\\ErrorReporting' -Name DoReport -ErrorAction SilentlyContinue).DoReport", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "medium",
+      "evidence": [
+        { "grade": "ms-doc", "source": "learn.microsoft.com Windows Error Reporting enablement guidance (read 2026-11-10, page dated 2026-02-12)", "claim": "Names both policies (Turn off Windows Error Reporting; Disable Windows Error Reporting) and shows that WER stays enabled with Disabled = 0 and DoReport = 1, so the opposite values turn it off." },
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP ADMX_ErrorReporting, WerDisable_1 (read 2026-11-10)", "claim": "User-scope policy, key SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Error Reporting, value Disabled; Pro, Enterprise, Education and IoT, Home not listed." },
+        { "grade": "ms-doc", "source": "learn.microsoft.com Windows Error Reporting enablement guidance", "claim": "WER sends to watson.microsoft.com, watson.telemetry.microsoft.com and umwatsonc.events.data.microsoft.com among other endpoints." }
+      ],
+      "references": [
+        { "title": "Windows Error Reporting and diagnostics enablement guidance", "url": "https://learn.microsoft.com/en-us/troubleshoot/windows-client/system-management-components/windows-error-reporting-diagnostics-enablement-guidance" },
+        { "title": "Policy CSP - ADMX_ErrorReporting", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-errorreporting" }
+      ],
+      "notes": "The WerSvc service is left alone. Confirm on a Home VM that a forced app crash no longer queues a report."
+    },
+    {
+      "id": "tel-011-online-speech-off",
+      "module": "m1-telemetry",
+      "title": "Turn off online speech recognition",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Online speech recognition sends your voice to Microsoft cloud services. The Allow Input Personalization policy set to 0 stops users from enabling it, so it stays off.",
+      "impact": "Cloud dictation such as voice typing (Win+H) is expected to stop working. On-device features are not meant to be affected (unverified).",
+      "apply": [
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\InputPersonalization", "name": "AllowInputPersonalization", "kind": "DWord", "data": 0, "scope": "machine" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\InputPersonalization' -Name AllowInputPersonalization -ErrorAction SilentlyContinue).AllowInputPersonalization", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "medium",
+      "evidence": [
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP Privacy, AllowInputPersonalization (read 2026-11-10)", "claim": "Device-scope policy, Pro, Enterprise, Education and IoT; Home not listed. 0 = not allowed (speech services disabled); it controls whether users can enable online speech recognition." }
+      ],
+      "references": [
+        { "title": "Policy CSP - Privacy (AllowInputPersonalization)", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-privacy" }
+      ],
+      "notes": "Kept apart from tel-005 so the voice-typing trade-off is an explicit opt-in at profile 2. Confirm on a Home VM that the Online speech recognition toggle is locked off and Win+H behaves as described."
+    }
+  ]
+}

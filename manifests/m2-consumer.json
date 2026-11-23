@@ -1,0 +1,390 @@
+{
+  "module": "m2-consumer",
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "ads-001-start-recommendations-off",
+      "module": "m2-consumer",
+      "title": "Turn off Start menu recommendations and account notifications",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "settings-backing",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Since KB5036980 (April 2024) the Start menu can show recommendations for tips, shortcuts and new apps, which the press describes as ads. Settings > Personalization > Start has toggles for these and for account-related notifications; both are turned off through the values those toggles write.",
+      "impact": "Start stops showing tip, shortcut and new-app recommendations and account-related notifications. Recent files and recently added apps are separate settings and are not changed.",
+      "apply": [
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "Start_IrisRecommendations", "kind": "DWord", "data": 0, "scope": "user" },
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "Start_AccountNotifications", "kind": "DWord", "data": 0, "scope": "user" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced' -Name Start_IrisRecommendations -ErrorAction SilentlyContinue).Start_IrisRecommendations", "expected": "0" },
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced' -Name Start_AccountNotifications -ErrorAction SilentlyContinue).Start_AccountNotifications", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "third-party", "source": "ZDNet and Neowin reports, April 2024 (research phase)", "claim": "KB5036980 brought promotional recommendations to the Start menu for Windows 11 users; the control is Settings > Personalization > Start > 'Show recommendations for tips, shortcuts, new apps, and more'." },
+        { "grade": "community", "source": "Winaero and geekrewind guides (read 2026-11-11)", "claim": "Start_IrisRecommendations, a DWORD under HKCU Explorer\\Advanced, set to 0 turns the toggle off; Winaero ties it to build 25227 and later, geekrewind to newer builds such as 23H2 and 24H2." },
+        { "grade": "community", "source": "geekrewind guide on account notifications (read 2026-11-11)", "claim": "Start_AccountNotifications, a DWORD under the same key, set to 0 turns off Settings > Personalization > Start > 'Show account-related notifications'; first seen in Insider build 22572." }
+      ],
+      "references": [
+        { "title": "Microsoft is now showing ads in Windows 11's Start menu (ZDNet)", "url": "https://www.zdnet.com.au/article/microsoft-is-now-showing-ads-in-windows-11s-start-menu-heres-how-to-block-them/" },
+        { "title": "Microsoft rolls out Start menu ads to all Windows 11 users (Neowin)", "url": "https://www.neowin.net/news/microsoft-rolls-out-start-menu-ads-to-all-windows-11-users-here-is-how-to-turn-them-off/" },
+        { "title": "How to disable ads in Windows 11 (Winaero)", "url": "https://winaero.com/how-to-disable-ads-in-windows-11" },
+        { "title": "Show or hide tips, shortcuts and new apps on Start (geekrewind)", "url": "https://geekrewind.com/how-to-show-or-hide-tips-shortcuts-and-new-apps-on-start-in-windows-11/" },
+        { "title": "Enable or disable Microsoft account notifications in Windows 11 (geekrewind)", "url": "https://geekrewind.com/?p=104306" }
+      ],
+      "notes": "26H2 adds a Start account manager and the Start menu keeps changing; re-check both toggles on 26H2. Per-user values go to every profile and to the Default user hive."
+    },
+    {
+      "id": "ads-002-settings-home-hidden",
+      "module": "m2-consumer",
+      "title": "Hide the Settings Home page that carries promotions",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "policy",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "The Settings Home page, shown on Windows 11 Home and Pro to Microsoft-account sign-ins, carries Microsoft 365, OneDrive and Game Pass cards. The documented Settings page visibility list can hide the 'home' page; the token is merged into any existing hide: list rather than overwriting it.",
+      "impact": "The Settings Home page disappears and navigating to it opens the first remaining Settings page. Pages already hidden by an existing hide: list are kept; an existing showonly: list makes the entry abort instead of being overwritten.",
+      "apply": [
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer", "name": "SettingsPageVisibility", "kind": "String", "data": "hide:home", "scope": "machine", "merge": "hide-list" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer' -Name SettingsPageVisibility -ErrorAction SilentlyContinue).SettingsPageVisibility -match '^hide:(.*;)?home(;|$)'", "expected": "True" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc", "source": "learn.microsoft.com Configure the Settings Page Visibility (read 2026-11-10)", "claim": "Applies to Windows 11 and 10 with no edition restriction stated. hide: and showonly: lists use semicolon-separated page identifiers; blocked pages are unreachable and direct navigation opens the first Settings page." },
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP Settings, PageVisibilityList (read 2026-11-10)", "claim": "Registry key Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer, mapped name SettingsPageVisibility, string. Pro, Enterprise, Education and IoT are listed; Home is not." },
+        { "grade": "community", "source": "Eleven Forum tutorial on the Settings Home page (read 2026-11-10)", "claim": "hide:home under that key removes the Settings Home page from build 22621.2361 (22H2 KB5030310); the tutorial says the page appears only on Home and Pro with a Microsoft account." },
+        { "grade": "third-party", "source": "chipp.in article on the Settings Home page (research phase)", "claim": "The Settings Home page promotes Microsoft 365 and Game Pass to Home and Pro users; hiding the home page removes those cards." }
+      ],
+      "references": [
+        { "title": "Configure the Settings Page Visibility in Windows", "url": "https://learn.microsoft.com/en-us/windows/configuration/settings/page-visibility" },
+        { "title": "Policy CSP - Settings (PageVisibilityList)", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-settings" },
+        { "title": "Add or remove Settings Home page in Windows 11 (Eleven Forum)", "url": "https://elevenforum.com/t/add-or-remove-settings-home-page-in-windows-11.16017/" },
+        { "title": "Is the main purpose of Windows 11's Settings home page advertising? (chipp.in)", "url": "https://chipp.in/software/windows/is-the-main-purpose-of-windows-11s-settings-home-page-advertising/" }
+      ],
+      "notes": "The value type is a string; the tutorial does not name it. The merge rule is part of the apply semantics: an existing showonly: list is never rewritten."
+    },
+    {
+      "id": "ads-003-suggested-apps-install-off",
+      "module": "m2-consumer",
+      "title": "Stop silent installs of suggested and OEM-promoted apps",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "settings-backing",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Content Delivery Manager installs suggested and OEM-promoted apps for each user without asking. These per-user values turn that off for existing users and, through the Default user hive, for users created later.",
+      "impact": "Suggested and promoted apps are no longer installed automatically for the user. Promotional apps that are already installed stay until removed (see the AppX module).",
+      "apply": [
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SilentInstalledAppsEnabled", "kind": "DWord", "data": 0, "scope": "user" },
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "PreInstalledAppsEnabled", "kind": "DWord", "data": 0, "scope": "user" },
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "OemPreInstalledAppsEnabled", "kind": "DWord", "data": 0, "scope": "user" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name SilentInstalledAppsEnabled -ErrorAction SilentlyContinue).SilentInstalledAppsEnabled", "expected": "0" },
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name PreInstalledAppsEnabled -ErrorAction SilentlyContinue).PreInstalledAppsEnabled", "expected": "0" },
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name OemPreInstalledAppsEnabled -ErrorAction SilentlyContinue).OemPreInstalledAppsEnabled", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "community", "source": "Winaero guide to disabling ads in Windows 11 (read 2026-11-11)", "claim": "SilentInstalledAppsEnabled = 0 under HKCU ContentDeliveryManager stops automatic installation of suggested apps; there is no Settings toggle, it needs a restart and must be applied per user account." },
+        { "grade": "community", "source": "Microsoft Q&A thread on promotional pinned shortcuts (read 2026-11-11)", "claim": "A Windows 11 Pro 22H2 user reports that setting these values in the Default hive did not stop promotional shortcuts for new users and that ContentDeliveryAllowed went back to 1. No Microsoft staff confirmation." },
+        { "grade": "background", "source": "prior knowledge of Content Delivery Manager values, not re-verified", "claim": "PreInstalledAppsEnabled and OemPreInstalledAppsEnabled belong to the same group of values." }
+      ],
+      "references": [
+        { "title": "How to disable ads in Windows 11 (Winaero)", "url": "https://winaero.com/how-to-disable-ads-in-windows-11" },
+        { "title": "Windows 10/11 promotional pinned shortcuts (Microsoft Q&A)", "url": "https://learn.microsoft.com/en-us/answers/questions/1362346/windows-10-11-promotional-pinned-shortcuts" }
+      ],
+      "notes": "Effect for newly created users on Windows 11 is disputed. Test on a Home VM by creating a new user after applying. Windows may write some Content Delivery Manager values back, which verify reports as drift."
+    },
+    {
+      "id": "ads-004-consumer-features-policy",
+      "module": "m2-consumer",
+      "title": "Set the Microsoft consumer experiences policy",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "The documented policy 'Turn off Microsoft consumer experiences' stops Windows from installing suggested apps and promotional content. Microsoft lists it for Enterprise and Education only, so Home may ignore it; it is kept because it is inert when ignored and costs one test on the Home VMs.",
+      "impact": "If Home honours it, suggested app installs and promotional content are suppressed. If Home ignores it, nothing changes.",
+      "apply": [
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent", "name": "DisableWindowsConsumerFeatures", "kind": "DWord", "data": 1, "scope": "machine" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent' -Name DisableWindowsConsumerFeatures -ErrorAction SilentlyContinue).DisableWindowsConsumerFeatures", "expected": "1" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP Experience, AllowWindowsConsumerFeatures (read 2026-11-10)", "claim": "Device-scope policy listed for Enterprise, Education and IoT only; Pro and Home are not listed. Key Software\\Policies\\Microsoft\\Windows\\CloudContent, value DisableWindowsConsumerFeatures; 0 in the CSP means not allowed." },
+        { "grade": "community", "source": "Microsoft Q&A thread on promotional pinned shortcuts (read 2026-11-11)", "claim": "A community answer recommends the policy; the poster says it needs Enterprise or Education and reports no working fix on Windows 11 Home or Pro." }
+      ],
+      "references": [
+        { "title": "Policy CSP - Experience (AllowWindowsConsumerFeatures)", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-experience" },
+        { "title": "Windows 10/11 promotional pinned shortcuts (Microsoft Q&A)", "url": "https://learn.microsoft.com/en-us/answers/questions/1362346/windows-10-11-promotional-pinned-shortcuts" }
+      ],
+      "notes": "Delete this entry if the VM test shows no effect on Home. DisableSoftLanding, DisableCloudOptimizedContent and DisableConsumerAccountStateContent are deliberately not set: the Experience CSP lists them for Enterprise, Education and IoT only."
+    },
+    {
+      "id": "ads-005-widgets-disabled",
+      "module": "m2-consumer",
+      "title": "Turn off the Widgets experience",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "flags": { "requires_reboot": true },
+      "rationale": "Widgets is a Microsoft-controlled content surface fed by MSN; in May 2026 Microsoft started hiding its MSN feed and ads by default in a preview build. The Allow widgets policy turns off the whole experience, including the taskbar button and the Settings option.",
+      "impact": "The Widgets button, board and Win+W stop working. Lock screen status cards that rely on Widgets may also disappear (one unconfirmed 25H2 Home report). A restart is needed.",
+      "apply": [
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Dsh", "name": "AllowNewsAndInterests", "kind": "DWord", "data": 0, "scope": "machine" }
+      ],
+      "manual_steps": [
+        "If Widgets is still available after a restart, turn it off in Settings > Personalization > Taskbar > Widgets."
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Dsh' -Name AllowNewsAndInterests -ErrorAction SilentlyContinue).AllowNewsAndInterests", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP NewsAndInterests, AllowNewsAndInterests (read 2026-11-10)", "claim": "Device-scope policy for Windows 11 21H2 and later, listed for Pro, Enterprise, Education and IoT; Home not listed. Key SOFTWARE\\Policies\\Microsoft\\Dsh; it applies to the entire widgets experience, including content on the taskbar." },
+        { "grade": "community", "source": "Winaero guide to disabling Widgets (read 2026-11-11)", "claim": "The same value works as a registry tweak on all editions, including Home which has no Group Policy editor; it removes the taskbar button and the Settings option, Win+W does nothing, and a restart is required." },
+        { "grade": "third-party", "source": "Windows Latest, 2026-05-03", "claim": "Microsoft is turning off the MSN feed and ads in Windows 11 Widgets by default (preview build)." },
+        { "grade": "community", "source": "Eleven Forum thread on 25H2 build 26200.6899 (read 2026-11-11)", "claim": "On a Home 25H2 system, a responder says the lock screen status cards depend on the core Widgets feature being on even when the taskbar button is hidden; no fix was confirmed." }
+      ],
+      "references": [
+        { "title": "Policy CSP - NewsAndInterests", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-newsandinterests" },
+        { "title": "How to disable Widgets in Windows 11 with Group Policy and in Registry (Winaero)", "url": "https://winaero.com/how-to-disable-widgets-in-windows-11-with-group-policy-and-in-registry" },
+        { "title": "Microsoft is finally turning off the MSN feed and ads in Widgets by default (Windows Latest)", "url": "https://www.windowslatest.com/2026/05/03/microsoft-is-finally-turning-off-the-msn-feed-and-ads-in-windows-11-widgets-by-default/" },
+        { "title": "Widgets option not available after Win 11 26200.6899 (Eleven Forum)", "url": "https://www.elevenforum.com/t/add-widgets-option-not-available-after-win-11-26200-6899-25h2-update.41079/latest" }
+      ],
+      "notes": "The per-user TaskbarDa value is not used. On a Home VM, check both the policy effect and the lock screen status cards."
+    },
+    {
+      "id": "ads-006-search-web-results-off",
+      "module": "m2-consumer",
+      "title": "Keep Windows search local: no Bing or web results",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Start and taskbar search send what you type to Bing and mix web results into local ones. Which control works on Home has changed between builds, so the two documented machine policies and the two per-user values reported for Windows 11 are all set; each is harmless if ignored.",
+      "impact": "Search shows only local results and the web search options go away. File Explorer search suggestions are not changed.",
+      "apply": [
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search", "name": "ConnectedSearchUseWeb", "kind": "DWord", "data": 0, "scope": "machine" },
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search", "name": "DisableWebSearch", "kind": "DWord", "data": 1, "scope": "machine" },
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings", "name": "IsWebSuggestionsEnabled", "kind": "DWord", "data": 0, "scope": "user" },
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Search", "name": "BingSearchEnabled", "kind": "DWord", "data": 0, "scope": "user" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search' -Name ConnectedSearchUseWeb -ErrorAction SilentlyContinue).ConnectedSearchUseWeb", "expected": "0" },
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search' -Name DisableWebSearch -ErrorAction SilentlyContinue).DisableWebSearch", "expected": "1" },
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings' -Name IsWebSuggestionsEnabled -ErrorAction SilentlyContinue).IsWebSuggestionsEnabled", "expected": "0" },
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Search' -Name BingSearchEnabled -ErrorAction SilentlyContinue).BingSearchEnabled", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP Search, DoNotUseWebResults (read 2026-11-11)", "claim": "Device-scope policy for Windows 10 1803 and later, listed for Enterprise, Education and IoT only (Pro and Home not listed). Key SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search, value ConnectedSearchUseWeb; 0 blocks web queries and results." },
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com manage connections, Server/Enterprise editions, section on Cortana and Search (page dated 2026-02-12)", "claim": "Documents ConnectedSearchUseWeb = 0 and DisableWebSearch = 1 under HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search to stop web queries and web results in Search." },
+        { "grade": "community", "source": "Eleven Forum tutorial on Bing web suggested results (read 2026-11-11)", "claim": "Lists HKCU SearchSettings IsWebSuggestionsEnabled = 0 and HKCU Search BingSearchEnabled = 0; ties the first to a hidden toggle in Insider build 26300.8697 (26H2); one poster says the first did not work for them." },
+        { "grade": "community", "source": "Eleven Forum tutorial on the registry method (read 2026-11-11)", "claim": "One user reports that BingSearchEnabled did not change the setting on a Home 24H2 system; unconfirmed." }
+      ],
+      "references": [
+        { "title": "Policy CSP - Search (DoNotUseWebResults)", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-search" },
+        { "title": "Manage connections from Windows components to Microsoft services (Server/Enterprise)", "url": "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services" },
+        { "title": "Enable or disable Bing web suggested results in Windows Search (Eleven Forum)", "url": "https://www.elevenforum.com/t/enable-or-disable-bing-web-suggested-search-results-in-windows-search-on-windows-11.5309/latest" },
+        { "title": "Disable Let apps show search results and Web search from Microsoft Bing via the registry (Eleven Forum)", "url": "https://www.elevenforum.com/t/how-to-disable-let-apps-show-search-results-and-web-search-from-microsoft-bing-using-the-registry.29544/" }
+      ],
+      "notes": "DisableSearchBoxSuggestions is deliberately not used: Microsoft documents it for the File Explorer search box only, it also turns off File Explorer recent searches, and one unconfirmed Microsoft Q&A report links it to a broken Camera preview. Re-verify per build and remove any value that proves vestigial. Not VM-verified: on a Home VM, search from the taskbar and confirm that no web results appear, then record build and date under 'verified'."
+    },
+    {
+      "id": "ads-007-search-highlights-off",
+      "module": "m2-consumer",
+      "title": "Turn off search highlights",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "settings-backing",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Search highlights put Microsoft-curated daily content such as illustrations, holidays and events into the search box and flyout. Settings > Privacy & security > Search has the toggle; the per-user value it writes and the Allow search highlights policy value are both set to off.",
+      "impact": "The search box and flyout no longer show daily highlights.",
+      "apply": [
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings", "name": "IsDynamicSearchBoxEnabled", "kind": "DWord", "data": 0, "scope": "user" },
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search", "name": "EnableDynamicContentInWSB", "kind": "DWord", "data": 0, "scope": "machine" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings' -Name IsDynamicSearchBoxEnabled -ErrorAction SilentlyContinue).IsDynamicSearchBoxEnabled", "expected": "0" },
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search' -Name EnableDynamicContentInWSB -ErrorAction SilentlyContinue).EnableDynamicContentInWSB", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "community", "source": "Eleven Forum tutorial on search highlights (read 2026-11-11)", "claim": "IsDynamicSearchBoxEnabled = 0 (DWORD, HKCU SearchSettings) turns highlights off; the Allow search highlights policy maps to HKLM Windows Search EnableDynamicContentInWSB (0 disables). The registry methods work on all editions; on 24H2 build 26100.4770 and later the toggle is under Privacy & security > Search." },
+        { "grade": "community", "source": "commenters on the same tutorial", "claim": "Some 25H2 and Insider systems lack the Settings toggle, reportedly because of EEA region rules; unconfirmed." }
+      ],
+      "references": [
+        { "title": "Enable or disable search highlights in Windows 11 (Eleven Forum)", "url": "https://www.elevenforum.com/t/enable-or-disable-search-highlights-in-windows-11.5735/latest" }
+      ],
+      "notes": "Confirm on the Home VMs that the value still has an effect on 25H2 and 26H2."
+    },
+    {
+      "id": "ads-008-explorer-sync-notifications-off",
+      "module": "m2-consumer",
+      "title": "Turn off File Explorer sync provider notifications",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "settings-backing",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "File Explorer can show notifications from sync providers such as OneDrive inside its window, which Winaero counts among Windows ads. The View option 'Show sync provider notifications' in Folder Options controls them.",
+      "impact": "File Explorer no longer shows sync provider notifications. This is a File Explorer view option; OneDrive's own settings are not changed.",
+      "apply": [
+        { "type": "registry", "hive": "HKCU", "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "ShowSyncProviderNotifications", "kind": "DWord", "data": 0, "scope": "user" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced' -Name ShowSyncProviderNotifications -ErrorAction SilentlyContinue).ShowSyncProviderNotifications", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "community", "source": "Winaero guide to disabling ads in Windows 11 (read 2026-11-11)", "claim": "File Explorer > See more > Options > View > clear 'Show sync provider notifications'; the value is ShowSyncProviderNotifications = 0 under HKCU Explorer\\Advanced." }
+      ],
+      "references": [
+        { "title": "How to disable ads in Windows 11 (Winaero)", "url": "https://winaero.com/how-to-disable-ads-in-windows-11" }
+      ],
+      "notes": "Confirm on a Home VM by toggling the View option and diffing HKCU."
+    },
+    {
+      "id": "ads-009-lock-screen-tips-off",
+      "module": "m2-consumer",
+      "title": "Turn off lock screen tips and suggestions",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "settings-backing",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "With a Picture or Slideshow background the lock screen can add fun facts, tips and suggestions over the image. Settings > Personalization > Lock screen has an option to clear them, and these two values sit behind it.",
+      "impact": "The lock screen shows no tips or suggestions overlay. The chosen background is not changed.",
+      "apply": [
+        { "type": "registry", "hive": "HKCU", "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "RotatingLockScreenOverlayEnabled", "kind": "DWord", "data": 0, "scope": "user" },
+        { "type": "registry", "hive": "HKCU", "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SubscribedContent-338387Enabled", "kind": "DWord", "data": 0, "scope": "user" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name RotatingLockScreenOverlayEnabled -ErrorAction SilentlyContinue).RotatingLockScreenOverlayEnabled", "expected": "0" },
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name 'SubscribedContent-338387Enabled' -ErrorAction SilentlyContinue).'SubscribedContent-338387Enabled'", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "community", "source": "Winaero guide to disabling ads in Windows 11 (read 2026-11-11)", "claim": "Settings > Personalization > Lock screen > clear 'Get fun facts, tips, tricks, and more on your lock screen' (shown only for Picture or Slideshow); the guide lists RotatingLockScreenEnabled, RotatingLockScreenOverlayEnabled and SubscribedContent-338387Enabled, all DWORD 0, under HKCU ContentDeliveryManager." }
+      ],
+      "references": [
+        { "title": "How to disable ads in Windows 11 (Winaero)", "url": "https://winaero.com/how-to-disable-ads-in-windows-11" }
+      ],
+      "notes": "RotatingLockScreenEnabled is left alone: the guide lists it with the other two, but it is likely to switch the Spotlight background itself (assumption; confirm by registry diff on the Home VM)."
+    },
+    {
+      "id": "ads-010-windows-tips-suggestions-off",
+      "module": "m2-consumer",
+      "title": "Turn off Windows tips and setup suggestions",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "settings-backing",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Windows prompts with tips, welcome screens and finish-setting-up-your-device suggestions. Settings > System > Notifications > Additional settings holds those options, and these two values sit behind them.",
+      "impact": "No more tips, welcome-experience or setup-suggestion prompts.",
+      "apply": [
+        { "type": "registry", "hive": "HKCU", "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SoftLandingEnabled", "kind": "DWord", "data": 0, "scope": "user" },
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\UserProfileEngagement", "name": "ScoobeSystemSettingEnabled", "kind": "DWord", "data": 0, "scope": "user" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name SoftLandingEnabled -ErrorAction SilentlyContinue).SoftLandingEnabled", "expected": "0" },
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\UserProfileEngagement' -Name ScoobeSystemSettingEnabled -ErrorAction SilentlyContinue).ScoobeSystemSettingEnabled", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "community", "source": "Winaero guide to disabling ads in Windows 11 (read 2026-11-11)", "claim": "Settings > System > Notifications > Additional settings: clear the tips, suggestions and welcome-experience options; values are SoftLandingEnabled (HKCU ContentDeliveryManager) and ScoobeSystemSettingEnabled (HKCU UserProfileEngagement), both DWORD 0." }
+      ],
+      "references": [
+        { "title": "How to disable ads in Windows 11 (Winaero)", "url": "https://winaero.com/how-to-disable-ads-in-windows-11" }
+      ],
+      "notes": "The guide's text says SoftLandingEnabled = 1 also disables tips; that looks like a typo because it describes 1 as the enabled state, so 0 is used. Confirm by registry diff on the Home VM."
+    },
+    {
+      "id": "ads-011-settings-suggested-content-off",
+      "module": "m2-consumer",
+      "title": "Turn off suggested content in the Settings app",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "settings-backing",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Settings can show suggested content, in effect promotions, inside its pages. Settings > Privacy & security > General > 'Show me suggested content in the Settings app' controls it, and this value sits behind that toggle.",
+      "impact": "No suggested-content cards inside Settings pages.",
+      "apply": [
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SubscribedContent-338393Enabled", "kind": "DWord", "data": 0, "scope": "user" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name 'SubscribedContent-338393Enabled' -ErrorAction SilentlyContinue).'SubscribedContent-338393Enabled'", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "community", "source": "Winaero guide to disabling ads in Windows 11 (read 2026-11-11)", "claim": "Settings > Privacy & security > General > 'Show me suggested content in the Settings app' is backed by SubscribedContent-338393Enabled = 0 under HKCU ContentDeliveryManager." },
+        { "grade": "community", "source": "geekrewind guide on suggested content (read 2026-11-11)", "claim": "Uses SubscribedContent-338393Enabled together with -353694Enabled and -353696Enabled for the same toggle but does not say which value controls what." }
+      ],
+      "references": [
+        { "title": "How to disable ads in Windows 11 (Winaero)", "url": "https://winaero.com/how-to-disable-ads-in-windows-11" },
+        { "title": "Enable or disable suggested content in Windows 11 (geekrewind)", "url": "https://geekrewind.com/?p=82992" }
+      ],
+      "notes": "SubscribedContent-353694Enabled and SubscribedContent-353696Enabled are not set until a registry diff on a Home VM shows which values the toggle writes."
+    }
+  ]
+}

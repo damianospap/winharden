@@ -1,0 +1,2681 @@
+{
+  "module": "m4-appx",
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "appx-001-bing-news",
+      "module": "m4-appx",
+      "title": "Remove the News app for all users",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "News is the consumer news-reader app that ships with Windows. The sources read record no feature of Windows that depends on it, except as stated in the impact. Microsoft's own list of removable inbox apps includes it; Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The News app disappears. The sources read record no feature that depends on it. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.BingNews",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.BingNews' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.BingNews' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps (read 2026-11-12)",
+          "claim": "The page's table of removable inbox apps has a row 'BingNews' with default value true, where true means the app is selected for removal by default. The page applies to \"Windows 11 Enterprise and Education, version 25H2\" and gives identifiers, not package names; Home is not covered."
+        },
+        {
+          "grade": "third-party",
+          "source": "allthings.how guide to the inbox-app removal policy (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.BingNews' among the common package family names of the apps the policy can remove."
+        },
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.BingNews' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.BingNews'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps",
+          "url": "https://support.microsoft.com/en-us/servicing/os/windows/docs/2025/08/policy-based-removal-of-pre-installed-microsoft-store-apps"
+        },
+        {
+          "title": "allthings.how: remove Windows 11 bloatware with the built-in policy",
+          "url": "https://allthings.how/remove-windows-11-bloatware-using-the-built-in-policy-24h2-25h2/"
+        },
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-002-bing-weather",
+      "module": "m4-appx",
+      "title": "Remove the Weather app for all users",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Weather is the consumer weather app that ships with Windows. The sources read record no feature of Windows that depends on it, except as stated in the impact. Microsoft's own list of removable inbox apps includes it; Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Weather app disappears. The sources read record no feature that depends on it; whether the Widgets board or the lock screen weather are affected has not been checked. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.BingWeather",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.BingWeather' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.BingWeather' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps (read 2026-11-12)",
+          "claim": "The page's table of removable inbox apps has a row 'BingWeather' with default value true, where true means the app is selected for removal by default. The page applies to \"Windows 11 Enterprise and Education, version 25H2\" and gives identifiers, not package names; Home is not covered."
+        },
+        {
+          "grade": "third-party",
+          "source": "allthings.how guide to the inbox-app removal policy (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.BingWeather' among the common package family names of the apps the policy can remove."
+        },
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.BingWeather' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.BingWeather'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps",
+          "url": "https://support.microsoft.com/en-us/servicing/os/windows/docs/2025/08/policy-based-removal-of-pre-installed-microsoft-store-apps"
+        },
+        {
+          "title": "allthings.how: remove Windows 11 bloatware with the built-in policy",
+          "url": "https://allthings.how/remove-windows-11-bloatware-using-the-built-in-policy-24h2-25h2/"
+        },
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. Check on a Home VM that the Widgets board and the lock screen still behave as before (docs/M4-CATALOG.md section 8). When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-003-solitaire-collection",
+      "module": "m4-appx",
+      "title": "Remove the Solitaire Collection app for all users",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "The Microsoft Solitaire Collection is a card-game app that ships with Windows. The sources read record no feature of Windows that depends on it, except as stated in the impact. Microsoft's own list of removable inbox apps includes it; Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The game disappears. The sources read record no feature that depends on it. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.MicrosoftSolitaireCollection",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.MicrosoftSolitaireCollection' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.MicrosoftSolitaireCollection' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps (read 2026-11-12)",
+          "claim": "The page's table of removable inbox apps has a row 'MicrosoftSolitaireCollection' with default value true, where true means the app is selected for removal by default. The page applies to \"Windows 11 Enterprise and Education, version 25H2\" and gives identifiers, not package names; Home is not covered."
+        },
+        {
+          "grade": "third-party",
+          "source": "allthings.how guide to the inbox-app removal policy (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.MicrosoftSolitaireCollection' among the common package family names of the apps the policy can remove."
+        },
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.MicrosoftSolitaireCollection' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.MicrosoftSolitaireCollection'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps",
+          "url": "https://support.microsoft.com/en-us/servicing/os/windows/docs/2025/08/policy-based-removal-of-pre-installed-microsoft-store-apps"
+        },
+        {
+          "title": "allthings.how: remove Windows 11 bloatware with the built-in policy",
+          "url": "https://allthings.how/remove-windows-11-bloatware-using-the-built-in-policy-24h2-25h2/"
+        },
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-004-microsoft-365-copilot-app",
+      "module": "m4-appx",
+      "title": "Remove the Microsoft 365 Copilot (Office hub) app for all users",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "The Microsoft 365 Copilot app (package MicrosoftOfficeHub) is the hub app for Microsoft 365 and Copilot that ships with Windows. The sources read record no feature of Windows that depends on it, except as stated in the impact. Microsoft's own list of removable inbox apps includes it; Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Microsoft 365 Copilot app (formerly the Office hub) disappears. Microsoft 365 desktop apps and the web apps are separate and keep working. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.MicrosoftOfficeHub",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.MicrosoftOfficeHub' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.MicrosoftOfficeHub' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps (read 2026-11-12)",
+          "claim": "The page's table of removable inbox apps has a row 'MicrosoftOfficeHub' with default value false, where true means the app is selected for removal by default. The page applies to \"Windows 11 Enterprise and Education, version 25H2\" and gives identifiers, not package names; Home is not covered."
+        },
+        {
+          "grade": "third-party",
+          "source": "allthings.how guide to the inbox-app removal policy (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.MicrosoftOfficeHub' among the common package family names of the apps the policy can remove."
+        },
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.MicrosoftOfficeHub' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.MicrosoftOfficeHub'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps",
+          "url": "https://support.microsoft.com/en-us/servicing/os/windows/docs/2025/08/policy-based-removal-of-pre-installed-microsoft-store-apps"
+        },
+        {
+          "title": "allthings.how: remove Windows 11 bloatware with the built-in policy",
+          "url": "https://allthings.how/remove-windows-11-bloatware-using-the-built-in-policy-24h2-25h2/"
+        },
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-005-clipchamp",
+      "module": "m4-appx",
+      "title": "Remove the Clipchamp app for all users",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Clipchamp is the video editor that ships with Windows. The sources read record no feature of Windows that depends on it, except as stated in the impact. Microsoft's own list of removable inbox apps includes it; Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Clipchamp video editor disappears. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Clipchamp.Clipchamp",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Clipchamp.Clipchamp' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Clipchamp.Clipchamp' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps (read 2026-11-12)",
+          "claim": "The page's table of removable inbox apps has a row 'Clipchamp' with default value false, where true means the app is selected for removal by default. The page applies to \"Windows 11 Enterprise and Education, version 25H2\" and gives identifiers, not package names; Home is not covered."
+        },
+        {
+          "grade": "third-party",
+          "source": "allthings.how guide to the inbox-app removal policy (read 2026-11-12)",
+          "claim": "Lists 'Clipchamp.Clipchamp' among the common package family names of the apps the policy can remove."
+        },
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Clipchamp.Clipchamp' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Clipchamp.Clipchamp'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps",
+          "url": "https://support.microsoft.com/en-us/servicing/os/windows/docs/2025/08/policy-based-removal-of-pre-installed-microsoft-store-apps"
+        },
+        {
+          "title": "allthings.how: remove Windows 11 bloatware with the built-in policy",
+          "url": "https://allthings.how/remove-windows-11-bloatware-using-the-built-in-policy-24h2-25h2/"
+        },
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-006-sticky-notes",
+      "module": "m4-appx",
+      "title": "Remove the Sticky Notes app for all users",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "flags": {
+        "deletes_user_data": true
+      },
+      "rationale": "Sticky Notes is the note-taking app that ships with Windows. The sources read record no feature of Windows that depends on it, except as stated in the impact. Microsoft's own list of removable inbox apps includes it; Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Sticky Notes app disappears and the notes stored locally are deleted with it. Notes synced to an online account are not touched by this entry, but they can no longer be opened in the app on this PC. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.MicrosoftStickyNotes",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.MicrosoftStickyNotes' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.MicrosoftStickyNotes' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps (read 2026-11-12)",
+          "claim": "The page's table of removable inbox apps has a row 'MicrosoftStickyNotes' with default value true, where true means the app is selected for removal by default. The page applies to \"Windows 11 Enterprise and Education, version 25H2\" and gives identifiers, not package names; Home is not covered."
+        },
+        {
+          "grade": "third-party",
+          "source": "allthings.how guide to the inbox-app removal policy (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.MicrosoftStickyNotes' among the common package family names of the apps the policy can remove."
+        },
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.MicrosoftStickyNotes' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.MicrosoftStickyNotes'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps",
+          "url": "https://support.microsoft.com/en-us/servicing/os/windows/docs/2025/08/policy-based-removal-of-pre-installed-microsoft-store-apps"
+        },
+        {
+          "title": "allthings.how: remove Windows 11 bloatware with the built-in policy",
+          "url": "https://allthings.how/remove-windows-11-bloatware-using-the-built-in-policy-24h2-25h2/"
+        },
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. Check on a Home VM what happens to the notes on removal and on reinstall (docs/M4-CATALOG.md section 8). The plan marks this entry as deleting user data and the engine skips it unless the plan was made with -AcceptDataLoss."
+    },
+    {
+      "id": "appx-007-microsoft-todo",
+      "module": "m4-appx",
+      "title": "Remove the Microsoft To Do app for all users",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "flags": {
+        "deletes_user_data": true
+      },
+      "rationale": "Microsoft To Do is the task-list app that ships with Windows. The sources read record no feature of Windows that depends on it, except as stated in the impact. Microsoft's own list of removable inbox apps includes it; Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The To Do app disappears and any lists cached locally are deleted with it. Lists kept in an online account are not touched by this entry, but they can no longer be opened in the app on this PC. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.Todos",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.Todos' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.Todos' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps (read 2026-11-12)",
+          "claim": "The page's table of removable inbox apps has a row 'Todo' with default value false, where true means the app is selected for removal by default. The page applies to \"Windows 11 Enterprise and Education, version 25H2\" and gives identifiers, not package names; Home is not covered."
+        },
+        {
+          "grade": "third-party",
+          "source": "allthings.how guide to the inbox-app removal policy (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.Todos' among the common package family names of the apps the policy can remove."
+        },
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.Todos' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.Todos'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps",
+          "url": "https://support.microsoft.com/en-us/servicing/os/windows/docs/2025/08/policy-based-removal-of-pre-installed-microsoft-store-apps"
+        },
+        {
+          "title": "allthings.how: remove Windows 11 bloatware with the built-in policy",
+          "url": "https://allthings.how/remove-windows-11-bloatware-using-the-built-in-policy-24h2-25h2/"
+        },
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. Check on a Home VM what happens to the lists on removal and on reinstall (docs/M4-CATALOG.md section 8). The plan marks this entry as deleting user data and the engine skips it unless the plan was made with -AcceptDataLoss."
+    },
+    {
+      "id": "appx-008-feedback-hub",
+      "module": "m4-appx",
+      "title": "Remove the Feedback Hub app for all users",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Feedback Hub is the app for sending feedback and bug reports to Microsoft. The sources read record no feature of Windows that depends on it, except as stated in the impact. Microsoft's own list of removable inbox apps includes it; Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "Feedback can no longer be sent from the app. The diagnostic-data and feedback settings handled in module m1-telemetry are separate. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.WindowsFeedbackHub",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.WindowsFeedbackHub' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.WindowsFeedbackHub' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps (read 2026-11-12)",
+          "claim": "The page's table of removable inbox apps has a row 'WindowsFeedbackHub' with default value false, where true means the app is selected for removal by default. The page applies to \"Windows 11 Enterprise and Education, version 25H2\" and gives identifiers, not package names; Home is not covered."
+        },
+        {
+          "grade": "third-party",
+          "source": "allthings.how guide to the inbox-app removal policy (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.WindowsFeedbackHub' among the common package family names of the apps the policy can remove."
+        },
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.WindowsFeedbackHub' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.WindowsFeedbackHub'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps",
+          "url": "https://support.microsoft.com/en-us/servicing/os/windows/docs/2025/08/policy-based-removal-of-pre-installed-microsoft-store-apps"
+        },
+        {
+          "title": "allthings.how: remove Windows 11 bloatware with the built-in policy",
+          "url": "https://allthings.how/remove-windows-11-bloatware-using-the-built-in-policy-24h2-25h2/"
+        },
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-009-microsoft-teams",
+      "module": "m4-appx",
+      "title": "Remove the Microsoft Teams app for all users",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Microsoft Teams is the chat and meetings client that ships with Windows. The sources read record no feature of Windows that depends on it, except as stated in the impact. Microsoft's own list of removable inbox apps includes it; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Teams client disappears. Teams in a browser is unaffected. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "MSTeams",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'MSTeams' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'MSTeams' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps (read 2026-11-12)",
+          "claim": "The page's table of removable inbox apps has a row 'MSTeams' with default value false, where true means the app is selected for removal by default. The page applies to \"Windows 11 Enterprise and Education, version 25H2\" and gives identifiers, not package names; Home is not covered."
+        },
+        {
+          "grade": "third-party",
+          "source": "allthings.how guide to the inbox-app removal policy (read 2026-11-12)",
+          "claim": "Lists 'MSTeams' among the common package family names of the apps the policy can remove."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'MSTeams'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps",
+          "url": "https://support.microsoft.com/en-us/servicing/os/windows/docs/2025/08/policy-based-removal-of-pre-installed-microsoft-store-apps"
+        },
+        {
+          "title": "allthings.how: remove Windows 11 bloatware with the built-in policy",
+          "url": "https://allthings.how/remove-windows-11-bloatware-using-the-built-in-policy-24h2-25h2/"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. Win11Debloat (section 1) and tiny11builder also list the older package MicrosoftTeams; Win11Debloat comments it 'Only removes the personal version (MS Store), does not remove business/enterprise version of teams'. It is not in Microsoft's list of removable inbox apps for 25H2 and is not part of this entry: check on a Home VM which of the two packages exist (docs/M4-CATALOG.md section 8)."
+    },
+    {
+      "id": "appx-010-outlook-for-windows",
+      "module": "m4-appx",
+      "title": "Remove the Outlook for Windows app for all users",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Outlook for Windows is the new mail client that ships with Windows. The sources read record no feature of Windows that depends on it, except as stated in the impact. Microsoft's own list of removable inbox apps includes it; Win11Debloat lists it but removes it only on request; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The new Outlook app disappears. Outlook on the web and the classic desktop Outlook are unaffected. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.OutlookForWindows",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.OutlookForWindows' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.OutlookForWindows' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps (read 2026-11-12)",
+          "claim": "The page's table of removable inbox apps has a row 'OutlookForWindows' with default value false, where true means the app is selected for removal by default. The page applies to \"Windows 11 Enterprise and Education, version 25H2\" and gives identifiers, not package names; Home is not covered."
+        },
+        {
+          "grade": "third-party",
+          "source": "allthings.how guide to the inbox-app removal policy (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.OutlookForWindows' among the common package family names of the apps the policy can remove."
+        },
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.OutlookForWindows' in section 3 (apps that are NOT uninstalled unless selected in the custom setup or by a script parameter). The line carries the comment \"New mail app: Outlook for Windows\"."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.OutlookForWindows'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps",
+          "url": "https://support.microsoft.com/en-us/servicing/os/windows/docs/2025/08/policy-based-removal-of-pre-installed-microsoft-store-apps"
+        },
+        {
+          "title": "allthings.how: remove Windows 11 bloatware with the built-in policy",
+          "url": "https://allthings.how/remove-windows-11-bloatware-using-the-built-in-policy-24h2-25h2/"
+        },
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. Check on a Home VM that mailto: links still have a handler you want. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-011-phone-link",
+      "module": "m4-appx",
+      "title": "Remove the Phone Link app for all users",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Phone Link connects the PC with a phone. The sources read record no feature of Windows that depends on it, except as stated in the impact. Win11Debloat lists it but removes it only on request; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "Phone Link disappears and with it the connection between the PC and the phone. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.YourPhone",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.YourPhone' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.YourPhone' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.YourPhone' in section 2 (apps that are NOT uninstalled unless the '#' in front of the line is removed). The line carries the comment \"Phone link\"."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.YourPhone'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. Win11Debloat keeps this package by default (section 2). When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-012-family-safety",
+      "module": "m4-appx",
+      "title": "Remove the Microsoft Family Safety app for all users",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Microsoft Family Safety is the app for parental controls and family features. The sources read record no feature of Windows that depends on it, except as stated in the impact. Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Family Safety app disappears. Whether parental controls that rely on it keep working has not been checked. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "MicrosoftCorporationII.MicrosoftFamily",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'MicrosoftCorporationII.MicrosoftFamily' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'MicrosoftCorporationII.MicrosoftFamily' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'MicrosoftCorporationII.MicrosoftFamily' in section 1 (the apps below the header 'WILL be uninstalled'). The line carries the comment \"Family Safety App\"."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'MicrosoftCorporationII.MicrosoftFamily'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. Check on a Home VM whether parental controls depend on the app before using this on a family PC (docs/M4-CATALOG.md section 8)."
+    },
+    {
+      "id": "appx-013-quick-assist",
+      "module": "m4-appx",
+      "title": "Remove the Quick Assist app for all users",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Quick Assist is a remote-assistance tool that lets another person view and control the PC. The sources read record no feature of Windows that depends on it, except as stated in the impact. Microsoft's own list of removable inbox apps includes it; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "Remote help sessions through Quick Assist are no longer possible from this PC. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "MicrosoftCorporationII.QuickAssist",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'MicrosoftCorporationII.QuickAssist' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'MicrosoftCorporationII.QuickAssist' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps (read 2026-11-12)",
+          "claim": "The page's table of removable inbox apps has a row 'QuickAssist' with default value false, where true means the app is selected for removal by default. The page applies to \"Windows 11 Enterprise and Education, version 25H2\" and gives identifiers, not package names; Home is not covered."
+        },
+        {
+          "grade": "third-party",
+          "source": "allthings.how guide to the inbox-app removal policy (read 2026-11-12)",
+          "claim": "Lists 'MicrosoftCorporationII.QuickAssist' among the common package family names of the apps the policy can remove."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'MicrosoftCorporationII.QuickAssist'."
+        },
+        {
+          "grade": "ms-statement",
+          "source": "Microsoft Security Blog, Storm-1811 and Quick Assist (read 2026-11-12)",
+          "claim": "Microsoft advises: \"Consider blocking or uninstalling Quick Assist and other remote monitoring and management tools\" (the sentence continues \"if these tools are not in use in your environment\")."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps",
+          "url": "https://support.microsoft.com/en-us/servicing/os/windows/docs/2025/08/policy-based-removal-of-pre-installed-microsoft-store-apps"
+        },
+        {
+          "title": "allthings.how: remove Windows 11 bloatware with the built-in policy",
+          "url": "https://allthings.how/remove-windows-11-bloatware-using-the-built-in-policy-24h2-25h2/"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Security Blog: Storm-1811 and Quick Assist",
+          "url": "https://www.microsoft.com/en-us/security/blog/?p=134322"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-014-people",
+      "module": "m4-appx",
+      "title": "Remove the People app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "People is the contacts app that Win11Debloat describes as 'Required for & included with Mail & Calendar'. The sources read record no feature of Windows that depends on it, except as stated in the impact. Win11Debloat lists it but removes it only on request; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The People app disappears. It is removed together with Mail & Calendar (appx-015). The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.People",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.People' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.People' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.People' in section 3 (apps that are NOT uninstalled unless selected in the custom setup or by a script parameter). The line carries the comment \"Required for & included with Mail & Calendar\"."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.People'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-015-mail-and-calendar",
+      "module": "m4-appx",
+      "title": "Remove the Mail & Calendar app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Mail & Calendar (package microsoft.windowscommunicationsapps) is the mail and calendar client. The sources read record no feature of Windows that depends on it, except as stated in the impact. Win11Debloat lists it but removes it only on request; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Mail and Calendar apps disappear and their locally configured accounts with them. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "microsoft.windowscommunicationsapps",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'microsoft.windowscommunicationsapps' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'microsoft.windowscommunicationsapps' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'microsoft.windowscommunicationsapps' in section 3 (apps that are NOT uninstalled unless selected in the custom setup or by a script parameter). The line carries the comment \"Mail & Calendar\"."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'microsoft.windowscommunicationsapps'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. Win11Debloat writes the package name with a capital M and tiny11builder with a small m; PowerShell matches names case-insensitively. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-016-power-automate",
+      "module": "m4-appx",
+      "title": "Remove the Power Automate app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Power Automate is the desktop automation app. The sources read record no feature of Windows that depends on it, except as stated in the impact. Win11Debloat lists it but removes it only on request; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "Power Automate disappears. Flows that rely on it stop running on this PC. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.PowerAutomateDesktop",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.PowerAutomateDesktop' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.PowerAutomateDesktop' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.PowerAutomateDesktop' in section 3 (apps that are NOT uninstalled unless selected in the custom setup or by a script parameter)."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.PowerAutomateDesktop'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-017-maps",
+      "module": "m4-appx",
+      "title": "Remove the Maps app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Maps is the Windows mapping app. The sources read record no feature of Windows that depends on it, except as stated in the impact. Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Maps app disappears, together with any offline maps stored locally. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.WindowsMaps",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.WindowsMaps' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.WindowsMaps' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.WindowsMaps' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.WindowsMaps'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-018-alarms-and-clock",
+      "module": "m4-appx",
+      "title": "Remove the Alarms & Clock app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Alarms & Clock provides alarms, timers and a stopwatch. The sources read record no feature of Windows that depends on it, except as stated in the impact. Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "Alarms, timers and the stopwatch of the app disappear, and alarms set in it no longer fire. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.WindowsAlarms",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.WindowsAlarms' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.WindowsAlarms' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.WindowsAlarms' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.WindowsAlarms'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-019-sound-recorder",
+      "module": "m4-appx",
+      "title": "Remove the Sound Recorder app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Sound Recorder is the simple audio-recording app. The sources read record no feature of Windows that depends on it, except as stated in the impact. Microsoft's own list of removable inbox apps includes it; Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Sound Recorder app disappears, together with recordings kept in its own storage. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.WindowsSoundRecorder",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.WindowsSoundRecorder' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.WindowsSoundRecorder' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps (read 2026-11-12)",
+          "claim": "The page's table of removable inbox apps has a row 'WindowsSoundRecorder' with default value false, where true means the app is selected for removal by default. The page applies to \"Windows 11 Enterprise and Education, version 25H2\" and gives identifiers, not package names; Home is not covered."
+        },
+        {
+          "grade": "third-party",
+          "source": "allthings.how guide to the inbox-app removal policy (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.WindowsSoundRecorder' among the common package family names of the apps the policy can remove."
+        },
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.WindowsSoundRecorder' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.WindowsSoundRecorder'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps",
+          "url": "https://support.microsoft.com/en-us/servicing/os/windows/docs/2025/08/policy-based-removal-of-pre-installed-microsoft-store-apps"
+        },
+        {
+          "title": "allthings.how: remove Windows 11 bloatware with the built-in policy",
+          "url": "https://allthings.how/remove-windows-11-bloatware-using-the-built-in-policy-24h2-25h2/"
+        },
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-020-movies-and-tv",
+      "module": "m4-appx",
+      "title": "Remove the Movies & TV app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Movies & TV is the video player and video store app. The sources read record no feature of Windows that depends on it, except as stated in the impact. Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Movies & TV app disappears. Media Player (a different package, Microsoft.ZuneMusic) is kept. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.ZuneVideo",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.ZuneVideo' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.ZuneVideo' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.ZuneVideo' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.ZuneVideo'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-021-xbox-game-bar",
+      "module": "m4-appx",
+      "title": "Remove the Xbox Game Bar app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Xbox Game Bar is the in-game overlay and also hosts Gaming Copilot. The sources read record no feature of Windows that depends on it, except as stated in the impact. Win11Debloat lists it but removes it only on request; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "Game Bar and the Gaming Copilot widget inside it disappear; the Win+G overlay stops working and some games that expect the overlay may complain. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.XboxGamingOverlay",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.XboxGamingOverlay' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.XboxGamingOverlay' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.XboxGamingOverlay' in section 3 (apps that are NOT uninstalled unless selected in the custom setup or by a script parameter). The line carries the comment \"Game overlay, required/useful for some games\"."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.XboxGamingOverlay'."
+        },
+        {
+          "grade": "third-party",
+          "source": "Neowin, as recorded in ai-009 (read 2026-11-11)",
+          "claim": "Neowin says the only way to remove Gaming Copilot is to remove Game Bar altogether."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Neowin: Microsoft denies accusations of screenshotting your gameplay",
+          "url": "https://www.neowin.net/news/microsoft-denies-accusations-of-screenshotting-your-gameplay-to-train-gaming-copilot"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. Related to ai-009 (Gaming Copilot privacy toggles): removing Game Bar removes the toggles with it. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-022-xbox-game-overlay",
+      "module": "m4-appx",
+      "title": "Remove the Xbox Game Overlay app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Xbox Game Overlay is a game-overlay component of the Xbox app set. The sources read record no feature of Windows that depends on it, except as stated in the impact. Win11Debloat lists it but removes it only on request; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The overlay component disappears; some games that expect it may complain. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.XboxGameOverlay",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.XboxGameOverlay' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.XboxGameOverlay' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.XboxGameOverlay' in section 3 (apps that are NOT uninstalled unless selected in the custom setup or by a script parameter). The line carries the comment \"Game overlay, required/useful for some games\"."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.XboxGameOverlay'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-023-xbox-app",
+      "module": "m4-appx",
+      "title": "Remove the Xbox app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "The Xbox app (package GamingApp) is the PC gaming front end. The sources read record no feature of Windows that depends on it, except as stated in the impact. Microsoft's own list of removable inbox apps includes it; Win11Debloat lists it but removes it only on request; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Xbox app disappears. Win11Debloat says it is 'required for installing some PC games', so installing Game Pass and some Store games may stop working until it is reinstalled. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.GamingApp",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.GamingApp' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.GamingApp' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps (read 2026-11-12)",
+          "claim": "The page's table of removable inbox apps has a row 'GamingApp' with default value true, where true means the app is selected for removal by default. The page applies to \"Windows 11 Enterprise and Education, version 25H2\" and gives identifiers, not package names; Home is not covered."
+        },
+        {
+          "grade": "third-party",
+          "source": "allthings.how guide to the inbox-app removal policy (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.GamingApp' among the common package family names of the apps the policy can remove."
+        },
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.GamingApp' in section 3 (apps that are NOT uninstalled unless selected in the custom setup or by a script parameter). The line carries the comment \"Modern Xbox Gaming App, required for installing some PC games\"."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.GamingApp'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Support: Policy-Based Removal of Pre-installed Microsoft Store Apps",
+          "url": "https://support.microsoft.com/en-us/servicing/os/windows/docs/2025/08/policy-based-removal-of-pre-installed-microsoft-store-apps"
+        },
+        {
+          "title": "allthings.how: remove Windows 11 bloatware with the built-in policy",
+          "url": "https://allthings.how/remove-windows-11-bloatware-using-the-built-in-policy-24h2-25h2/"
+        },
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. When the package is missing the engine treats the entry as compliant."
+    },
+    {
+      "id": "appx-024-tips",
+      "module": "m4-appx",
+      "title": "Remove the Tips app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Tips (package Microsoft.Getstarted) shows tips and introductory content. It is a package from earlier Windows releases and is probably present only on upgraded systems (not verified). Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Tips app disappears. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.Getstarted",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.Getstarted' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.Getstarted' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.Getstarted' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.Getstarted'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. The package is not in Microsoft's list of removable inbox apps for 25H2 and may be absent on clean installs; the entry is then a no-op."
+    },
+    {
+      "id": "appx-025-3d-viewer",
+      "module": "m4-appx",
+      "title": "Remove the 3D Viewer app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "3D Viewer is the viewer for 3D models. It is a package from earlier Windows releases and is probably present only on upgraded systems (not verified). Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The 3D Viewer app disappears. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.Microsoft3DViewer",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.Microsoft3DViewer' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.Microsoft3DViewer' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.Microsoft3DViewer' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.Microsoft3DViewer'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. The package is not in Microsoft's list of removable inbox apps for 25H2 and may be absent on clean installs; the entry is then a no-op."
+    },
+    {
+      "id": "appx-026-mixed-reality-portal",
+      "module": "m4-appx",
+      "title": "Remove the Mixed Reality Portal app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Mixed Reality Portal is the setup and management app for Windows Mixed Reality headsets. It is a package from earlier Windows releases and is probably present only on upgraded systems (not verified). Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Mixed Reality Portal app disappears; a Windows Mixed Reality headset can no longer be set up from this PC. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.MixedReality.Portal",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.MixedReality.Portal' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.MixedReality.Portal' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.MixedReality.Portal' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.MixedReality.Portal'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. The package is not in Microsoft's list of removable inbox apps for 25H2 and may be absent on clean installs; the entry is then a no-op."
+    },
+    {
+      "id": "appx-027-skype-app",
+      "module": "m4-appx",
+      "title": "Remove the Skype app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "The Skype app is the consumer Skype client that shipped with Windows. It is a package from earlier Windows releases and is probably present only on upgraded systems (not verified). Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Skype app disappears. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.SkypeApp",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.SkypeApp' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.SkypeApp' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.SkypeApp' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.SkypeApp'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. The package is not in Microsoft's list of removable inbox apps for 25H2 and may be absent on clean installs; the entry is then a no-op."
+    },
+    {
+      "id": "appx-028-onenote-for-windows-10",
+      "module": "m4-appx",
+      "title": "Remove the OneNote for Windows 10 app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "OneNote for Windows 10 (package Microsoft.Office.OneNote) is the Store version of OneNote. It is a package from earlier Windows releases and is probably present only on upgraded systems (not verified). Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Store version of OneNote disappears together with notebook data cached locally. The Microsoft 365 desktop OneNote and OneNote on the web are separate. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.Office.OneNote",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.Office.OneNote' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.Office.OneNote' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.Office.OneNote' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.Office.OneNote'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. The package is not in Microsoft's list of removable inbox apps for 25H2 and may be absent on clean installs; the entry is then a no-op."
+    },
+    {
+      "id": "appx-029-cortana",
+      "module": "m4-appx",
+      "title": "Remove the Cortana app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Package Microsoft.549981C3F5F10 is the Cortana app. It is a package from earlier Windows releases and is probably present only on upgraded systems (not verified). Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The Cortana app disappears. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.549981C3F5F10",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.549981C3F5F10' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.549981C3F5F10' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.549981C3F5F10' in section 1 (the apps below the header 'WILL be uninstalled')."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.549981C3F5F10'."
+        },
+        {
+          "grade": "background",
+          "source": "Prior knowledge, not re-verified",
+          "claim": "Package Microsoft.549981C3F5F10 is the Cortana app."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. The package is not in Microsoft's list of removable inbox apps for 25H2 and may be absent on clean installs; the entry is then a no-op."
+    },
+    {
+      "id": "appx-030-xbox-console-companion",
+      "module": "m4-appx",
+      "title": "Remove the Xbox Console Companion app for all users",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Xbox Console Companion (package Microsoft.XboxApp) is the old Xbox companion app. It is a package from earlier Windows releases and is probably present only on upgraded systems (not verified). Win11Debloat removes it by default; tiny11builder removes it. The installed copies are removed for all users and the provisioned copy is removed as well, so that new profiles do not receive it again.",
+      "impact": "The old Xbox Console Companion app disappears. The current Xbox app (appx-023) is a different package. The app is removed for every existing user and is no longer provisioned for new accounts. Local app data is assumed to be lost with the package: Microsoft Learn does not say what happens to it.",
+      "apply": [
+        {
+          "type": "appx",
+          "package_name": "Microsoft.XboxApp",
+          "action": "remove",
+          "deprovision": true,
+          "all_users": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.XboxApp' | Measure-Object).Count",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.XboxApp' } | Measure-Object).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "store-reinstall",
+        "reversibility": "partial",
+        "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and a feature update can bring an inbox app back on its own."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "Win11Debloat Appslist.txt (read 2026-11-12)",
+          "claim": "Lists 'Microsoft.XboxApp' in section 1 (the apps below the header 'WILL be uninstalled'). The line carries the comment \"Old Xbox Console Companion App, no longer supported\"."
+        },
+        {
+          "grade": "community",
+          "source": "tiny11builder tiny11maker.ps1 (read 2026-11-12)",
+          "claim": "The $packagePrefixes list that the script removes from the image includes 'Microsoft.XboxApp'."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "Microsoft Learn: Remove-AppxPackage and Remove-AppxProvisionedPackage (read 2026-11-12)",
+          "claim": "Remove-AppxProvisionedPackage: \"App packages will not be installed when new user accounts are created.\" and \"Packages will not be removed from existing user accounts.\" Remove-AppxPackage \"removes an app package from a user account\"; with -AllUsers it \"removes the app package for all user accounts on the computer\" and needs administrator rights. Both cmdlets are therefore used together, one for the installed copies and one for the provisioned copy."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win11Debloat, Appslist.txt",
+          "url": "https://github.com/Raphire/Win11Debloat/blob/master/Appslist.txt"
+        },
+        {
+          "title": "tiny11builder, tiny11maker.ps1",
+          "url": "https://github.com/ntdevlabs/tiny11builder/blob/main/tiny11maker.ps1"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage"
+        },
+        {
+          "title": "Microsoft Learn: Remove-AppxProvisionedPackage",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/dism/remove-appxprovisionedpackage"
+        }
+      ],
+      "notes": "Not VM-verified. The package is not in Microsoft's list of removable inbox apps for 25H2 and may be absent on clean installs; the entry is then a no-op."
+    }
+  ]
+}

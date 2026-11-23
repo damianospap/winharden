@@ -1,0 +1,1754 @@
+{
+  "module": "m7-defender",
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "def-001-cloud-protection-on",
+      "module": "m7-defender",
+      "title": "Keep cloud-delivered protection on (MAPS membership Advanced)",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Cloud-delivered protection is the lookup that lets Defender judge a file it has never seen. Block at first seen, the cloud block level and several attack surface reduction rules depend on it: Microsoft states that some rules 'must enable cloud-delivered protection' and that the cloud protection level can only be configured after cloud protection is on. This is the one place where the tool deliberately keeps a data flow to Microsoft switched on, because the protection that depends on it is worth more than the privacy it costs; automatic sample upload is a separate, manual choice (def-028).",
+      "impact": "Defender sends file and URL metadata for files it cannot judge locally to Microsoft's cloud service. On a default Windows 11 Home install the setting is normally already on, so the entry usually changes nothing; it restores the setting when a tweak tool or an earlier change switched it off.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_pref",
+          "name": "MAPSReporting",
+          "value": 2
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-MpPreference).MAPSReporting",
+            "expected": "2"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Set-MpPreference (read 2026-11-15)",
+          "claim": "MAPSReporting: \"Specifies the type of membership in Microsoft Active Protection Service.\" The accepted values are Disabled (0), Basic (1) and Advanced (2); the value 2 is written here."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Specify the cloud protection level (read 2026-11-15)",
+          "claim": "\"Turn on cloud protection before you configure the cloud protection level.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "For the rules 'Block executable files from running unless they meet a prevalence, age, or trusted list criterion', 'Block execution of potentially obfuscated scripts' and 'Use advanced protection against ransomware': \"To use this ASR rule, you must enable cloud-delivered protection.\""
+        }
+      ],
+      "references": [
+        {
+          "title": "Set-MpPreference",
+          "url": "https://learn.microsoft.com/powershell/module/defender/set-mppreference"
+        },
+        {
+          "title": "Specify the cloud protection level for Microsoft Defender Antivirus",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/specify-cloud-protection-level-microsoft-defender-antivirus"
+        },
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-002-realtime-protection-on",
+      "module": "m7-defender",
+      "title": "Keep real-time protection switched on (Defender never disabled)",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Hardening only: this entry makes sure real-time protection (scanning of files when they are opened or run) is on and never turns anything off. Tweak tools and malware both switch these Defender layers off; writing DisableRealtimeMonitoring = False puts the layer back. Defender itself stays the antivirus of the system, as the project's never-touch list requires.",
+      "impact": "No change on a system where real-time protection is already on (the Windows default). Where it was switched off, it is switched on again, with the usual cost of on-access scanning.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_pref",
+          "name": "DisableRealtimeMonitoring",
+          "value": false
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-MpPreference).DisableRealtimeMonitoring",
+            "expected": "False"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Set-MpPreference (read 2026-11-15)",
+          "claim": "DisableRealtimeMonitoring: \"Indicates whether to use real-time protection.\" The parameter takes a Boolean; False keeps the feature on."
+        }
+      ],
+      "references": [
+        {
+          "title": "Set-MpPreference",
+          "url": "https://learn.microsoft.com/powershell/module/defender/set-mppreference"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-003-behavior-monitoring-on",
+      "module": "m7-defender",
+      "title": "Keep behavior monitoring switched on (Defender never disabled)",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Hardening only: this entry makes sure behavior monitoring (detection of malicious behavior of running programs) is on and never turns anything off. Tweak tools and malware both switch these Defender layers off; writing DisableBehaviorMonitoring = False puts the layer back. Defender itself stays the antivirus of the system, as the project's never-touch list requires.",
+      "impact": "No change on a system where behavior monitoring is already on (the Windows default). Where it was switched off, it is switched on again, with the usual cost of on-access scanning.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_pref",
+          "name": "DisableBehaviorMonitoring",
+          "value": false
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-MpPreference).DisableBehaviorMonitoring",
+            "expected": "False"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Set-MpPreference (read 2026-11-15)",
+          "claim": "DisableBehaviorMonitoring: \"Indicates whether to enable behavior monitoring.\" The parameter takes a Boolean; False keeps the feature on."
+        }
+      ],
+      "references": [
+        {
+          "title": "Set-MpPreference",
+          "url": "https://learn.microsoft.com/powershell/module/defender/set-mppreference"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-004-download-scanning-on",
+      "module": "m7-defender",
+      "title": "Keep download and attachment scanning switched on (Defender never disabled)",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Hardening only: this entry makes sure scanning of downloaded files and attachments is on and never turns anything off. Tweak tools and malware both switch these Defender layers off; writing DisableIOAVProtection = False puts the layer back. Defender itself stays the antivirus of the system, as the project's never-touch list requires.",
+      "impact": "No change on a system where download and attachment scanning is already on (the Windows default). Where it was switched off, it is switched on again, with the usual cost of on-access scanning.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_pref",
+          "name": "DisableIOAVProtection",
+          "value": false
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-MpPreference).DisableIOAVProtection",
+            "expected": "False"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Set-MpPreference (read 2026-11-15)",
+          "claim": "DisableIOAVProtection: \"Indicates whether Windows Defender scans all downloaded files and attachments.\" The parameter takes a Boolean; False keeps the feature on."
+        }
+      ],
+      "references": [
+        {
+          "title": "Set-MpPreference",
+          "url": "https://learn.microsoft.com/powershell/module/defender/set-mppreference"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-005-script-scanning-on",
+      "module": "m7-defender",
+      "title": "Keep script scanning switched on (Defender never disabled)",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Hardening only: this entry makes sure script scanning during malware scans is on and never turns anything off. Tweak tools and malware both switch these Defender layers off; writing DisableScriptScanning = False puts the layer back. Defender itself stays the antivirus of the system, as the project's never-touch list requires.",
+      "impact": "No change on a system where script scanning is already on (the Windows default). Where it was switched off, it is switched on again, with the usual cost of on-access scanning.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_pref",
+          "name": "DisableScriptScanning",
+          "value": false
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-MpPreference).DisableScriptScanning",
+            "expected": "False"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Set-MpPreference (read 2026-11-15)",
+          "claim": "DisableScriptScanning: \"Specifies whether to disable the scanning of scripts during malware scans.\" The parameter takes a Boolean; False keeps the feature on."
+        }
+      ],
+      "references": [
+        {
+          "title": "Set-MpPreference",
+          "url": "https://learn.microsoft.com/powershell/module/defender/set-mppreference"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-006-block-at-first-seen-on",
+      "module": "m7-defender",
+      "title": "Keep block at first seen switched on (Defender never disabled)",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Hardening only: this entry makes sure block at first seen (holding a new file back until the cloud has judged it) is on and never turns anything off. Tweak tools and malware both switch these Defender layers off; writing DisableBlockAtFirstSeen = False puts the layer back. Defender itself stays the antivirus of the system, as the project's never-touch list requires.",
+      "impact": "No change on a system where block at first seen is already on (the Windows default). Where it was switched off, it is switched on again, with the usual cost of on-access scanning.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_pref",
+          "name": "DisableBlockAtFirstSeen",
+          "value": false
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-MpPreference).DisableBlockAtFirstSeen",
+            "expected": "False"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Set-MpPreference (read 2026-11-15)",
+          "claim": "DisableBlockAtFirstSeen: \"Indicates whether to enable block at first seen.\" The parameter takes a Boolean; False keeps the feature on."
+        }
+      ],
+      "references": [
+        {
+          "title": "Set-MpPreference",
+          "url": "https://learn.microsoft.com/powershell/module/defender/set-mppreference"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-007-pua-protection-on",
+      "module": "m7-defender",
+      "title": "Block potentially unwanted applications (adware, bundlers)",
+      "tier": "T0",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Potentially unwanted applications are the adware, bundled installers and similar software that this tool's whole purpose is to keep off the system. With PUA protection on, Defender blocks them when they are downloaded, moved, run or installed and quarantines them. The setting is a Defender preference, so it needs no policy engine that Home lacks.",
+      "impact": "Installers that bundle optional extras, some download managers and cracked or key-generator tools can be blocked and quarantined. Defender shows a notification prefaced with 'PUA:'. The release is done in Windows Security under Protection history.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_pref",
+          "name": "PUAProtection",
+          "value": 1
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-MpPreference).PUAProtection",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Detect and block potentially unwanted applications (read 2026-11-15)",
+          "claim": "\"Microsoft Defender Antivirus blocks detected PUA files and any attempts to download, move, run, or install them.\" \"Blocked PUA files are then moved to quarantine.\" The command is `Set-MpPreference -PUAProtection Enabled`; the documented values are 0 (off), 1 (on, detected items are blocked) and 2 (audit mode). The categories include \"Advertising software that displays advertisements or promotions\"."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Set-MpPreference (read 2026-11-15)",
+          "claim": "PUAProtection: \"Specifies the level of detection for potentially unwanted applications.\" Accepted values: Disabled, Enabled, AuditMode."
+        }
+      ],
+      "references": [
+        {
+          "title": "Detect and block potentially unwanted applications",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/detect-block-potentially-unwanted-apps-microsoft-defender-antivirus"
+        },
+        {
+          "title": "Set-MpPreference",
+          "url": "https://learn.microsoft.com/powershell/module/defender/set-mppreference"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-008-cloud-block-level-high",
+      "module": "m7-defender",
+      "title": "Raise the cloud block level to High",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "A higher cloud block level makes Defender block unknown files more aggressively while it waits for the cloud verdict. Level High is the first step above Default. Zero tolerance ('Blocks all unknown executable files') is deliberately not allowed by the policy file because it would block every new program on a general-purpose PC; High plus is not used because Microsoft says it might affect client performance. Entry def-001 (cloud protection) must be on first.",
+      "impact": "Microsoft states that this level 'increases the chance of false positives': a rarely seen, harmless program can be blocked for a short time or quarantined. It also makes the notification pop-up of the rule 'Block executable content from email client and webmail' appear (def-015), which at the default level blocks silently.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_pref",
+          "name": "CloudBlockLevel",
+          "value": 2
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-MpPreference).CloudBlockLevel",
+            "expected": "2"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Specify the cloud protection level (read 2026-11-15)",
+          "claim": "High: \"Aggressively blocks unknown files while optimizing client performance. This option increases the chance of false positives.\" Zero tolerance: \"Blocks all unknown executable files.\" The command is `Set-MpPreference -CloudBlockLevel High`; the valid values are Default, High, HighPlus and ZeroTolerance. \"Turn on cloud protection before you configure the cloud protection level.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Set-MpPreference (read 2026-11-15)",
+          "claim": "CloudBlockLevel: \"Specifies a cloud block level. This value determines how aggressive Microsoft Defender Antivirus is in blocking and scanning suspicious files.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "Rule 'Block executable content from email client and webmail': \"User notification pop-ups are generated only when the cloud protection level on the device is High, High plus, or Zero tolerance.\""
+        }
+      ],
+      "references": [
+        {
+          "title": "Specify the cloud protection level for Microsoft Defender Antivirus",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/specify-cloud-protection-level-microsoft-defender-antivirus"
+        },
+        {
+          "title": "Set-MpPreference",
+          "url": "https://learn.microsoft.com/powershell/module/defender/set-mppreference"
+        },
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        }
+      ],
+      "notes": "Not VM-verified. The numeric value 2 is what Get-MpPreference reports for High; confirm on a Home VM that Set-MpPreference -CloudBlockLevel High and the value 2 written by this tool give the same read-back."
+    },
+    {
+      "id": "def-009-network-protection-block",
+      "module": "m7-defender",
+      "title": "Turn on network protection in block mode",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Network protection extends Defender's SmartScreen-style reputation checks from the browser to every program: connections to malicious or suspicious domains are blocked at the network layer, which also covers malware that never opens a browser. The page read lists Windows 11 Pro and Enterprise only, so on Home the setting is written as 'inert if ignored' and the entry is marked unverified until a Home VM shows that it acts.",
+      "impact": "Programs lose connections to sites that Defender's reputation service flags; legitimate but flagged sites are blocked too. Microsoft recommends audit mode first ('use audit mode in a test environment to identify apps that would be blocked'); this tool does not ship an audit-mode entry because audit mode is not a hardening. Requires Defender in active mode with real-time protection on.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_pref",
+          "name": "EnableNetworkProtection",
+          "value": 1
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-MpPreference).EnableNetworkProtection",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Turn on network protection (read 2026-11-15)",
+          "claim": "Supported systems are \"Windows 10, version 1709 or later, or Windows 11 (Pro or Enterprise).\" The page does not mention Windows 11 Home."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Turn on network protection (read 2026-11-15)",
+          "claim": "\"Enabled: Turns on network protection in block mode, which prevents connections to malicious or suspicious domains.\" \"Network protection requires Microsoft Defender Antivirus in active mode with real-time protection enabled.\" The read-back values are 0 (off), 1 (block mode) and 2 (audit mode)."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Set-MpPreference (read 2026-11-15)",
+          "claim": "EnableNetworkProtection: \"Specifies how the network protection service handles web-based malicious threats, including phishing and malware.\" Accepted values: Disabled, Enabled, AuditMode."
+        }
+      ],
+      "references": [
+        {
+          "title": "Turn on network protection",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/enable-network-protection"
+        },
+        {
+          "title": "Set-MpPreference",
+          "url": "https://learn.microsoft.com/powershell/module/defender/set-mppreference"
+        }
+      ],
+      "notes": "Not VM-verified, and the Microsoft page read documents this feature for Pro or Enterprise only or does not name editions. On a Windows 11 Home VM: apply, read the value back with Get-MpPreference, and check that the feature really acts (see impact). If the value is accepted but has no effect, mark the entry na."
+    },
+    {
+      "id": "def-010-controlled-folder-access-on",
+      "module": "m7-defender",
+      "title": "Turn on controlled folder access (ransomware protection)",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Controlled folder access lets only trusted programs write to the protected folders (Documents, Pictures and similar), which stops ransomware from encrypting them. It is the strongest anti-ransomware control Defender offers, and it is the reason this entry exists at profile 3 despite its cost in convenience.",
+      "impact": "Programs that Defender does not trust can no longer change files in the protected folders: installers, games that save to Documents, photo and video editors, backup tools and scripts will fail with an access error until the program is allowed in Windows Security > Virus & threat protection > Ransomware protection > Allow an app through Controlled folder access. Exclude this entry from the plan when that is not acceptable.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_pref",
+          "name": "EnableControlledFolderAccess",
+          "value": 1
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-MpPreference).EnableControlledFolderAccess",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "high",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Enable controlled folder access (read 2026-11-15)",
+          "claim": "The command is `Set-MpPreference -EnableControlledFolderAccess <Mode>`; the modes are 0 or Disabled (default), 1 or Enabled, 2 or AuditMode, 3 or BlockDiskModificationOnly, 4 or AuditDiskModificationOnly. \"The Windows Security app supports only On (equivalent to the Enabled mode) and Off (the Disabled mode).\" \"After you assess the effect of CFA in Audit Mode, you can set it to Enabled.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Set-MpPreference (read 2026-11-15)",
+          "claim": "EnableControlledFolderAccess: \"Specifies the state for the controlled folder access feature. Valid values are Disabled, Enabled, and Audit Mode.\""
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Enable controlled folder access (read 2026-11-15)",
+          "claim": "The page lists \"Windows 10 or later\" and Windows Server versions as supported systems and does not name editions, so Home support is not documented."
+        }
+      ],
+      "references": [
+        {
+          "title": "Enable controlled folder access",
+          "url": "https://learn.microsoft.com/en-nz/defender-endpoint/enable-controlled-folders"
+        },
+        {
+          "title": "Set-MpPreference",
+          "url": "https://learn.microsoft.com/powershell/module/defender/set-mppreference"
+        }
+      ],
+      "notes": "Not VM-verified, and the Microsoft page read documents this feature for Pro or Enterprise only or does not name editions. On a Windows 11 Home VM: apply, read the value back with Get-MpPreference, and check that the feature really acts (see impact). If the value is accepted but has no effect, mark the entry na."
+    },
+    {
+      "id": "def-011-tamper-protection-attest",
+      "module": "m7-defender",
+      "title": "Attest that Defender tamper protection is on",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "attest",
+      "home_effective": "unverified",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Tamper protection stops other software from switching Defender's own settings off, including through the registry. It cannot be changed by this tool or by any script (Microsoft says changes made through a management tool 'might appear to succeed, but tamper protection blocks the changes'), so the tool only reports whether it is on. A failing check means 'tamper protection not attested', never a silent pass.",
+      "impact": "Read-only. Prints one line in the report and changes nothing.",
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-MpComputerStatus).IsTamperProtected",
+            "expected": "True"
+          }
+        ],
+        "manual_check": "Windows Security > Virus & threat protection > Virus & threat protection settings > Tamper Protection reads On."
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Protect security settings with tamper protection (read 2026-11-15)",
+          "claim": "\"Tamper protection in Microsoft Defender for Endpoint helps protect important security settings from being disabled or changed.\" \"Attempts to modify Microsoft Defender Antivirus settings through the registry are blocked.\" \"When tamper protection is turned on, changes made through a management tool, including Group Policy, might appear to succeed, but tamper protection blocks the changes.\" \"To check both settings, see Determine the status of tamper protection and real-time protection using PowerShell.\""
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com MSFT_MpComputerStatus class (read 2026-11-15)",
+          "claim": "The property name IsTamperProtected of Get-MpComputerStatus comes from general knowledge of the Defender module: it is not in the pages read (the MSFT_MpComputerStatus class page lists RealTimeProtectionEnabled, AntivirusEnabled, BehaviorMonitorEnabled, IoavProtectionEnabled and NISEnabled, and no tamper property). If the property does not exist, the check returns nothing and the entry fails, which is the safe outcome."
+        }
+      ],
+      "references": [
+        {
+          "title": "Protect security settings with tamper protection",
+          "url": "https://learn.microsoft.com/defender-endpoint/prevent-changes-to-security-settings-with-tamper-protection"
+        },
+        {
+          "title": "MSFT_MpComputerStatus class",
+          "url": "https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpcomputerstatus"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). Run Get-MpComputerStatus | Select-Object IsTamperProtected there and compare it with the toggle in Windows Security; if the property is missing on Home, replace the check with the manual one."
+    },
+    {
+      "id": "def-012-asr-vulnerable-drivers",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: block abuse of exploited vulnerable signed drivers",
+      "tier": "T0",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Stops programs from loading signed drivers that are known to be vulnerable and exploited, a route malware uses to get into the kernel and switch protection off. It is one of Microsoft's three standard protection rules and works at the antivirus level, independent of the Windows vulnerable driver blocklist.",
+      "impact": "A driver on Microsoft's exploited list fails to load; very old hardware drivers may be affected. Typical systems notice nothing.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "56a863a9-875e-4185-98a7-b882c64b5ce5",
+          "value": "block",
+          "label": "Block abuse of exploited vulnerable signed drivers"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '56a863a9-875e-4185-98a7-b882c64b5ce5') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block abuse of exploited vulnerable signed drivers\" with the GUID 56a863a9-875e-4185-98a7-b882c64b5ce5."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview names three \"standard protection rules\" and says Microsoft \"recommends enabling them in Block mode without the need for extensive testing.\" \"Typically, these rules have minimal or no noticeable effect on users, but there are exceptions:\""
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-013-asr-lsass-credentials",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: block credential stealing from the Windows local security authority subsystem",
+      "tier": "T0",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Stops processes from reading the memory of LSASS, the process that holds logon secrets, which is how credential-stealing tools work. Standard protection rule. Microsoft says this rule can go straight to block mode.",
+      "impact": "Tools that read LSASS memory fail, including some diagnostic and anti-cheat software. Microsoft notes that the rule does not support Warn mode.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2",
+          "value": "block",
+          "label": "Block credential stealing from the Windows local security authority subsystem"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block credential stealing from the Windows local security authority subsystem\" with the GUID 9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2. \"This ASR rule produces a large volume of audit events, almost all of which are safe to ignore\", \"This ASR rule doesn't support Warn mode.\" and \"You can choose to skip the audit mode evaluation and proceed to block mode deployment.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview names three \"standard protection rules\" and says Microsoft \"recommends enabling them in Block mode without the need for extensive testing.\" \"Typically, these rules have minimal or no noticeable effect on users, but there are exceptions:\""
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-014-asr-wmi-persistence",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: block persistence through WMI event subscription",
+      "tier": "T0",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Stops malware from using WMI event subscriptions to start itself again after a restart. Standard protection rule.",
+      "impact": "Software that legitimately registers permanent WMI event subscriptions (some hardware monitoring and management tools) is blocked from doing so.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "e6db77e5-3df2-4cf1-b95a-636979351e5b",
+          "value": "block",
+          "label": "Block persistence through WMI event subscription"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq 'e6db77e5-3df2-4cf1-b95a-636979351e5b') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block persistence through WMI event subscription\" with the GUID e6db77e5-3df2-4cf1-b95a-636979351e5b."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview names three \"standard protection rules\" and says Microsoft \"recommends enabling them in Block mode without the need for extensive testing.\" \"Typically, these rules have minimal or no noticeable effect on users, but there are exceptions:\""
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-015-asr-email-executables",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: block executable content from email client and webmail",
+      "tier": "T0",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Blocks executable files, script files and archives that arrive through email opened in Outlook, Outlook.com and other popular webmail providers from being run, which closes the most common way a malicious attachment reaches a home PC.",
+      "impact": "An executable, script or .zip received through email cannot be used from the mail client. At the default cloud level the block is silent: the notification pop-up only appears with cloud block level High or higher (def-008, profile 3).",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "be9ba2d9-53ea-4cdc-84e5-9b1eeee46550",
+          "value": "block",
+          "label": "Block executable content from email client and webmail"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq 'be9ba2d9-53ea-4cdc-84e5-9b1eeee46550') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block executable content from email client and webmail\" with the GUID be9ba2d9-53ea-4cdc-84e5-9b1eeee46550. The rule blocks \"Executable files (for example, .exe, .dll, or .scr).\", \"Script files (for example, .ps1, .vbs, or .js).\" and \"Archive files (for example, .zip).\" \"User notification pop-ups are generated only when the cloud protection level on the device is High, High plus,\" \"or Zero tolerance.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview says other rules need \"initial testing in Audit mode for other ASR rules before activating them in Block or Warn mode.\" This tool does not run an audit phase: it ships these rules at a higher profile, where the user has accepted a stricter system."
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-016-asr-office-executable-content",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: block Office applications from creating executable content",
+      "tier": "T0",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Stops Word, Excel and the other Office applications from writing executable files, the step where macro malware drops its payload.",
+      "impact": "Macros that create .exe or .dll files stop working. The rule is not affected by where Office is installed.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "3b576869-a4ec-4529-8536-b80a7769e899",
+          "value": "block",
+          "label": "Block Office applications from creating executable content"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '3b576869-a4ec-4529-8536-b80a7769e899') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block Office applications from creating executable content\" with the GUID 3b576869-a4ec-4529-8536-b80a7769e899. \"This ASR rule isn't affected by the installation location of Office.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview says other rules need \"initial testing in Audit mode for other ASR rules before activating them in Block or Warn mode.\" This tool does not run an audit phase: it ships these rules at a higher profile, where the user has accepted a stricter system."
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-017-asr-office-win32-macros",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: block Win32 API calls from Office macros",
+      "tier": "T0",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Stops VBA macros in Office documents from calling Win32 API functions, which malicious macros use to run code. Microsoft's reference says that most organizations do not need such calls.",
+      "impact": "Macros that call Win32 APIs (some older spreadsheets and templates) fail. Documents without macros are not affected.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "92e97fa1-2edf-4476-bdd6-9dd0b4dddc7b",
+          "value": "block",
+          "label": "Block Win32 API calls from Office macros"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '92e97fa1-2edf-4476-bdd6-9dd0b4dddc7b') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block Win32 API calls from Office macros\" with the GUID 92e97fa1-2edf-4476-bdd6-9dd0b4dddc7b. The page says: \"Most organizations don't require Win32 API calls from VBA macros\"."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview says other rules need \"initial testing in Audit mode for other ASR rules before activating them in Block or Warn mode.\" This tool does not run an audit phase: it ships these rules at a higher profile, where the user has accepted a stricter system."
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-018-asr-office-child-processes",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: block all Office applications from creating child processes",
+      "tier": "T0",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Stops every Office application from starting other programs, which is what a malicious document does to run a script or a tool.",
+      "impact": "Office add-ins, mail-merge helpers and macros that start another program stop working. The rule is enforced only when Office is installed under %ProgramFiles% or %ProgramFiles(x86)%.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "d4f940ab-401b-4efc-aadc-ad5f3c50688a",
+          "value": "block",
+          "label": "Block all Office applications from creating child processes"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq 'd4f940ab-401b-4efc-aadc-ad5f3c50688a') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block all Office applications from creating child processes\" with the GUID d4f940ab-401b-4efc-aadc-ad5f3c50688a. \"This rule is enforced only if Office is installed in the %ProgramFiles% or %ProgramFiles(x86)% locations\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview says other rules need \"initial testing in Audit mode for other ASR rules before activating them in Block or Warn mode.\" This tool does not run an audit phase: it ships these rules at a higher profile, where the user has accepted a stricter system."
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-019-asr-office-comm-child-processes",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: block Office communication application from creating child processes",
+      "tier": "T0",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Stops the Office communication application (Outlook) from starting other programs, which closes a way for a malicious mail or message to run code.",
+      "impact": "Outlook add-ins and rules that launch a program stop working. The rule is enforced only when Office is installed under %ProgramFiles% or %ProgramFiles(x86)%.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "26190899-1602-49e8-8b27-eb1d0a1ce869",
+          "value": "block",
+          "label": "Block Office communication application from creating child processes"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '26190899-1602-49e8-8b27-eb1d0a1ce869') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block Office communication application from creating child processes\" with the GUID 26190899-1602-49e8-8b27-eb1d0a1ce869. \"This rule is enforced only if Office is installed in the %ProgramFiles% or %ProgramFiles(x86)% locations\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview says other rules need \"initial testing in Audit mode for other ASR rules before activating them in Block or Warn mode.\" This tool does not run an audit phase: it ships these rules at a higher profile, where the user has accepted a stricter system."
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-020-asr-office-code-injection",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: block Office applications from injecting code into other processes",
+      "tier": "T0",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Stops Office applications from injecting code into other processes, a technique that hides malicious code inside trusted programs.",
+      "impact": "Office add-ins that inject into other processes stop working, and Microsoft 365 apps must be restarted for the change to apply. Microsoft lists BeyondTrust Privilege Guard and Heimdal security as incompatible. The rule does not support Warn mode.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "75668c1f-73b5-4cf0-bb93-3ecf5cb7cc84",
+          "value": "block",
+          "label": "Block Office applications from injecting code into other processes"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '75668c1f-73b5-4cf0-bb93-3ecf5cb7cc84') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block Office applications from injecting code into other processes\" with the GUID 75668c1f-73b5-4cf0-bb93-3ecf5cb7cc84. \"This ASR rule doesn't support Warn mode.\" \"This ASR rule requires restarting Microsoft 365 Apps (Office applications) for the configuration changes to take effect.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview says other rules need \"initial testing in Audit mode for other ASR rules before activating them in Block or Warn mode.\" This tool does not run an audit phase: it ships these rules at a higher profile, where the user has accepted a stricter system."
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-021-asr-adobe-reader-child-processes",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: block Adobe Reader from creating child processes",
+      "tier": "T0",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Stops Adobe Reader from starting other programs, which malicious PDF files use to run code.",
+      "impact": "PDF files that launch another program (rare, and usually unwanted) no longer do so. Systems without Adobe Reader are not affected.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "7674ba52-37eb-4a4f-a9a1-f0f9a1619a2c",
+          "value": "block",
+          "label": "Block Adobe Reader from creating child processes"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '7674ba52-37eb-4a4f-a9a1-f0f9a1619a2c') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block Adobe Reader from creating child processes\" with the GUID 7674ba52-37eb-4a4f-a9a1-f0f9a1619a2c."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview says other rules need \"initial testing in Audit mode for other ASR rules before activating them in Block or Warn mode.\" This tool does not run an audit phase: it ships these rules at a higher profile, where the user has accepted a stricter system."
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-022-asr-script-downloads",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: block JavaScript or VBScript from launching downloaded executable content",
+      "tier": "T0",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Stops JavaScript and VBScript from running an executable that was downloaded, the usual last step of a script-based dropper.",
+      "impact": "Scripts that download and start a program fail; some installers written as scripts do this.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "d3e037e1-3eb8-44c8-a917-57927947596d",
+          "value": "block",
+          "label": "Block JavaScript or VBScript from launching downloaded executable content"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq 'd3e037e1-3eb8-44c8-a917-57927947596d') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block JavaScript or VBScript from launching downloaded executable content\" with the GUID d3e037e1-3eb8-44c8-a917-57927947596d."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview says other rules need \"initial testing in Audit mode for other ASR rules before activating them in Block or Warn mode.\" This tool does not run an audit phase: it ships these rules at a higher profile, where the user has accepted a stricter system."
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-023-asr-obfuscated-scripts",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: block execution of potentially obfuscated scripts",
+      "tier": "T0",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Blocks scripts that look obfuscated, which hides malicious code from simple scanners. The rule relies on cloud-delivered protection (def-001).",
+      "impact": "Legitimate scripts that were minified or packed can be flagged; installers and some developer tools do this.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "5beb7efe-fd9a-4556-801d-275e5ffc04cc",
+          "value": "block",
+          "label": "Block execution of potentially obfuscated scripts"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '5beb7efe-fd9a-4556-801d-275e5ffc04cc') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block execution of potentially obfuscated scripts\" with the GUID 5beb7efe-fd9a-4556-801d-275e5ffc04cc. \"To use this ASR rule, you must enable cloud-delivered protection.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview says other rules need \"initial testing in Audit mode for other ASR rules before activating them in Block or Warn mode.\" This tool does not run an audit phase: it ships these rules at a higher profile, where the user has accepted a stricter system."
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-024-asr-advanced-ransomware",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: use advanced protection against ransomware",
+      "tier": "T0",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Adds a cloud-assisted check for files that behave like ransomware. The rule relies on cloud-delivered protection (def-001).",
+      "impact": "Benign but unknown files can be blocked. Microsoft says that \"Typically, blocks on benign, unknown files by this rule eventually resolve themselves.\"",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "c1db55ab-c21a-4637-bb3f-a12568109d35",
+          "value": "block",
+          "label": "Use advanced protection against ransomware"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq 'c1db55ab-c21a-4637-bb3f-a12568109d35') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Use advanced protection against ransomware\" with the GUID c1db55ab-c21a-4637-bb3f-a12568109d35. \"Typically, blocks on benign, unknown files by this rule eventually resolve themselves.\" \"To use this ASR rule, you must enable cloud-delivered protection.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview says other rules need \"initial testing in Audit mode for other ASR rules before activating them in Block or Warn mode.\" This tool does not run an audit phase: it ships these rules at a higher profile, where the user has accepted a stricter system."
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-025-asr-usb-untrusted",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: block untrusted and unsigned processes that run from USB",
+      "tier": "T0",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Prevents unsigned or untrusted executable files from running from USB drives and SD cards, which stops malware that spreads on removable media.",
+      "impact": "Portable programs that are not signed cannot be started from a USB drive. Copying them to the disk first does not help: the rule blocks the copy when it runs.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "b2b3f03d-6a65-4f7b-a9c7-1c7ef74a9ba4",
+          "value": "block",
+          "label": "Block untrusted and unsigned processes that run from USB"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq 'b2b3f03d-6a65-4f7b-a9c7-1c7ef74a9ba4') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "high",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block untrusted and unsigned processes that run from USB\" with the GUID b2b3f03d-6a65-4f7b-a9c7-1c7ef74a9ba4. \"This ASR rule prevents unsigned or untrusted executable files (for example, .exe, .dll, or .scr)\" \"from running from USB removable drives, including SD cards.\" \"This ASR rule doesn't block the files from being copied from the USB drive to disk. It blocks the copied files from running from disk.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview says other rules need \"initial testing in Audit mode for other ASR rules before activating them in Block or Warn mode.\" This tool does not run an audit phase: it ships these rules at a higher profile, where the user has accepted a stricter system."
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-026-asr-psexec-wmi",
+      "module": "m7-defender",
+      "title": "ASR rule, block mode: block process creations originating from PSExec and WMI commands",
+      "tier": "T0",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Blocks processes that are started remotely through PsExec or WMI, the way attackers move from one computer to another.",
+      "impact": "Remote administration tools that use PsExec or WMI to start programs (and some software deployment tools) fail. A home PC rarely uses either. Microsoft warns not to use other deployment methods for this rule on devices managed by Configuration Manager.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "d1e49aac-8f56-4280-b9ba-993a6d77406c",
+          "value": "block",
+          "label": "Block process creations originating from PSExec and WMI commands"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq 'd1e49aac-8f56-4280-b9ba-993a6d77406c') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "high",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block process creations originating from PSExec and WMI commands\" with the GUID d1e49aac-8f56-4280-b9ba-993a6d77406c. \"If you use Microsoft Configuration Manager, don't use other available deployment methods to enable this rule on managed devices.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview says other rules need \"initial testing in Audit mode for other ASR rules before activating them in Block or Warn mode.\" This tool does not run an audit phase: it ships these rules at a higher profile, where the user has accepted a stricter system."
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-027-asr-prevalence-age",
+      "module": "m7-defender",
+      "title": "ASR rule, warn mode: block executable files from running unless they meet a prevalence, age, or trusted list criterion",
+      "tier": "T0",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Blocks executable files that are new, rare or untrusted until Defender's cloud has judged them. It is the strictest rule of the set, so it is set to Warn, not Block: the user sees a notification and can allow a program once. The rule relies on cloud-delivered protection (def-001).",
+      "impact": "New or rarely used programs trigger a warning the first time they run; users select Unblock to continue for 24 hours. Expect warnings after every software installation.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "defender_asr",
+          "name": "01443614-cd74-433a-b99e-2ecdc07bfc25",
+          "value": "warn",
+          "label": "Block executable files from running unless they meet a prevalence, age, or trusted list criterion"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '01443614-cd74-433a-b99e-2ecdc07bfc25') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+            "expected": "6"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "high",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules reference (read 2026-11-15)",
+          "claim": "The reference lists the rule \"Block executable files from running unless they meet a prevalence, age, or trusted list criterion\" with the GUID 01443614-cd74-433a-b99e-2ecdc07bfc25. \"To use this ASR rule, you must enable cloud-delivered protection.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Attack surface reduction rules overview (read 2026-11-15)",
+          "claim": "\"available on any edition of Windows that includes Microsoft Defender Antivirus (for example, Windows 11 Home).\" The overview says other rules need \"initial testing in Audit mode for other ASR rules before activating them in Block or Warn mode.\" This tool does not run an audit phase: it ships these rules at a higher profile, where the user has accepted a stricter system. For Warn mode, \"users can select Unblock in the warning notification pop-up to bypass the block for 24 hours.\""
+        }
+      ],
+      "references": [
+        {
+          "title": "Attack surface reduction rules reference",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+        },
+        {
+          "title": "Attack surface reduction rules overview",
+          "url": "https://learn.microsoft.com/defender-endpoint/attack-surface-reduction-rules-overview"
+        }
+      ],
+      "notes": "Not VM-verified. On a Windows 11 Home VM, apply, then run Get-MpPreference and compare with the audit check; 'winharden.ps1 verify' does the same."
+    },
+    {
+      "id": "def-028-sample-submission-manual",
+      "module": "m7-defender",
+      "title": "Decide about automatic sample submission (manual choice, not changed by the tool)",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "manual",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "defender_active",
+      "rationale": "Automatic sample submission is the one Defender data flow that this tool does not change. Its default sends 'safe' samples (files unlikely to hold personal data) to Microsoft automatically; the alternatives are to be asked every time or never to send. Block at first seen holds a new file back until the cloud has judged it, and that judgment can need the file: switching submission off therefore weakens a protection layer, which the project's rule 'hardening only' does not allow the tool to do on its own. The choice is the user's.",
+      "impact": "Nothing is changed by the tool. The report prints the manual steps.",
+      "manual_steps": [
+        "Open Windows Security > Virus & threat protection > Virus & threat protection settings > Manage settings.",
+        "Find 'Automatic sample submission'. Leave it On to keep block at first seen at full strength; switch it Off if you prefer that no file leaves the PC without being asked, and accept that Defender then judges new files with less help from the cloud."
+      ],
+      "audit": {
+        "manual_check": "Windows Security > Virus & threat protection settings > Manage settings > Automatic sample submission shows the state you chose. The setting is SubmitSamplesConsent in Get-MpPreference: 0 always prompt, 1 send safe samples (default), 2 never send, 3 send all samples."
+      },
+      "rollback": {
+        "strategy": "manual",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Set-MpPreference (read 2026-11-15)",
+          "claim": "SubmitSamplesConsent: \"Specifies how Windows Defender checks for user consent for certain samples.\" \"If consent has previously been granted, Windows Defender submits the samples. Otherwise, if the MAPSReporting parameter does not have a value of Disabled, Windows Defender prompts the user for consent.\" The values are 0 Always prompt, 1 Send safe samples automatically, 2 Never send, 3 Send all samples automatically."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Set-MpPreference (read 2026-11-15)",
+          "claim": "DisableBlockAtFirstSeen: \"Indicates whether to enable block at first seen.\""
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com Set-MpPreference (read 2026-11-15)",
+          "claim": "That block at first seen can need the file itself is general knowledge about how the feature works and is not stated in the pages read; it is the reason the entry is a manual choice."
+        }
+      ],
+      "references": [
+        {
+          "title": "Set-MpPreference",
+          "url": "https://learn.microsoft.com/powershell/module/defender/set-mppreference"
+        }
+      ],
+      "notes": "The Windows Security menu path is from general knowledge, not from a page read; the report prints it as a manual step only."
+    }
+  ]
+}

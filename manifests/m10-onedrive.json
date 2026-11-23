@@ -1,0 +1,253 @@
+{
+  "module": "m10-onedrive",
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "one-001-kfm-block",
+      "module": "m10-onedrive",
+      "title": "Stop OneDrive from taking over the Desktop, Documents and Pictures folders",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "OneDrive can move the Documents, Pictures and Desktop folders into a OneDrive account, so that the files in them are kept in the cloud. The policy value KFMBlockOptIn stops that move, so the three folders stay on the PC. OneDrive itself is neither removed nor stopped by this entry; entries one-002 to one-004 are for that.",
+      "impact": "OneDrive's folder backup can no longer be turned on for Desktop, Documents and Pictures. Folders that were already moved are not moved back by this entry, because it does not use the value 2 that the page lists for redirecting them back.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\OneDrive",
+          "name": "KFMBlockOptIn",
+          "kind": "DWord",
+          "data": 1,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\OneDrive' -Name KFMBlockOptIn -ErrorAction SilentlyContinue).KFMBlockOptIn",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com use-group-policy page for the OneDrive sync app (read 2026-11-16)",
+          "claim": "Registry key [HKLM\\SOFTWARE\\Policies\\Microsoft\\OneDrive], value KFMBlockOptIn as a DWORD: 1 enables the policy 'Prevent users from moving their Windows known folders to OneDrive'. \"This setting prevents users from moving their Documents, Pictures, and Desktop folders to any OneDrive account.\" The page notes that the registry value name (KFMBlockOptIn) differs from the policy name (BlockKnownFolderMove). It lists the value 2 for the setting that redirects the folders back, which this entry does not use."
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com use-group-policy page for the OneDrive sync app (read 2026-11-16)",
+          "claim": "The page names no Windows edition. It says the policies come from administrative templates that installing the sync app provides (for a domain, the Central Store; for one PC, the local policy store) or from Intune. Whether the sync app reads the key on Windows 11 Home, which has no Group Policy editor, is not documented."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Learn: Group Policy settings for the OneDrive sync app (use-group-policy)",
+          "url": "https://learn.microsoft.com/sharepoint/use-group-policy"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM, sign in to OneDrive with a Microsoft account, apply the entry, and check that the OneDrive setting for backing up Desktop, Documents and Pictures is unavailable or refused; then roll back and check that it is offered again."
+    },
+    {
+      "id": "one-002-onedrive-start-blocked",
+      "module": "m10-onedrive",
+      "title": "Prevent OneDrive from starting",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "opt_in": "no-onedrive",
+      "rationale": "OneDrive starts with Windows, signs in with the Microsoft account and uploads the files in its folder. For people who want no cloud sync at all, the machine-wide policy value DisableFileSyncNGSC is the documented way to stop it: Microsoft's troubleshooting page 'OneDrive won't start' names it as the Group Policy setting that prevents onedrive.exe from starting. The program stays installed (one-004 uninstalls it), but it cannot start, so nothing is uploaded. The policy value is not part of the program, so it stays if the program is installed again.",
+      "impact": "OneDrive does not start for any user and does not sync. A community tutorial says it then also disappears from the File Explorer navigation pane and cannot be opened. Files already in the OneDrive folder stay on the disk but are no longer synced; files that exist only online are not downloaded. The change applies after signing out and in, or after a restart.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\OneDrive",
+          "name": "DisableFileSyncNGSC",
+          "kind": "DWord",
+          "data": 1,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\OneDrive' -Name DisableFileSyncNGSC -ErrorAction SilentlyContinue).DisableFileSyncNGSC",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "support.microsoft.com OneDrive won't start (read 2026-11-16)",
+          "claim": "Registry path HKEY_LOCAL_MACHINE\\Software\\Policies\\Microsoft\\Windows\\OneDrive, value DisableFileSyncNGSC = DWORD:1. \"An administrator of your organization has configured a Group Policy setting to prevent onedrive.exe from starting.\" \"This issue occurs when there's a Group Policy setting on the computer that prevents OneDrive for work or school from starting.\" To undo it: \"the DisableFileSyncNGSC key must be removed or the DWORD value must be changed to 0 (zero).\" The page is a troubleshooting article about OneDrive for work or school; it does not name the policy 'Prevent the usage of OneDrive for file storage'."
+        },
+        {
+          "grade": "community",
+          "source": "elevenforum.com Enable or Disable OneDrive in Windows 11 (community tutorial) (read 2026-11-16)",
+          "claim": "The tutorial says \"The Local Group Policy Editor is only available in the Windows 11 Pro, Enterprise, and Education editions.\" and \"All editions can use Option Two\", which is a .reg file. It lists the effects of disabling OneDrive integration: \"Users can't open OneDrive.\" \"OneDrive will not run at startup for all users\" \"OneDrive doesn't appear in the navigation pane in File Explorer for all users.\" It says \"Either sign out and sign in or restart the computer to apply.\" The part of the page that was read does not show the .reg file or the value name, so it does not prove that DisableFileSyncNGSC is the value that Option Two writes."
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "support.microsoft.com OneDrive won't start (read 2026-11-16)",
+          "claim": "The page names no Windows edition and does not say whether Windows 11 Home reads the policy key without a Group Policy editor."
+        }
+      ],
+      "references": [
+        {
+          "title": "OneDrive won't start",
+          "url": "https://support.microsoft.com/office/onedrive-won-t-start-0c158fa6-0cd8-4373-98c8-9179e24f10f2"
+        },
+        {
+          "title": "Enable or Disable OneDrive in Windows 11 (Windows 11 Forum tutorial)",
+          "url": "https://www.elevenforum.com/t/enable-or-disable-onedrive-in-windows-11.2318"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM with OneDrive installed and signed in: apply, sign out and in, and check that OneDrive is not running, has no notification-area icon and is missing from the File Explorer navigation pane; then roll back and check that it starts again. If it still starts on Home, the entry is useless there and one-003 or the uninstall in one-004 is the way."
+    },
+    {
+      "id": "one-003-onedrive-personal-sync-blocked",
+      "module": "m10-onedrive",
+      "title": "Block signing in to OneDrive with a personal Microsoft account",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "opt_in": "no-onedrive",
+      "rationale": "A second documented policy blocks the case that matters on a home PC: signing in with a personal Microsoft account to sync a personal OneDrive. It is a per-user policy, so the entry writes it for every existing profile and for the default profile that new users start from. It is a separate setting, so it can still hold if the machine-wide policy of one-002 turns out to be ignored on Home.",
+      "impact": "People can no longer sign in to OneDrive with a personal Microsoft account on this PC, so a personal OneDrive does not sync. A work or school account is not affected. Files that are already in the OneDrive folder stay on the disk.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "SOFTWARE\\Policies\\Microsoft\\OneDrive",
+          "name": "DisablePersonalSync",
+          "kind": "DWord",
+          "data": 1,
+          "scope": "user"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Policies\\Microsoft\\OneDrive' -Name DisablePersonalSync -ErrorAction SilentlyContinue).DisablePersonalSync",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com use-group-policy page for the OneDrive sync app (read 2026-11-16)",
+          "claim": "Registry key [HKCU\\SOFTWARE\\Policies\\Microsoft\\OneDrive], value DisablePersonalSync as a DWORD: 1 enables the policy 'Prevent users from syncing personal OneDrive accounts'. \"This setting lets you block users from signing in with a Microsoft account to sync their personal OneDrive files.\""
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com use-group-policy page for the OneDrive sync app (read 2026-11-16)",
+          "claim": "The page names no Windows edition. It says the policies come from administrative templates that installing the sync app provides (for a domain, the Central Store; for one PC, the local policy store) or from Intune. Whether the sync app reads the key on Windows 11 Home, which has no Group Policy editor, is not documented."
+        }
+      ],
+      "references": [
+        {
+          "title": "Microsoft Learn: Group Policy settings for the OneDrive sync app (use-group-policy)",
+          "url": "https://learn.microsoft.com/sharepoint/use-group-policy"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM, apply, start OneDrive and try to sign in with a personal Microsoft account; the sign-in must be refused. Then roll back and check that it works again. Check that a user created after the apply gets the value from the default profile."
+    },
+    {
+      "id": "one-004-onedrive-uninstall-manual",
+      "module": "m10-onedrive",
+      "title": "Uninstall OneDrive (manual steps)",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "manual",
+      "home_effective": "expected",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "opt_in": "no-onedrive",
+      "rationale": "The program itself can be removed with the uninstaller that Windows lists under installed apps. This tool has no operation that runs a vendor uninstaller, so it lists the steps; the block of one-002 and one-003 does the same job for as long as the program is present, and the steps first make sure that no file is left behind in the OneDrive folder by accident.",
+      "impact": "Nothing is changed by the tool. After the steps, OneDrive is gone from installed apps and from the startup list. Microsoft says uninstalling does not lose files or data; files that were only in the OneDrive folder stay on the disk in that folder.",
+      "manual_steps": [
+        "Open OneDrive from the notification area, open its settings and stop the backup of Desktop, Documents and Pictures if it is on.",
+        "Open Desktop, Documents and Pictures in File Explorer and check that your files are there. If a folder is empty or its files are in the OneDrive folder, move them back.",
+        "In File Explorer, open the OneDrive folder and download the files that you need and that show a cloud icon (online only).",
+        "Select Start, type Programs, select Add or remove programs, find Microsoft OneDrive, select Uninstall and confirm if asked.",
+        "Restart the PC."
+      ],
+      "audit": {
+        "manual_check": "Add or remove programs does not list Microsoft OneDrive, the File Explorer navigation pane has no OneDrive entry, and the Startup apps list in Task Manager does not list OneDrive."
+      },
+      "rollback": {
+        "strategy": "manual",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "support.microsoft.com Turn off, disable, or uninstall OneDrive (read 2026-11-16)",
+          "claim": "\"Select the Start button, type Programs in the search box, and then select Add or remove programs in the list of results.\" \"Under Apps & features, find and select Microsoft OneDrive, and then select Uninstall.\" \"If you're prompted for an administrator password or confirmation, type the password or provide confirmation.\" \"You won't lose files or data by uninstalling OneDrive from your computer.\" \"You can always access your files by signing in to OneDrive.com.\" The page gives one set of steps for Windows 10 and 11, names no edition, and does not tell the reader to stop folder backup first."
+        },
+        {
+          "grade": "background",
+          "source": "support.microsoft.com Turn off, disable, or uninstall OneDrive (read 2026-11-16)",
+          "claim": "That OneDrive's folder backup can keep the files of Desktop, Documents and Pictures inside the OneDrive folder of the user profile, so that the folders point there after an uninstall, is general knowledge; the page read does not say it. The step that stops the backup and checks the folders comes from that."
+        }
+      ],
+      "references": [
+        {
+          "title": "Turn off, disable, or uninstall OneDrive",
+          "url": "https://support.microsoft.com/onedrive/turn-off-disable-or-uninstall-onedrive"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM with folder backup turned on: run the steps once without the first two and note where Desktop, Documents and Pictures point afterwards; then repeat with them. Check that OneDrive does not come back after the next feature update."
+    }
+  ]
+}

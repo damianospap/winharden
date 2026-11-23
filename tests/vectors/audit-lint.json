@@ -1,0 +1,1227 @@
+[
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Clipchamp.Clipchamp' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'MSTeams' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.549981C3F5F10' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.BingNews' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.BingWeather' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.Copilot' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.GamingApp' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.Getstarted' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.Microsoft3DViewer' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.MicrosoftOfficeHub' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.MicrosoftSolitaireCollection' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.MicrosoftStickyNotes' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.MixedReality.Portal' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.Office.OneNote' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.OutlookForWindows' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.People' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.PowerAutomateDesktop' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.SkypeApp' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.Todos' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.WindowsAlarms' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.WindowsFeedbackHub' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.WindowsMaps' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.WindowsSoundRecorder' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.XboxApp' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.XboxGameOverlay' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.XboxGamingOverlay' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.YourPhone' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.ZuneVideo' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'MicrosoftCorporationII.MicrosoftFamily' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'MicrosoftCorporationII.QuickAssist' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxPackage -AllUsers -Name 'microsoft.windowscommunicationsapps' | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Clipchamp.Clipchamp' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'MSTeams' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.549981C3F5F10' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.BingNews' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.BingWeather' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.Copilot' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.GamingApp' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.Getstarted' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.Microsoft3DViewer' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.MicrosoftOfficeHub' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.MicrosoftSolitaireCollection' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.MicrosoftStickyNotes' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.MixedReality.Portal' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.Office.OneNote' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.OutlookForWindows' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.People' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.PowerAutomateDesktop' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.SkypeApp' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.Todos' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.WindowsAlarms' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.WindowsFeedbackHub' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.WindowsMaps' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.WindowsSoundRecorder' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.XboxApp' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.XboxGameOverlay' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.XboxGamingOverlay' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.YourPhone' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.ZuneVideo' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'MicrosoftCorporationII.MicrosoftFamily' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'MicrosoftCorporationII.QuickAssist' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'microsoft.windowscommunicationsapps' } | Measure-Object).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Microsoft\\Siuf\\Rules' -Name NumberOfSIUFInPeriod -ErrorAction SilentlyContinue).NumberOfSIUFInPeriod",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name 'SubscribedContent-338387Enabled' -ErrorAction SilentlyContinue).'SubscribedContent-338387Enabled'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name RotatingLockScreenOverlayEnabled -ErrorAction SilentlyContinue).RotatingLockScreenOverlayEnabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name SoftLandingEnabled -ErrorAction SilentlyContinue).SoftLandingEnabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced' -Name ShowSyncProviderNotifications -ErrorAction SilentlyContinue).ShowSyncProviderNotifications",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent' -Name DisableTailoredExperiencesWithDiagnosticData -ErrorAction SilentlyContinue).DisableTailoredExperiencesWithDiagnosticData",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI' -Name DisableAIDataAnalysis -ErrorAction SilentlyContinue).DisableAIDataAnalysis",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\InputPersonalization' -Name RestrictImplicitInkCollection -ErrorAction SilentlyContinue).RestrictImplicitInkCollection",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\InputPersonalization' -Name RestrictImplicitTextCollection -ErrorAction SilentlyContinue).RestrictImplicitTextCollection",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Input\\TIPC' -Name Enabled -ErrorAction SilentlyContinue).Enabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo' -Name Enabled -ErrorAction SilentlyContinue).Enabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name 'SubscribedContent-338393Enabled' -ErrorAction SilentlyContinue).'SubscribedContent-338393Enabled'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name OemPreInstalledAppsEnabled -ErrorAction SilentlyContinue).OemPreInstalledAppsEnabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name PreInstalledAppsEnabled -ErrorAction SilentlyContinue).PreInstalledAppsEnabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager' -Name SilentInstalledAppsEnabled -ErrorAction SilentlyContinue).SilentInstalledAppsEnabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced' -Name Start_AccountNotifications -ErrorAction SilentlyContinue).Start_AccountNotifications",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced' -Name Start_IrisRecommendations -ErrorAction SilentlyContinue).Start_IrisRecommendations",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Privacy' -Name TailoredExperiencesWithDiagnosticDataEnabled -ErrorAction SilentlyContinue).TailoredExperiencesWithDiagnosticDataEnabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Search' -Name BingSearchEnabled -ErrorAction SilentlyContinue).BingSearchEnabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings' -Name IsDynamicSearchBoxEnabled -ErrorAction SilentlyContinue).IsDynamicSearchBoxEnabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings' -Name IsWebSuggestionsEnabled -ErrorAction SilentlyContinue).IsWebSuggestionsEnabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\UserProfileEngagement' -Name ScoobeSystemSettingEnabled -ErrorAction SilentlyContinue).ScoobeSystemSettingEnabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\Shell\\ClickToDo' -Name DisableClickToDo -ErrorAction SilentlyContinue).DisableClickToDo",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo' -Name Enabled -ErrorAction SilentlyContinue).Enabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer' -Name SettingsPageVisibility -ErrorAction SilentlyContinue).SettingsPageVisibility -match '^hide:(.*;)?home(;|$)'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint' -Name DisableCocreator -ErrorAction SilentlyContinue).DisableCocreator",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint' -Name DisableGenerativeFill -ErrorAction SilentlyContinue).DisableGenerativeFill",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint' -Name DisableImageCreator -ErrorAction SilentlyContinue).DisableImageCreator",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Dsh' -Name AllowNewsAndInterests -ErrorAction SilentlyContinue).AllowNewsAndInterests",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\InputPersonalization' -Name AllowInputPersonalization -ErrorAction SilentlyContinue).AllowInputPersonalization",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\PCHealth\\ErrorReporting' -Name DoReport -ErrorAction SilentlyContinue).DoReport",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo' -Name DisabledByGroupPolicy -ErrorAction SilentlyContinue).DisabledByGroupPolicy",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent' -Name DisableWindowsConsumerFeatures -ErrorAction SilentlyContinue).DisableWindowsConsumerFeatures",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection' -Name AllowTelemetry -ErrorAction SilentlyContinue).AllowTelemetry",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection' -Name DoNotShowFeedbackNotifications -ErrorAction SilentlyContinue).DoNotShowFeedbackNotifications",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Error Reporting' -Name Disabled -ErrorAction SilentlyContinue).Disabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search' -Name ConnectedSearchUseWeb -ErrorAction SilentlyContinue).ConnectedSearchUseWeb",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search' -Name DisableWebSearch -ErrorAction SilentlyContinue).DisableWebSearch",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search' -Name EnableDynamicContentInWSB -ErrorAction SilentlyContinue).EnableDynamicContentInWSB",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI' -Name AllowRecallEnablement -ErrorAction SilentlyContinue).AllowRecallEnablement",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI' -Name DisableAIDataAnalysis -ErrorAction SilentlyContinue).DisableAIDataAnalysis",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI' -Name DisableClickToDo -ErrorAction SilentlyContinue).DisableClickToDo",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Application Experience\\' -TaskName 'Microsoft Compatibility Appraiser' -ErrorAction SilentlyContinue).Actions.Execute -match 'compattelrunner\\.exe$'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-Service -Name DiagTrack -ErrorAction SilentlyContinue).StartType",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-Service -Name DiagTrack -ErrorAction SilentlyContinue).Status",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-Service -Name whesvc -ErrorAction SilentlyContinue).StartType",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "@(Get-WindowsOptionalFeature -Online -ErrorAction SilentlyContinue | Where-Object { $_.FeatureName -eq 'Recall' -and $_.State -eq 'Enabled' }).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Application Experience\\' -TaskName 'Microsoft Compatibility Appraiser' -ErrorAction SilentlyContinue | Where-Object State -ne 'Disabled' | Measure-Object | Select-Object -ExpandProperty Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Application Experience\\' -TaskName 'ProgramDataUpdater' -ErrorAction SilentlyContinue | Where-Object State -ne 'Disabled' | Measure-Object | Select-Object -ExpandProperty Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Customer Experience Improvement Program\\' -TaskName 'Consolidator','UsbCeip','KernelCeipTask' -ErrorAction SilentlyContinue | Where-Object State -ne 'Disabled' | Measure-Object | Select-Object -ExpandProperty Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "Get-ScheduledTask -TaskPath '\\Microsoft\\Windows\\Feedback\\Siuf\\' -TaskName 'DmClient','DmClientOnScenarioDownload' -ErrorAction SilentlyContinue | Where-Object State -ne 'Disabled' | Measure-Object | Select-Object -ExpandProperty Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-MpPreference).MAPSReporting",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-MpPreference).DisableRealtimeMonitoring",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-MpPreference).DisableBehaviorMonitoring",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-MpPreference).DisableIOAVProtection",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-MpPreference).DisableScriptScanning",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-MpPreference).DisableBlockAtFirstSeen",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-MpPreference).PUAProtection",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-MpPreference).CloudBlockLevel",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-MpPreference).EnableNetworkProtection",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-MpPreference).EnableControlledFolderAccess",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-MpComputerStatus).IsTamperProtected",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '56a863a9-875e-4185-98a7-b882c64b5ce5') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq 'e6db77e5-3df2-4cf1-b95a-636979351e5b') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq 'be9ba2d9-53ea-4cdc-84e5-9b1eeee46550') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '3b576869-a4ec-4529-8536-b80a7769e899') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '92e97fa1-2edf-4476-bdd6-9dd0b4dddc7b') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq 'd4f940ab-401b-4efc-aadc-ad5f3c50688a') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '26190899-1602-49e8-8b27-eb1d0a1ce869') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '75668c1f-73b5-4cf0-bb93-3ecf5cb7cc84') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '7674ba52-37eb-4a4f-a9a1-f0f9a1619a2c') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq 'd3e037e1-3eb8-44c8-a917-57927947596d') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '5beb7efe-fd9a-4556-801d-275e5ffc04cc') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq 'c1db55ab-c21a-4637-bb3f-a12568109d35') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq 'b2b3f03d-6a65-4f7b-a9c7-1c7ef74a9ba4') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq 'd1e49aac-8f56-4280-b9ba-993a6d77406c') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "$p = Get-MpPreference; $n = 0; foreach ($g in @($p.AttackSurfaceReductionRules_Ids)) { if ($g -ieq '01443614-cd74-433a-b99e-2ecdc07bfc25') { @($p.AttackSurfaceReductionRules_Actions)[$n] }; $n++ }",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(auditpol /get /subcategory:'{0CCE9216-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(auditpol /get /subcategory:'{0CCE921B-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(auditpol /get /subcategory:'{0CCE923F-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(auditpol /get /subcategory:'{0CCE9235-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(auditpol /get /subcategory:'{0CCE9237-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(auditpol /get /subcategory:'{0CCE922B-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System\\Audit' -Name ProcessCreationIncludeCmdLine_Enabled -ErrorAction SilentlyContinue).ProcessCreationIncludeCmdLine_Enabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(auditpol /get /subcategory:'{0CCE922F-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(auditpol /get /subcategory:'{0CCE9230-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(auditpol /get /subcategory:'{0CCE9232-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(auditpol /get /subcategory:'{0CCE9210-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(auditpol /get /subcategory:'{0CCE9211-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(auditpol /get /subcategory:'{0CCE9212-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\PowerShell\\ScriptBlockLogging' -Name EnableScriptBlockLogging -ErrorAction SilentlyContinue).EnableScriptBlockLogging",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "@(Get-WindowsOptionalFeature -Online -ErrorAction SilentlyContinue | Where-Object { $_.FeatureName -eq 'SMB1Protocol' -and $_.State -eq 'Enabled' }).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\WDigest' -Name UseLogonCredential -ErrorAction SilentlyContinue).UseLogonCredential",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-NetFirewallProfile -Name Domain -ErrorAction SilentlyContinue).Enabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-NetFirewallProfile -Name Private -ErrorAction SilentlyContinue).Enabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-NetFirewallProfile -Name Public -ErrorAction SilentlyContinue).Enabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows NT\\DNSClient' -Name EnableMulticast -ErrorAction SilentlyContinue).EnableMulticast",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "@(Get-ChildItem -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters\\Interfaces' -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -like 'Tcpip_*' -and (Get-ItemProperty -Path $_.PSPath -Name NetbiosOptions -ErrorAction SilentlyContinue).NetbiosOptions -ne 2 }).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\LanManWorkstation\\Parameters' -Name RequireSecuritySignature -ErrorAction SilentlyContinue).RequireSecuritySignature",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\LanmanWorkstation' -Name AllowInsecureGuestAuth -ErrorAction SilentlyContinue).AllowInsecureGuestAuth",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\LanManWorkstation\\Parameters' -Name AllowInsecureGuestAuth -ErrorAction SilentlyContinue).AllowInsecureGuestAuth",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa' -Name RestrictAnonymousSAM -ErrorAction SilentlyContinue).RestrictAnonymousSAM",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa' -Name RestrictAnonymous -ErrorAction SilentlyContinue).RestrictAnonymous",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-Service -Name RemoteRegistry -ErrorAction SilentlyContinue).StartType",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-Service -Name RemoteRegistry -ErrorAction SilentlyContinue).Status",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer' -Name NoDriveTypeAutoRun -ErrorAction SilentlyContinue).NoDriveTypeAutoRun",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "@(Get-WindowsOptionalFeature -Online -ErrorAction SilentlyContinue | Where-Object { $_.FeatureName -like 'MicrosoftWindowsPowerShellV2*' -and $_.State -eq 'Enabled' }).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\LanManServer\\Parameters' -Name RequireSecuritySignature -ErrorAction SilentlyContinue).RequireSecuritySignature",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa' -Name LmCompatibilityLevel -ErrorAction SilentlyContinue).LmCompatibilityLevel",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters' -Name EnableMDNS -ErrorAction SilentlyContinue).EnableMDNS",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-Service -Name SSDPSRV -ErrorAction SilentlyContinue).StartType",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-Service -Name SSDPSRV -ErrorAction SilentlyContinue).Status",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-Service -Name upnphost -ErrorAction SilentlyContinue).StartType",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-Service -Name upnphost -ErrorAction SilentlyContinue).Status",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows Script Host\\Settings' -Name Enabled -ErrorAction SilentlyContinue).Enabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-Service -Name Spooler -ErrorAction SilentlyContinue).StartType",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-Service -Name Spooler -ErrorAction SilentlyContinue).Status",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-Service -Name LanmanServer -ErrorAction SilentlyContinue).StartType",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-Service -Name LanmanServer -ErrorAction SilentlyContinue).Status",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "@(Get-CimInstance -Namespace 'root\\cimv2\\security\\microsofttpm' -ClassName Win32_Tpm -ErrorAction SilentlyContinue | Where-Object { $_.SpecVersion -like '2.0*' }).Count",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\SecureBoot\\Servicing' -Name UEFICA2023Status -ErrorAction SilentlyContinue).UEFICA2023Status",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-CimInstance -Namespace 'root\\cimv2\\security\\microsoftvolumeencryption' -ClassName Win32_EncryptableVolume -ErrorAction SilentlyContinue | Where-Object { $_.DriveLetter -eq 'C:' }).ProtectionStatus",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-LocalUser -ErrorAction SilentlyContinue | Where-Object { $_.SID.Value -like 'S-1-5-21-*-500' }).Enabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-LocalUser -ErrorAction SilentlyContinue | Where-Object { $_.SID.Value -like 'S-1-5-21-*-501' }).Enabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System' -Name EnableLUA -ErrorAction SilentlyContinue).EnableLUA",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System' -Name PromptOnSecureDesktop -ErrorAction SilentlyContinue).PromptOnSecureDesktop",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa' -Name RunAsPPL -ErrorAction SilentlyContinue).RunAsPPL",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\CI\\Config' -Name VulnerableDriverBlocklistEnable -ErrorAction SilentlyContinue).VulnerableDriverBlocklistEnable -ne 0",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System' -Name ConsentPromptBehaviorAdmin -ErrorAction SilentlyContinue).ConsentPromptBehaviorAdmin",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity' -Name Enabled -ErrorAction SilentlyContinue).Enabled",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-CimInstance -ClassName Win32_DeviceGuard -Namespace 'root\\Microsoft\\Windows\\DeviceGuard' -ErrorAction SilentlyContinue).SecurityServicesRunning -contains 2",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Kernel DMA Protection' -Name DeviceEnumerationPolicy -ErrorAction SilentlyContinue).DeviceEnumerationPolicy",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\OneDrive' -Name KFMBlockOptIn -ErrorAction SilentlyContinue).KFMBlockOptIn",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\OneDrive' -Name DisableFileSyncNGSC -ErrorAction SilentlyContinue).DisableFileSyncNGSC",
+  "ok": true
+ },
+ {
+  "name": "manifest command",
+  "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Policies\\Microsoft\\OneDrive' -Name DisablePersonalSync -ErrorAction SilentlyContinue).DisablePersonalSync",
+  "ok": true
+ },
+ {
+  "name": "out-string is allowed",
+  "command": "Get-Service | Out-String",
+  "ok": true
+ },
+ {
+  "name": "select and format",
+  "command": "Get-Service | Select-Object -First 1 | Format-List",
+  "ok": true
+ },
+ {
+  "name": "allowed string method",
+  "command": "(Get-Date).ToString('yyyy')",
+  "ok": true
+ },
+ {
+  "name": "get-content is read-only",
+  "command": "Get-Content -Path 'C:\\Windows\\System32\\drivers\\etc\\hosts'",
+  "ok": true
+ },
+ {
+  "name": "quoted text may contain forbidden characters",
+  "command": "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\a & b > c' | Measure-Object",
+  "ok": true
+ },
+ {
+  "name": "group and sort",
+  "command": "Get-Service | Group-Object Status | Sort-Object Name",
+  "ok": true
+ },
+ {
+  "name": "two lines",
+  "command": "Get-Service -Name 'a'\nGet-Service -Name 'b'",
+  "ok": false
+ },
+ {
+  "name": "double quotes",
+  "command": "Get-Service -Name \"a\"",
+  "ok": false
+ },
+ {
+  "name": "write cmdlet",
+  "command": "Set-ItemProperty -Path 'HKLM:\\x' -Name 'a' -Value 1",
+  "ok": false
+ },
+ {
+  "name": "remove cmdlet",
+  "command": "Remove-Item -Path 'C:\\x'",
+  "ok": false
+ },
+ {
+  "name": "invoke cmdlet",
+  "command": "Invoke-Expression 'Get-Date'",
+  "ok": false
+ },
+ {
+  "name": "web cmdlet",
+  "command": "Invoke-WebRequest -Uri 'https://example.org'",
+  "ok": false
+ },
+ {
+  "name": "url in a read command",
+  "command": "Get-Content -Path 'https://example.org/x'",
+  "ok": false
+ },
+ {
+  "name": "backtick",
+  "command": "Get-Service -Name `a",
+  "ok": false
+ },
+ {
+  "name": "call operator",
+  "command": "& 'C:\\x.exe'",
+  "ok": false
+ },
+ {
+  "name": "redirection",
+  "command": "Get-Service > 'C:\\x.txt'",
+  "ok": false
+ },
+ {
+  "name": "static .NET call",
+  "command": "[System.IO.File]::ReadAllText('C:\\x')",
+  "ok": false
+ },
+ {
+  "name": "alias rm",
+  "command": "rm 'C:\\x'",
+  "ok": false
+ },
+ {
+  "name": "alias iex",
+  "command": "iex 'Get-Date'",
+  "ok": false
+ },
+ {
+  "name": "native reg",
+  "command": "reg query HKLM\\SOFTWARE",
+  "ok": false
+ },
+ {
+  "name": "native netsh",
+  "command": "netsh advfirewall show allprofiles",
+  "ok": false
+ },
+ {
+  "name": "native exe suffix",
+  "command": "reg.exe query HKLM\\SOFTWARE",
+  "ok": false
+ },
+ {
+  "name": "start verb",
+  "command": "Start-Process 'notepad.exe'",
+  "ok": false
+ },
+ {
+  "name": "out-file",
+  "command": "Get-Service | Out-File 'C:\\x.txt'",
+  "ok": false
+ },
+ {
+  "name": "confirm-securebootuefi is allowed by exact name",
+  "command": "Confirm-SecureBootUEFI -ErrorAction SilentlyContinue",
+  "ok": true
+ },
+ {
+  "name": "other Confirm cmdlets are not allowed",
+  "command": "Confirm-Bogus -Name 'x'",
+  "ok": false
+ },
+ {
+  "name": "a longer name that starts like the allowed one is not allowed",
+  "command": "Confirm-SecureBootUEFIX",
+  "ok": false
+ },
+ {
+  "name": "network test cmdlet",
+  "command": "Test-NetConnection 'example.org'",
+  "ok": false
+ },
+ {
+  "name": "dns cmdlet",
+  "command": "Resolve-DnsName 'example.org'",
+  "ok": false
+ },
+ {
+  "name": "windows update log",
+  "command": "Get-WindowsUpdateLog",
+  "ok": false
+ },
+ {
+  "name": "dot sourcing",
+  "command": ". 'C:\\x.ps1'",
+  "ok": false
+ },
+ {
+  "name": "delete method",
+  "command": "(Get-Item -Path 'C:\\x').Delete()",
+  "ok": false
+ },
+ {
+  "name": "encoded command",
+  "command": "Get-Date -EncodedCommand AAAA",
+  "ok": false
+ },
+ {
+  "name": "base64",
+  "command": "Get-Date | ForEach-Object { FromBase64String('AAAA') }",
+  "ok": false
+ },
+ {
+  "name": "pipeline into alias",
+  "command": "Get-Service | kill",
+  "ok": false
+ },
+ {
+  "name": "semicolon then alias",
+  "command": "Get-Date; del 'C:\\x'",
+  "ok": false
+ },
+ {
+  "name": "auditpol reads one subcategory",
+  "command": "(auditpol /get /subcategory:'{0CCE9215-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+  "ok": true
+ },
+ {
+  "name": "auditpol reads a whole category",
+  "command": "auditpol.exe /get /category:*",
+  "ok": true
+ },
+ {
+  "name": "auditpol sets a subcategory",
+  "command": "auditpol /set /subcategory:'{0CCE9215-69AE-11D9-BED3-505054503030}' /success:disable",
+  "ok": false
+ },
+ {
+  "name": "auditpol clears the policy",
+  "command": "auditpol /clear /y",
+  "ok": false
+ },
+ {
+  "name": "auditpol writes a backup file",
+  "command": "auditpol /backup /file:'C:\\x.csv'",
+  "ok": false
+ },
+ {
+  "name": "auditpol removes a user policy",
+  "command": "auditpol /remove /allusers",
+  "ok": false
+ },
+ {
+  "name": "auditpol write after a read",
+  "command": "auditpol /get /category:* ; auditpol /remove /allusers",
+  "ok": false
+ },
+ {
+  "name": "auditpol write inside a script block",
+  "command": "Get-Date | ForEach-Object { auditpol /set /category:* /success:disable }",
+  "ok": false
+ },
+ {
+  "name": "auditpol in upper case",
+  "command": "AUDITPOL /SET /category:* /failure:disable",
+  "ok": false
+ },
+ {
+  "name": "auditpol read with a write option",
+  "command": "auditpol /get /category:* /backup",
+  "ok": false
+ },
+ {
+  "name": "auditpol without a verb",
+  "command": "auditpol",
+  "ok": false
+ }
+]

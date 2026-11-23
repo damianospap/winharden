@@ -1,0 +1,257 @@
+{
+  "module": "m8-cleanup",
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "cln-001-machine-temp-files",
+      "module": "m8-cleanup",
+      "title": "Delete old files from the Windows temp folder",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "once",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Installers, updaters and crashed programs leave files in the system temp folder. Windows' own Storage Sense does the same kind of cleaning for temporary files; this entry removes the files in %SystemRoot%\\Temp that have not changed for 7 days, and nothing else. It is the classic debloat step, kept deliberately mild.",
+      "impact": "Files in the folder that are older than 7 days are deleted and cannot be restored; files that are in use stay. Files changed in the last 7 days are left alone, so running installers and updates are not disturbed. The folder itself stays.",
+      "apply": [
+        {
+          "type": "file_cleanup",
+          "scope": "machine",
+          "root": "%SystemRoot%\\Temp",
+          "pattern": "*",
+          "min_age_days": 7,
+          "recurse": true
+        }
+      ],
+      "audit": {
+        "manual_check": "Open Settings > System > Storage > Temporary files, or the folder C:\\Windows\\Temp: files older than 7 days are gone (files in use remain)."
+      },
+      "rollback": {
+        "strategy": "manual",
+        "reversibility": "partial",
+        "limitation": "Deleted files are not restored: the engine does not copy them anywhere first. Windows and programs recreate the temporary files they need; anything else that was in the folder and older than the limit is gone."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "support.microsoft.com Manage drive space with Storage Sense (read 2026-11-15)",
+          "claim": "Windows 11 and Windows 10 are listed as the systems the page applies to, with no edition details. With default settings, Storage Sense \"will clean up unnecessary temporary files.\" \"your Downloads folder and OneDrive (or any other cloud provider) will not be touched\" unless Storage Sense is configured for them; this tool never lists those folders either, because the policy file allows only the folders named in its cleanup section."
+        }
+      ],
+      "references": [
+        {
+          "title": "Manage drive space with Storage Sense",
+          "url": "https://support.microsoft.com/en-us/help/5000679"
+        }
+      ],
+      "notes": "Not VM-verified. On a Home VM: put an old file (set its modified date back 8 days) and a new one in C:\\Windows\\Temp, apply, and check that only the old one was deleted."
+    },
+    {
+      "id": "cln-002-user-temp-files",
+      "module": "m8-cleanup",
+      "title": "Delete old files from every user's temp folder",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "once",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Every program that unpacks, downloads or converts something leaves files in the user's temp folder (%LocalAppData%\\Temp). They pile up, and they can hold copies of documents, installer packages and other things that were open once. The entry removes the files that have not changed for 7 days in the temp folder of every real user profile, which is what Storage Sense does for temporary files.",
+      "impact": "Files older than 7 days in each user's temp folder are deleted and cannot be restored; files in use stay. Documents that a program stored only in its temp folder and that were not saved elsewhere are lost; programs are not supposed to keep anything there.",
+      "apply": [
+        {
+          "type": "file_cleanup",
+          "scope": "user",
+          "root": "%LocalAppData%\\Temp",
+          "pattern": "*",
+          "min_age_days": 7,
+          "recurse": true
+        }
+      ],
+      "audit": {
+        "manual_check": "Open %LocalAppData%\\Temp for each user: files older than 7 days are gone (files in use remain)."
+      },
+      "rollback": {
+        "strategy": "manual",
+        "reversibility": "partial",
+        "limitation": "Deleted files are not restored: the engine does not copy them anywhere first. Windows and programs recreate the temporary files they need; anything else that was in the folder and older than the limit is gone."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "support.microsoft.com Manage drive space with Storage Sense (read 2026-11-15)",
+          "claim": "Windows 11 and Windows 10 are listed as the systems the page applies to, with no edition details. With default settings, Storage Sense \"will clean up unnecessary temporary files.\" \"your Downloads folder and OneDrive (or any other cloud provider) will not be touched\" unless Storage Sense is configured for them; this tool never lists those folders either, because the policy file allows only the folders named in its cleanup section."
+        }
+      ],
+      "references": [
+        {
+          "title": "Manage drive space with Storage Sense",
+          "url": "https://support.microsoft.com/en-us/help/5000679"
+        }
+      ],
+      "notes": "Not VM-verified. On a Home VM: apply, then check %LocalAppData%\\Temp of every local account; folders that cannot be read (an account whose profile is locked) are reported by the engine."
+    },
+    {
+      "id": "cln-003-crash-dumps",
+      "module": "m8-cleanup",
+      "title": "Delete old crash dumps",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "once",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "A crash dump is a copy of memory, and memory holds whatever the program was working on: documents, addresses, sometimes passwords. Microsoft's own page says that \"A complete memory dump may contain data from processes that were running when the memory dump was collected.\" Small kernel dumps in %SystemRoot%\\Minidump and user-mode dumps in %LocalAppData%\\CrashDumps are of no use once the crash has been looked at, so the entry deletes the .dmp files older than 7 days and leaves the newest ones for anyone analyzing a recent crash.",
+      "impact": "Dump files (*.dmp) older than 7 days are deleted and cannot be restored. A crash from the last 7 days can still be analyzed. The full memory dump file MEMORY.DMP in the Windows folder is not touched: the tool only ever cleans a listed folder.",
+      "apply": [
+        {
+          "type": "file_cleanup",
+          "scope": "machine",
+          "root": "%SystemRoot%\\Minidump",
+          "pattern": "*.dmp",
+          "min_age_days": 7,
+          "recurse": false
+        },
+        {
+          "type": "file_cleanup",
+          "scope": "user",
+          "root": "%LocalAppData%\\CrashDumps",
+          "pattern": "*.dmp",
+          "min_age_days": 7,
+          "recurse": false
+        }
+      ],
+      "audit": {
+        "manual_check": "Look in C:\\Windows\\Minidump and in %LocalAppData%\\CrashDumps: no .dmp file is older than 7 days (the folders may not exist)."
+      },
+      "rollback": {
+        "strategy": "manual",
+        "reversibility": "partial",
+        "limitation": "Deleted files are not restored: the engine does not copy them anywhere first. Windows and programs recreate the temporary files they need; anything else that was in the folder and older than the limit is gone."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Overview of memory dump file options for Windows (read 2026-11-15)",
+          "claim": "\"A list of all small memory dump files is kept in the %SystemRoot%\\Minidump folder.\" \"A complete memory dump may contain data from processes that were running when the memory dump was collected.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Collecting User-Mode Dumps (read 2026-11-15)",
+          "claim": "The DumpFolder value of the LocalDumps key has the default \"%LOCALAPPDATA%\\CrashDumps\"; DumpCount, \"The maximum number of dump files in the folder.\", defaults to 10. \"This feature is not enabled by default.\" so the folder only exists when a program or the user turned the feature on."
+        }
+      ],
+      "references": [
+        {
+          "title": "Overview of memory dump file options for Windows",
+          "url": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/performance/memory-dump-file-options"
+        },
+        {
+          "title": "Collecting User-Mode Dumps",
+          "url": "https://learn.microsoft.com/windows/win32/wer/collecting-user-mode-dumps"
+        }
+      ],
+      "notes": "Not VM-verified. The folders usually do not exist on a Home system that never crashed; the engine reports 'The folder does not exist' for them."
+    },
+    {
+      "id": "cln-004-error-report-archive",
+      "module": "m8-cleanup",
+      "title": "Delete old Windows Error Reporting reports",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "once",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Windows Error Reporting keeps every problem report on disk, in a queue for reports not yet sent and in an archive for those already sent, and each can contain a memory dump. A community guide notes that the queue \"occupies much space on the system drive (up to several dozens of GB)\". Turning reporting off (entry tel-010) does not remove what is already stored. The entry deletes report files older than 7 days from the machine-wide queue and archive and from each user's folder.",
+      "impact": "Reports older than 7 days are deleted, including reports that were waiting to be sent: they will never be sent. Nothing else about error handling changes; the folders are recreated when Windows needs them.",
+      "apply": [
+        {
+          "type": "file_cleanup",
+          "scope": "machine",
+          "root": "%ProgramData%\\Microsoft\\Windows\\WER\\ReportArchive",
+          "pattern": "*",
+          "min_age_days": 7,
+          "recurse": true
+        },
+        {
+          "type": "file_cleanup",
+          "scope": "machine",
+          "root": "%ProgramData%\\Microsoft\\Windows\\WER\\ReportQueue",
+          "pattern": "*",
+          "min_age_days": 7,
+          "recurse": true
+        },
+        {
+          "type": "file_cleanup",
+          "scope": "user",
+          "root": "%LocalAppData%\\Microsoft\\Windows\\WER",
+          "pattern": "*",
+          "min_age_days": 7,
+          "recurse": true
+        }
+      ],
+      "audit": {
+        "manual_check": "Open C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportQueue and ...\\ReportArchive: report folders older than 7 days are gone."
+      },
+      "rollback": {
+        "strategy": "manual",
+        "reversibility": "partial",
+        "limitation": "Deleted files are not restored: the engine does not copy them anywhere first. Windows and programs recreate the temporary files they need; anything else that was in the folder and older than the limit is gone."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "community",
+          "source": "woshub.com Clear the Windows Error Reporting ReportQueue folder (read 2026-11-15)",
+          "claim": "The page lists C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportQueue\\, C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportArchive\\ and %USERPROFILE%\\AppData\\Local\\Microsoft\\Windows\\WER\\ as the places where reports are stored, says \"you can manually delete debug and log files generated by the WER service in the following folders\", and says the ReportQueue folder sometimes \"occupies much space on the system drive (up to several dozens of GB)\". It does not say whether Windows recreates the folders."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Overview of memory dump file options for Windows (read 2026-11-15)",
+          "claim": "\"A complete memory dump may contain data from processes that were running when the memory dump was collected.\" Reports can carry such dumps, which is why this entry is part of the privacy clean-up and not only a disk-space one."
+        },
+        {
+          "grade": "background",
+          "source": "woshub.com Clear the Windows Error Reporting ReportQueue folder (read 2026-11-15)",
+          "claim": "That Windows creates the WER folders again when it needs them is general knowledge and is not stated on the page; the entry only deletes files and never the folders."
+        }
+      ],
+      "references": [
+        {
+          "title": "Windows Error Reporting: how to clear the ReportQueue folder",
+          "url": "https://woshub.com/wer-windows-error-reporting-clear-reportqueue-folder-windows/"
+        },
+        {
+          "title": "Overview of memory dump file options for Windows",
+          "url": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/performance/memory-dump-file-options"
+        }
+      ],
+      "notes": "Not VM-verified. The source for the folder names is a community page, not Microsoft. On a Home VM, confirm the folder names exist after a program crash, then apply and check that old report folders disappear."
+    }
+  ]
+}

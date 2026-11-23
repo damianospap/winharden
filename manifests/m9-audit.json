@@ -1,0 +1,539 @@
+{
+  "module": "m9-audit",
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "aud-001-logon-auditing",
+      "module": "m9-audit",
+      "title": "Audit sign-ins: logon, logoff, special logon and credential validation",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Records who signed in, when, and whether a password check failed, which is the first thing to look at after a break-in. Microsoft's recommendation table sets Logon to Success and Failure at every level, Credential Validation to Success and Failure at its Stronger level, and Special Logon (sign-ins with administrator rights) to Success and Failure at its Stronger level. The tool writes Success and Failure for all four so that it can only widen what is recorded.",
+      "impact": "More entries in the Security event log: one per sign-in, per sign-out and per password check. Nothing leaves the PC. The Security log has a fixed size and overwrites its oldest events when it is full, so the trail covers a limited period.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "audit_policy",
+          "name": "0CCE9215-69AE-11D9-BED3-505054503030",
+          "value": "success_failure",
+          "label": "Audit Logon"
+        },
+        {
+          "type": "setting",
+          "kind": "audit_policy",
+          "name": "0CCE9216-69AE-11D9-BED3-505054503030",
+          "value": "success_failure",
+          "label": "Audit Logoff"
+        },
+        {
+          "type": "setting",
+          "kind": "audit_policy",
+          "name": "0CCE921B-69AE-11D9-BED3-505054503030",
+          "value": "success_failure",
+          "label": "Audit Special Logon"
+        },
+        {
+          "type": "setting",
+          "kind": "audit_policy",
+          "name": "0CCE923F-69AE-11D9-BED3-505054503030",
+          "value": "success_failure",
+          "label": "Audit Credential Validation"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(auditpol /get /subcategory:'{0CCE9215-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+            "expected": "Success and Failure",
+            "locale_dependent": true
+          },
+          {
+            "command": "(auditpol /get /subcategory:'{0CCE9216-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+            "expected": "Success and Failure",
+            "locale_dependent": true
+          },
+          {
+            "command": "(auditpol /get /subcategory:'{0CCE921B-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+            "expected": "Success and Failure",
+            "locale_dependent": true
+          },
+          {
+            "command": "(auditpol /get /subcategory:'{0CCE923F-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+            "expected": "Success and Failure",
+            "locale_dependent": true
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com MS-GPAC 2.2.1.2 Subcategory and SubcategoryGUID (read 2026-11-15)",
+          "claim": "The table of valid SubcategoryGUID values lists: Logon = {0CCE9215-69AE-11D9-BED3-505054503030}, Logoff = {0CCE9216-69AE-11D9-BED3-505054503030}, Special Logon = {0CCE921B-69AE-11D9-BED3-505054503030}, Credential Validation = {0CCE923F-69AE-11D9-BED3-505054503030}. \"The SubcategoryGUID allows administrators to identify audit subcategories to enable or disable\" (sentence cut at 125 characters)."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Audit policy recommendations (read 2026-11-15)",
+          "claim": "The table lists Audit Logon with Success and Failure at all levels, Audit Credential Validation with Success and Failure at its Stronger level (Baseline: Success), Audit Special Logon with Success and Failure at its Stronger level, and Audit Logoff with Success at every level. \"Beginning with Windows 10 version 1809, Audit Logon is enabled by default for both Success and Failure.\" The page's recommendations are for \"enterprise-class computers, which Microsoft defines as computers that have average security requirements and require a high level of operational functionality.\" The page covers workstations and servers."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com Audit policy recommendations (read 2026-11-15)",
+          "claim": "Failure is added to Logoff although the page lists Success only. The tool writes Success and Failure everywhere so it can never narrow a setting that someone already widened; the page does not say whether Logoff produces failure events."
+        }
+      ],
+      "references": [
+        {
+          "title": "Audit policy recommendations",
+          "url": "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/plan/security-best-practices/audit-policy-recommendations"
+        },
+        {
+          "title": "[MS-GPAC] 2.2.1.2 Subcategory and SubcategoryGUID",
+          "url": "https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-gpac/77878370-0712-47cd-997d-b07053429f6d"
+        }
+      ],
+      "notes": "Not VM-verified. The Learn pages read do not name Windows 11 Home for advanced audit policy. On a Home VM: apply, run auditpol /get /category:* and compare; then run 'winharden.ps1 verify'. If the read-back column is not called 'Inclusion Setting' there, fix the audit command (the state check does not depend on it). The audit command prints translated text, so it is skipped on a system whose display language is not English; the state check covers the same setting there."
+    },
+    {
+      "id": "aud-002-account-management-auditing",
+      "module": "m9-audit",
+      "title": "Audit account changes: user accounts and security groups",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Records when a user account is created, changed, enabled or removed and when someone is added to a security group such as Administrators, the usual way an intruder keeps access. Microsoft's table sets both to Success and Failure at its Stronger level.",
+      "impact": "A few events per account change; normally very quiet on a home PC. Nothing leaves the PC.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "audit_policy",
+          "name": "0CCE9235-69AE-11D9-BED3-505054503030",
+          "value": "success_failure",
+          "label": "Audit User Account Management"
+        },
+        {
+          "type": "setting",
+          "kind": "audit_policy",
+          "name": "0CCE9237-69AE-11D9-BED3-505054503030",
+          "value": "success_failure",
+          "label": "Audit Security Group Management"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(auditpol /get /subcategory:'{0CCE9235-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+            "expected": "Success and Failure",
+            "locale_dependent": true
+          },
+          {
+            "command": "(auditpol /get /subcategory:'{0CCE9237-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+            "expected": "Success and Failure",
+            "locale_dependent": true
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com MS-GPAC 2.2.1.2 Subcategory and SubcategoryGUID (read 2026-11-15)",
+          "claim": "The table of valid SubcategoryGUID values lists: User Account Management = {0CCE9235-69AE-11D9-BED3-505054503030}, Security Group Management = {0CCE9237-69AE-11D9-BED3-505054503030}. \"The SubcategoryGUID allows administrators to identify audit subcategories to enable or disable\" (sentence cut at 125 characters)."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Audit policy recommendations (read 2026-11-15)",
+          "claim": "The table lists Audit User Account Management with Success and Failure at its Stronger level (Baseline: Success) and Audit Security Group Management with Success and Failure at its Stronger level (Baseline: Success). The page's recommendations are for \"enterprise-class computers, which Microsoft defines as computers that have average security requirements and require a high level of operational functionality.\" The page covers workstations and servers."
+        }
+      ],
+      "references": [
+        {
+          "title": "Audit policy recommendations",
+          "url": "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/plan/security-best-practices/audit-policy-recommendations"
+        },
+        {
+          "title": "[MS-GPAC] 2.2.1.2 Subcategory and SubcategoryGUID",
+          "url": "https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-gpac/77878370-0712-47cd-997d-b07053429f6d"
+        }
+      ],
+      "notes": "Not VM-verified. The Learn pages read do not name Windows 11 Home for advanced audit policy. On a Home VM: apply, run auditpol /get /category:* and compare; then run 'winharden.ps1 verify'. If the read-back column is not called 'Inclusion Setting' there, fix the audit command (the state check does not depend on it). The audit command prints translated text, so it is skipped on a system whose display language is not English; the state check covers the same setting there."
+    },
+    {
+      "id": "aud-003-process-creation-command-line",
+      "module": "m9-audit",
+      "title": "Audit process creation with the full command line",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Event 4688 records every program that starts. Without the command line it says that powershell.exe ran; with it, it says what it was told to do, which is what tells an attack from a routine task. Microsoft's table sets Audit Process Creation to Success and Failure at its Stronger level. The command line is only recorded when the process-creation audit is on, so the two settings are one transaction.",
+      "impact": "Every program start adds an event, so this is the largest source of Security log volume in the module and the log covers a shorter period. Privacy: command lines are stored in plain text and can contain passwords or personal data typed into a command; anyone who can read the Security log (administrators) can read them. Nothing leaves the PC. Turn this entry off if that is not acceptable.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "audit_policy",
+          "name": "0CCE922B-69AE-11D9-BED3-505054503030",
+          "value": "success_failure",
+          "label": "Audit Process Creation"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System\\Audit",
+          "name": "ProcessCreationIncludeCmdLine_Enabled",
+          "kind": "DWord",
+          "data": 1,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(auditpol /get /subcategory:'{0CCE922B-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+            "expected": "Success and Failure",
+            "locale_dependent": true
+          },
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System\\Audit' -Name ProcessCreationIncludeCmdLine_Enabled -ErrorAction SilentlyContinue).ProcessCreationIncludeCmdLine_Enabled",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com MS-GPAC 2.2.1.2 Subcategory and SubcategoryGUID (read 2026-11-15)",
+          "claim": "The table of valid SubcategoryGUID values lists: Process Creation = {0CCE922B-69AE-11D9-BED3-505054503030}. \"The SubcategoryGUID allows administrators to identify audit subcategories to enable or disable\" (sentence cut at 125 characters)."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Audit policy recommendations (read 2026-11-15)",
+          "claim": "The table lists Audit Process Creation with Success and Failure at its Stronger level (Baseline: Success). The page's recommendations are for \"enterprise-class computers, which Microsoft defines as computers that have average security requirements and require a high level of operational functionality.\" The page covers workstations and servers."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Command line process auditing (read 2026-11-15)",
+          "claim": "\"You must have Audit Process Creation auditing enabled to see event ID 4688.\" With the policy on, \"command line information for every process will be logged in plain text in the security event log\". \"Command line arguments can contain sensitive or private information such as passwords or user data.\" and \"any user with access to read the security events will be able to read the command line arguments for any successfully created process\"."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Policy CSP ADMX_AuditSettings (read 2026-11-15)",
+          "claim": "Policy 'Include command line in process creation events': registry key \"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System\\Audit\", value name \"ProcessCreationIncludeCmdLine_Enabled\". \"This policy setting determines what information is logged in security audit events when a new process has been created.\" It \"only applies when the Audit Process Creation policy is enabled.\""
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Policy CSP ADMX_AuditSettings (read 2026-11-15)",
+          "claim": "The editions table lists Pro, Enterprise, Education and IoT Enterprise; Home is not listed. The applicable systems include \"Windows 11, version 21H2 [10.0.22000] and later\"."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com Policy CSP ADMX_AuditSettings (read 2026-11-15)",
+          "claim": "The page does not state the registry value type or the enabled value; DWORD 1 is the widely documented form and is what this entry writes."
+        }
+      ],
+      "references": [
+        {
+          "title": "Command line process auditing",
+          "url": "https://learn.microsoft.com/windows-server/identity/ad-ds/manage/component-updates/command-line-process-auditing"
+        },
+        {
+          "title": "Policy CSP - ADMX_AuditSettings",
+          "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-auditsettings"
+        },
+        {
+          "title": "Audit policy recommendations",
+          "url": "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/plan/security-best-practices/audit-policy-recommendations"
+        },
+        {
+          "title": "[MS-GPAC] 2.2.1.2 Subcategory and SubcategoryGUID",
+          "url": "https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-gpac/77878370-0712-47cd-997d-b07053429f6d"
+        }
+      ],
+      "notes": "Not VM-verified. The Learn pages read do not name Windows 11 Home for advanced audit policy. On a Home VM: apply, run auditpol /get /category:* and compare; then run 'winharden.ps1 verify'. If the read-back column is not called 'Inclusion Setting' there, fix the audit command (the state check does not depend on it). The audit command prints translated text, so it is skipped on a system whose display language is not English; the state check covers the same setting there. For the command line: run any program, open Event Viewer > Windows Logs > Security, and look for event 4688 with a filled 'Process Command Line'."
+    },
+    {
+      "id": "aud-004-policy-change-auditing",
+      "module": "m9-audit",
+      "title": "Audit security policy changes: audit settings, authentication and firewall rules",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Records changes to the audit policy itself (an intruder's first move is to switch logging off), to authentication policy and to Windows Defender Firewall rules. Microsoft's table sets Audit Policy Change and Authentication Policy Change to Success and Failure at the Stronger level and MPSSVC Rule-Level Policy Change to Success at the Stronger level.",
+      "impact": "A few events per change; very quiet on a home PC, except when software installs or removes firewall rules. Nothing leaves the PC.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "audit_policy",
+          "name": "0CCE922F-69AE-11D9-BED3-505054503030",
+          "value": "success_failure",
+          "label": "Audit Audit Policy Change"
+        },
+        {
+          "type": "setting",
+          "kind": "audit_policy",
+          "name": "0CCE9230-69AE-11D9-BED3-505054503030",
+          "value": "success_failure",
+          "label": "Audit Authentication Policy Change"
+        },
+        {
+          "type": "setting",
+          "kind": "audit_policy",
+          "name": "0CCE9232-69AE-11D9-BED3-505054503030",
+          "value": "success_failure",
+          "label": "Audit MPSSVC Rule-Level Policy Change"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(auditpol /get /subcategory:'{0CCE922F-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+            "expected": "Success and Failure",
+            "locale_dependent": true
+          },
+          {
+            "command": "(auditpol /get /subcategory:'{0CCE9230-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+            "expected": "Success and Failure",
+            "locale_dependent": true
+          },
+          {
+            "command": "(auditpol /get /subcategory:'{0CCE9232-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+            "expected": "Success and Failure",
+            "locale_dependent": true
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com MS-GPAC 2.2.1.2 Subcategory and SubcategoryGUID (read 2026-11-15)",
+          "claim": "The table of valid SubcategoryGUID values lists: Audit Policy Change = {0CCE922F-69AE-11D9-BED3-505054503030}, Authentication Policy Change = {0CCE9230-69AE-11D9-BED3-505054503030}, MPSSVC Rule-Level Policy Change = {0CCE9232-69AE-11D9-BED3-505054503030}. \"The SubcategoryGUID allows administrators to identify audit subcategories to enable or disable\" (sentence cut at 125 characters)."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Audit policy recommendations (read 2026-11-15)",
+          "claim": "The table lists Audit Audit Policy Change with Success and Failure at the Stronger level (Baseline: Success and Failure), Audit Authentication Policy Change with Success and Failure at the Stronger level (Baseline: Success), and Audit MPSSVC Rule-Level Policy Change with Success at the Stronger level only. The page's recommendations are for \"enterprise-class computers, which Microsoft defines as computers that have average security requirements and require a high level of operational functionality.\" The page covers workstations and servers."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com Audit policy recommendations (read 2026-11-15)",
+          "claim": "Failure is added to MPSSVC Rule-Level Policy Change although the page lists Success only, so that the tool can never narrow a setting that someone already widened."
+        }
+      ],
+      "references": [
+        {
+          "title": "Audit policy recommendations",
+          "url": "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/plan/security-best-practices/audit-policy-recommendations"
+        },
+        {
+          "title": "[MS-GPAC] 2.2.1.2 Subcategory and SubcategoryGUID",
+          "url": "https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-gpac/77878370-0712-47cd-997d-b07053429f6d"
+        }
+      ],
+      "notes": "Not VM-verified. The Learn pages read do not name Windows 11 Home for advanced audit policy. On a Home VM: apply, run auditpol /get /category:* and compare; then run 'winharden.ps1 verify'. If the read-back column is not called 'Inclusion Setting' there, fix the audit command (the state check does not depend on it). The audit command prints translated text, so it is skipped on a system whose display language is not English; the state check covers the same setting there."
+    },
+    {
+      "id": "aud-005-system-integrity-auditing",
+      "module": "m9-audit",
+      "title": "Audit system integrity: security state, security extensions and integrity violations",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Records changes of the security state of the computer (start-up and shut-down of the security subsystem, time changes), the loading of security extensions such as authentication packages and drivers that hook into the security system, and violations of code integrity. Microsoft's table sets all three to Success and Failure at its Stronger level (System Integrity at every level).",
+      "impact": "A small number of events, mostly at start-up and shut-down. Nothing leaves the PC.",
+      "apply": [
+        {
+          "type": "setting",
+          "kind": "audit_policy",
+          "name": "0CCE9210-69AE-11D9-BED3-505054503030",
+          "value": "success_failure",
+          "label": "Audit Security State Change"
+        },
+        {
+          "type": "setting",
+          "kind": "audit_policy",
+          "name": "0CCE9211-69AE-11D9-BED3-505054503030",
+          "value": "success_failure",
+          "label": "Audit Security System Extension"
+        },
+        {
+          "type": "setting",
+          "kind": "audit_policy",
+          "name": "0CCE9212-69AE-11D9-BED3-505054503030",
+          "value": "success_failure",
+          "label": "Audit System Integrity"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(auditpol /get /subcategory:'{0CCE9210-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+            "expected": "Success and Failure",
+            "locale_dependent": true
+          },
+          {
+            "command": "(auditpol /get /subcategory:'{0CCE9211-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+            "expected": "Success and Failure",
+            "locale_dependent": true
+          },
+          {
+            "command": "(auditpol /get /subcategory:'{0CCE9212-69AE-11D9-BED3-505054503030}' /r | ConvertFrom-Csv).'Inclusion Setting'",
+            "expected": "Success and Failure",
+            "locale_dependent": true
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com MS-GPAC 2.2.1.2 Subcategory and SubcategoryGUID (read 2026-11-15)",
+          "claim": "The table of valid SubcategoryGUID values lists: Security State Change = {0CCE9210-69AE-11D9-BED3-505054503030}, Security System Extension = {0CCE9211-69AE-11D9-BED3-505054503030}, System Integrity = {0CCE9212-69AE-11D9-BED3-505054503030}. \"The SubcategoryGUID allows administrators to identify audit subcategories to enable or disable\" (sentence cut at 125 characters)."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Audit policy recommendations (read 2026-11-15)",
+          "claim": "The table lists Audit Security State Change, Audit Security System Extension and Audit System Integrity with Success and Failure at the Stronger level; Audit System Integrity has Success and Failure at all levels. The page's recommendations are for \"enterprise-class computers, which Microsoft defines as computers that have average security requirements and require a high level of operational functionality.\" The page covers workstations and servers."
+        }
+      ],
+      "references": [
+        {
+          "title": "Audit policy recommendations",
+          "url": "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/plan/security-best-practices/audit-policy-recommendations"
+        },
+        {
+          "title": "[MS-GPAC] 2.2.1.2 Subcategory and SubcategoryGUID",
+          "url": "https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-gpac/77878370-0712-47cd-997d-b07053429f6d"
+        }
+      ],
+      "notes": "Not VM-verified. The Learn pages read do not name Windows 11 Home for advanced audit policy. On a Home VM: apply, run auditpol /get /category:* and compare; then run 'winharden.ps1 verify'. If the read-back column is not called 'Inclusion Setting' there, fix the audit command (the state check does not depend on it). The audit command prints translated text, so it is skipped on a system whose display language is not English; the state check covers the same setting there."
+    },
+    {
+      "id": "aud-006-powershell-script-block-logging",
+      "module": "m9-audit",
+      "title": "Turn on PowerShell script block logging",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Records the text of every PowerShell script and command block that Windows PowerShell runs, after de-obfuscation, in the PowerShell Operational log. Most modern malware and most hands-on attacks use PowerShell, and this log is often the only record of what they ran.",
+      "impact": "More events in the Microsoft-Windows-PowerShell/Operational log; a few more milliseconds per script. Privacy: the log holds the text of scripts, including any password or token typed into one, readable by administrators. Nothing leaves the PC.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\PowerShell\\ScriptBlockLogging",
+          "name": "EnableScriptBlockLogging",
+          "kind": "DWord",
+          "data": 1,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\PowerShell\\ScriptBlockLogging' -Name EnableScriptBlockLogging -ErrorAction SilentlyContinue).EnableScriptBlockLogging",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Policy CSP WindowsPowerShell (read 2026-11-15)",
+          "claim": "Policy TurnOnPowerShellScriptBlockLogging: \"This policy setting enables logging of all PowerShell script input to the Microsoft-Windows-PowerShell/Operational event log.\" \"If you enable this policy setting, Windows PowerShell will log the processing of commands, script blocks, functions, and scripts\". ADMX registry key \"Software\\Policies\\Microsoft\\Windows\\PowerShell\\ScriptBlockLogging\", value name \"EnableScriptBlockLogging\"."
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Policy CSP WindowsPowerShell (read 2026-11-15)",
+          "claim": "The editions table lists Pro, Enterprise, Education and IoT Enterprise; Home is not listed, and the applicable system is given as \"Windows 10, version 1803 [10.0.17134] and later\" with no Windows 11 version named."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com Policy CSP WindowsPowerShell (read 2026-11-15)",
+          "claim": "That Windows PowerShell reads this policy key by itself, whatever the edition, is general knowledge about how the engine works and is not stated on the page; the entry is unverified for that reason. The value is a DWORD (the page shows the CSP string format)."
+        }
+      ],
+      "references": [
+        {
+          "title": "Policy CSP - WindowsPowerShell",
+          "url": "https://learn.microsoft.com/windows/client-management/mdm/policy-csp-windowspowershell"
+        }
+      ],
+      "notes": "Not VM-verified. On a Home VM: apply, run any Windows PowerShell command (for example Get-Date), then open Event Viewer > Applications and Services Logs > Microsoft > Windows > PowerShell > Operational and look for event 4104 with that command. If no event appears, the policy key is ignored on Home: mark the entry na."
+    }
+  ]
+}

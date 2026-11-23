@@ -1,0 +1,664 @@
+[
+ {
+  "name": "service on the list",
+  "op": {
+   "type": "service",
+   "name": "wuauserv",
+   "startup": "Disabled",
+   "stop": true
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "service on the list, other case",
+  "op": {
+   "type": "service",
+   "name": "WINDEFEND",
+   "startup": "Disabled",
+   "stop": true
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "service not on the list",
+  "op": {
+   "type": "service",
+   "name": "DiagTrack",
+   "startup": "Disabled",
+   "stop": true
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "servicing-adjacent service",
+  "op": {
+   "type": "service",
+   "name": "DoSvc",
+   "startup": "Disabled",
+   "stop": true
+  },
+  "blocked": false,
+  "servicing_adjacent": true
+ },
+ {
+  "name": "registry under Windows Update policy",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU",
+   "name": "NoAutoUpdate",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "registry under Secure Boot",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SYSTEM\\CurrentControlSet\\Control\\SecureBoot\\State",
+   "name": "X",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "registry under BitLocker policy",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SOFTWARE\\Policies\\Microsoft\\FVE",
+   "name": "X",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "registry telemetry policy is allowed",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+   "name": "AllowTelemetry",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "prefix match is by whole path part",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdateX",
+   "name": "X",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "forward slashes are normalised",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SOFTWARE/Policies/Microsoft/Windows/WindowsUpdate",
+   "name": "X",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "raw service Start write",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SYSTEM\\CurrentControlSet\\Services\\DiagTrack",
+   "name": "Start",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "raw service DelayedAutostart write, ControlSet001",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SYSTEM\\ControlSet001\\Services\\DiagTrack",
+   "name": "DelayedAutostart",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "service parameters of an allowed service",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SYSTEM\\CurrentControlSet\\Services\\DiagTrack\\Parameters",
+   "name": "X",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "service key of a never-touch service",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SYSTEM\\CurrentControlSet\\Services\\wuauserv\\Parameters",
+   "name": "X",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "Defender engine value",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SOFTWARE\\Policies\\Microsoft\\Windows Defender",
+   "name": "DisableAntiSpyware",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "Defender other value is allowed",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Windows Defender Exploit Guard\\ASR",
+   "name": "ExploitGuard_ASR_Rules",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "Defender tamper protection value",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SOFTWARE\\Microsoft\\Windows Defender\\Features",
+   "name": "TamperProtection",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "SmartScreen policy value",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+   "name": "EnableSmartScreen",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "SmartScreen app value in HKCU",
+  "op": {
+   "type": "registry",
+   "hive": "HKCU",
+   "path": "Software\\Microsoft\\Windows\\CurrentVersion\\AppHost",
+   "name": "EnableWebContentEvaluation",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "user"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "vulnerable driver blocklist value",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SYSTEM\\CurrentControlSet\\Control\\CI\\Config",
+   "name": "VulnerableDriverBlocklistEnable",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "task under Windows Update",
+  "op": {
+   "type": "scheduled_task",
+   "path": "\\Microsoft\\Windows\\WindowsUpdate\\",
+   "name": "Scheduled Start",
+   "state": "Disabled",
+   "if_missing": "skip"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "task under Defender",
+  "op": {
+   "type": "scheduled_task",
+   "path": "\\Microsoft\\Windows\\Windows Defender\\",
+   "name": "Windows Defender Scheduled Scan",
+   "state": "Disabled",
+   "if_missing": "skip"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "CEIP task is allowed",
+  "op": {
+   "type": "scheduled_task",
+   "path": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\",
+   "name": "Consolidator",
+   "state": "Disabled",
+   "if_missing": "skip"
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "Appraiser task is servicing-adjacent",
+  "op": {
+   "type": "scheduled_task",
+   "path": "\\Microsoft\\Windows\\Application Experience\\",
+   "name": "Microsoft Compatibility Appraiser",
+   "state": "Disabled",
+   "if_missing": "skip"
+  },
+  "blocked": false,
+  "servicing_adjacent": true
+ },
+ {
+  "name": "Store package",
+  "op": {
+   "type": "appx",
+   "package_name": "Microsoft.WindowsStore",
+   "action": "remove",
+   "deprovision": true,
+   "all_users": true
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "App Installer, other case",
+  "op": {
+   "type": "appx",
+   "package_name": "microsoft.desktopappinstaller",
+   "action": "remove",
+   "deprovision": true,
+   "all_users": true
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "framework package by pattern",
+  "op": {
+   "type": "appx",
+   "package_name": "Microsoft.UI.Xaml.2.8",
+   "action": "remove",
+   "deprovision": true,
+   "all_users": true
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "ordinary inbox app",
+  "op": {
+   "type": "appx",
+   "package_name": "Microsoft.BingNews",
+   "action": "remove",
+   "deprovision": true,
+   "all_users": true
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "Defender default definitions feature",
+  "op": {
+   "type": "optional_feature",
+   "name": "Windows-Defender-Default-Definitions",
+   "state": "Disabled"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "Recall feature is allowed",
+  "op": {
+   "type": "optional_feature",
+   "name": "Recall",
+   "state": "Disabled"
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "Defender cloud reporting raised to advanced",
+  "op": {
+   "type": "setting",
+   "kind": "defender_pref",
+   "name": "MAPSReporting",
+   "value": 2
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "Defender cloud reporting turned off",
+  "op": {
+   "type": "setting",
+   "kind": "defender_pref",
+   "name": "MAPSReporting",
+   "value": 0
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "Defender real-time monitoring switched off",
+  "op": {
+   "type": "setting",
+   "kind": "defender_pref",
+   "name": "DisableRealtimeMonitoring",
+   "value": true
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "Defender real-time monitoring kept on",
+  "op": {
+   "type": "setting",
+   "kind": "defender_pref",
+   "name": "DisableRealtimeMonitoring",
+   "value": false
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "Defender preference that is not on the list",
+  "op": {
+   "type": "setting",
+   "kind": "defender_pref",
+   "name": "ExclusionPath",
+   "value": "C:\\Temp"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "Defender preference name in other case",
+  "op": {
+   "type": "setting",
+   "kind": "defender_pref",
+   "name": "mapsreporting",
+   "value": 2
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "ASR rule in block mode",
+  "op": {
+   "type": "setting",
+   "kind": "defender_asr",
+   "name": "9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2",
+   "value": "block"
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "ASR rule disabled",
+  "op": {
+   "type": "setting",
+   "kind": "defender_asr",
+   "name": "9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2",
+   "value": "disabled"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "ASR warn mode on a rule that has none",
+  "op": {
+   "type": "setting",
+   "kind": "defender_asr",
+   "name": "9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2",
+   "value": "warn"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "ASR rule that is not on the list",
+  "op": {
+   "type": "setting",
+   "kind": "defender_asr",
+   "name": "00000000-0000-0000-0000-000000000000",
+   "value": "block"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "audit subcategory set to success and failure",
+  "op": {
+   "type": "setting",
+   "kind": "audit_policy",
+   "name": "0CCE9215-69AE-11D9-BED3-505054503030",
+   "value": "success_failure"
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "audit subcategory switched off",
+  "op": {
+   "type": "setting",
+   "kind": "audit_policy",
+   "name": "0CCE9215-69AE-11D9-BED3-505054503030",
+   "value": "none"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "audit subcategory that is not on the list",
+  "op": {
+   "type": "setting",
+   "kind": "audit_policy",
+   "name": "FFFFFFFF-69AE-11D9-BED3-505054503030",
+   "value": "success"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "cleanup of the Windows temp folder",
+  "op": {
+   "type": "file_cleanup",
+   "scope": "machine",
+   "root": "%SystemRoot%\\Temp",
+   "pattern": "*",
+   "min_age_days": 7,
+   "recurse": true
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "cleanup root in other case",
+  "op": {
+   "type": "file_cleanup",
+   "scope": "machine",
+   "root": "%SYSTEMROOT%\\TEMP",
+   "pattern": "*",
+   "min_age_days": 7,
+   "recurse": true
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "cleanup of the Windows Update download cache",
+  "op": {
+   "type": "file_cleanup",
+   "scope": "machine",
+   "root": "%SystemRoot%\\SoftwareDistribution\\Download",
+   "pattern": "*",
+   "min_age_days": 0,
+   "recurse": true
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "cleanup of the component store",
+  "op": {
+   "type": "file_cleanup",
+   "scope": "machine",
+   "root": "%SystemRoot%\\WinSxS",
+   "pattern": "*",
+   "min_age_days": 0,
+   "recurse": true
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "cleanup folder with the wrong scope",
+  "op": {
+   "type": "file_cleanup",
+   "scope": "user",
+   "root": "%SystemRoot%\\Temp",
+   "pattern": "*",
+   "min_age_days": 7,
+   "recurse": true
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "wildcard below an allowed key",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters\\Interfaces\\Tcpip_*",
+   "name": "NetbiosOptions",
+   "kind": "DWord",
+   "data": 2,
+   "scope": "machine"
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "wildcard that can reach the BitLocker policy key",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SOFTWARE\\Policies\\Microsoft\\F*",
+   "name": "X",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "wildcard that can reach a never-touch service key",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SYSTEM\\CurrentControlSet\\Services\\*",
+   "name": "Foo",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "wildcard below a never-touch service",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SYSTEM\\CurrentControlSet\\Services\\wuauserv\\*",
+   "name": "Foo",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": true,
+  "servicing_adjacent": false
+ },
+ {
+  "name": "wildcard that cannot reach any protected key",
+  "op": {
+   "type": "registry",
+   "hive": "HKLM",
+   "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Dns*",
+   "name": "X",
+   "kind": "DWord",
+   "data": 1,
+   "scope": "machine"
+  },
+  "blocked": false,
+  "servicing_adjacent": false
+ }
+]

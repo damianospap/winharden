@@ -1,0 +1,316 @@
+{
+  "module": "m3-ai",
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "ai-001-recall-availability-policy",
+      "module": "m3-ai",
+      "title": "Make Recall unavailable (Allow Recall to be enabled = off)",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "flags": { "requires_reboot": true },
+      "rationale": "Project rule: Recall must be explicitly off and attested. The WindowsAI policy AllowRecallEnablement = 0 makes the Recall component unavailable, and Microsoft's Manage Recall page says disabling it removes the component. On Home the policy is not documented for the edition (the CSP page lists Pro, Enterprise, Education and IoT; Manage Recall never mentions Home), so it is written as inert-if-ignored and backed by the feature-state entry ai-003.",
+      "impact": "If Windows honours the policy, Microsoft says the Recall component is disabled and its bits are removed, snapshots saved earlier are deleted, and a restart is required. This tool cannot bring deleted snapshots back. Recall exists only on Copilot+ PCs, so on other PCs nothing changes.",
+      "apply": [
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI", "name": "AllowRecallEnablement", "kind": "DWord", "data": 0, "scope": "machine" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI' -Name AllowRecallEnablement -ErrorAction SilentlyContinue).AllowRecallEnablement", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "partial", "limitation": "The journal restores the previous registry value, but snapshots deleted by Recall removal cannot be recovered and the component may need Enable-WindowsOptionalFeature to return." },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP WindowsAI, AllowRecallEnablement (read 2026-11-10)", "claim": "Device-scope policy at SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI, value AllowRecallEnablement: 0 = Recall is not available, 1 (default) = available. Editions listed: Pro, Enterprise, Education, IoT; Home is not listed. Minimum build 24H2 with KB5055627 (10.0.26100.3915)." },
+        { "grade": "ms-doc", "source": "learn.microsoft.com Manage Recall, last updated 2025-12-10 (read 2026-11-11)", "claim": "Documents 'Allow Recall to be enabled' only by its CSP name (AllowRecallEnablement) and Group Policy path. If the policy is disabled, \"the Recall component will be in disabled state and the bits for Recall will be removed from the device\". \"If snapshots were previously saved on the device, they'll be deleted when this policy is disabled.\" \"Removing Recall requires a device restart.\" \"By default, Recall is disabled and removed on managed devices.\" The page has no editions column and never mentions Windows Home; its only edition statement is \"Some Recall policies apply only to Enterprise and Education editions of Windows.\"" }
+      ],
+      "references": [
+        { "title": "Policy CSP - WindowsAI", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowsai" },
+        { "title": "Manage Recall", "url": "https://learn.microsoft.com/en-us/windows/client-management/manage-recall" }
+      ],
+      "notes": "Not VM-verified, and a VM without Copilot+ hardware cannot show the effect, only the registry write and the audit. The plan must show a data-loss line when Get-WindowsOptionalFeature reports Recall as Enabled. Value names come from the CSP page; Manage Recall gives CSP and Group Policy names only."
+    },
+    {
+      "id": "ai-002-recall-snapshots-policy",
+      "module": "m3-ai",
+      "title": "Turn off saving snapshots for Recall (machine and user policy)",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "A second, independent lock on the same risk: even if the Recall component were present and a user opted in, this policy stops snapshots from being saved. Microsoft documents it at both device and user scope, so both hives are written. Home is not named in either Microsoft page, so the entry is written as inert-if-ignored.",
+      "impact": "Recall cannot save snapshots for any user, even after opt-in, and Microsoft documents that snapshots already saved are deleted when the policy is enabled. No effect on PCs without Recall.",
+      "apply": [
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI", "name": "DisableAIDataAnalysis", "kind": "DWord", "data": 1, "scope": "machine" },
+        { "type": "registry", "hive": "HKCU", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI", "name": "DisableAIDataAnalysis", "kind": "DWord", "data": 1, "scope": "user" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI' -Name DisableAIDataAnalysis -ErrorAction SilentlyContinue).DisableAIDataAnalysis", "expected": "1" },
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI' -Name DisableAIDataAnalysis -ErrorAction SilentlyContinue).DisableAIDataAnalysis", "expected": "1" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "partial", "limitation": "The journal restores the previous registry values, but snapshots deleted when the policy took effect cannot be recovered." },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP WindowsAI, DisableAIDataAnalysis (read 2026-11-10)", "claim": "'Turn off saving snapshots for use with Recall', Device and User scope, value DisableAIDataAnalysis under SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI: 0 (default) = saving allowed, 1 = disabled. Editions listed: Pro, Enterprise, Education, IoT; Home is not listed. Minimum build 24H2 with KB5055627." },
+        { "grade": "ms-doc", "source": "learn.microsoft.com Manage Recall, last updated 2025-12-10 (read 2026-11-11)", "claim": "Documents 'Turn off saving snapshots for Recall' by its CSP names (DisableAIDataAnalysis at Device and User scope) and Group Policy paths under Windows AI. \"Administrators can't enable saving snapshots on behalf of their users. The choice to enable saving snapshots requires individual user opt-in consent.\" Also \"If snapshots were previously saved on a device, they'll be deleted when this policy is enabled.\" The page has no editions column and does not mention Windows Home." }
+      ],
+      "references": [
+        { "title": "Policy CSP - WindowsAI", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowsai" },
+        { "title": "Manage Recall", "url": "https://learn.microsoft.com/en-us/windows/client-management/manage-recall" }
+      ],
+      "notes": "Not VM-verified. The HKCU audit covers the invoking user only; the engine checks every profile hive and the Default user hive. Because enabling the policy deletes previously saved snapshots (Microsoft), the plan must show the same data-loss line as for ai-001."
+    },
+    {
+      "id": "ai-003-recall-feature-disabled",
+      "module": "m3-ai",
+      "title": "Disable the Recall optional feature (without -Remove)",
+      "tier": "T0",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Optional-feature state works the same on every edition, so this is the lock that does not depend on Home honouring a Pro-era policy. Microsoft documents Disable-WindowsOptionalFeature for the 'Recall' feature. The engine uses the form without -Remove, so the feature is only switched off; Microsoft's page shows -Remove, which removes the Recall bits. A community report shows the state DisabledWithPayloadRemoved after a plain disable, so re-enabling may still need the payload to be available.",
+      "impact": "Recall cannot start while the feature is disabled. Microsoft's support page says to remove Recall through 'Turn Windows features on or off' and that previously saved snapshots are deleted when Recall is removed, so assume disabling the feature deletes saved snapshots. Recall exists only on Copilot+ PCs; where the feature is absent this entry is not applicable.",
+      "apply": [
+        { "type": "optional_feature", "name": "Recall", "state": "Disabled" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "@(Get-WindowsOptionalFeature -Online -ErrorAction SilentlyContinue | Where-Object { $_.FeatureName -eq 'Recall' -and $_.State -eq 'Enabled' }).Count", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "partial", "limitation": "Enable-WindowsOptionalFeature restores the component, but any snapshots Windows deleted while disabling it cannot be recovered, and if Windows reports DisabledWithPayloadRemoved the payload must be available again." },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc", "source": "learn.microsoft.com Manage Recall, last updated 2025-12-10 (read 2026-11-11)", "claim": "Recall is an optional feature named 'Recall'. The page documents 'Disable-WindowsOptionalFeature -Online -FeatureName \"Recall\" -Remove' to remove the Recall bits and 'Enable-WindowsOptionalFeature -Online -FeatureName \"Recall\"' to enable the package. It gives no command or registry value that reports whether Recall is enabled." },
+        { "grade": "ms-doc", "source": "support.microsoft.com Retrace your steps with Recall (page metadata updated 2026-09-28, read 2026-11-11)", "claim": "\"Recall is an optional feature for Windows.\" \"You need to opt in to saving snapshots.\" \"By default, saving snapshots for Recall aren't enabled.\" \"To remove Recall, type Turn Windows features on or off in the search box on your taskbar.\" \"Any snapshots that were previously saved will be deleted when Recall is removed.\" The page refers to Copilot+ PCs and does not mention Home or Pro." },
+        { "grade": "community", "source": "Microsoft Learn Q&A 5557090 (question title ends 'Windows 11 Home'; one Independent Advisor reply; no accepted answer; read 2026-11-11)", "claim": "The asker ran Disable-WindowsOptionalFeature -Online -FeatureName \"Recall\" (output RestartNeeded: False), then Get-WindowsOptionalFeature -Online -FeatureName Recall, which showed RestartRequired: Possible and State: DisabledWithPayloadRemoved. Also writes \"It's not listed, I've double checked and clicked around trying to find it.\" and asks \"Why is it reactivated after Windows Update has run?\". An Independent Advisor replied (including the question \"If you search the PC for Recall does anything show?\") and no answer is marked accepted. Unconfirmed user report." }
+      ],
+      "references": [
+        { "title": "Manage Recall", "url": "https://learn.microsoft.com/en-us/windows/client-management/manage-recall" },
+        { "title": "Retrace your steps with Recall", "url": "https://support.microsoft.com/en-us/windows/ai/ai-features/retrace-your-steps-with-recall" },
+        { "title": "Learn Q&A: how do I remove the Recall feature completely", "url": "https://learn.microsoft.com/en-us/answers/questions/5557090/how-do-i-remove-the-recall-feature-completely-from" }
+      ],
+      "notes": "Not VM-verified. A missing feature is reported as not applicable, never as an error. The audit lists all optional features instead of naming Recall so that an absent feature cannot throw. The Q&A asks why Recall is reactivated after Windows Update and has no accepted answer; module m10 re-runs the attestation ai-004 for that reason."
+    },
+    {
+      "id": "ai-004-recall-attestation",
+      "module": "m3-ai",
+      "title": "Attest that Recall is off (component, availability policy, snapshot policy)",
+      "tier": "T0",
+      "min_profile": 1,
+      "mode": "attest",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Project rule: the report must state whether Recall is off, in every profile and even in a dry run. Microsoft documents no registry value or command that reports Recall's saving state, so the attestation rests on what can be read: the Recall optional feature is not Enabled (authoritative, edition-independent) and the two Recall policies are set (explicit configuration). A failing check means 'Recall not attested', never a silent pass.",
+      "impact": "Read-only. Prints one Recall line in the report and changes nothing, so there is nothing to roll back.",
+      "audit": {
+        "checks": [
+          { "command": "@(Get-WindowsOptionalFeature -Online -ErrorAction SilentlyContinue | Where-Object { $_.FeatureName -eq 'Recall' -and $_.State -eq 'Enabled' }).Count", "expected": "0" },
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI' -Name AllowRecallEnablement -ErrorAction SilentlyContinue).AllowRecallEnablement", "expected": "0" },
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI' -Name DisableAIDataAnalysis -ErrorAction SilentlyContinue).DisableAIDataAnalysis", "expected": "1" }
+        ],
+        "manual_check": "Settings > Privacy & security > Recall & snapshots: 'Save snapshots' reads Off, or the page does not exist because this PC has no Recall. Not machine-checkable: no registry value or command reports it."
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc", "source": "learn.microsoft.com Manage Recall, last updated 2025-12-10 (read 2026-11-11)", "claim": "In the text read, the only commands given (Enable-WindowsOptionalFeature and Disable-WindowsOptionalFeature) change state: no command or registry value reports whether Recall is enabled, removed or saving snapshots, and no file path or registry key is given for snapshot storage. It says snapshots are \"securely stored on the local device only\" and are \"always encrypted\". \"Before snapshots start getting saved to the device, users need to open Recall and authenticate.\" \"Recall requires users to confirm their identity with Windows Hello before it launches and before accessing snapshots.\"" },
+        { "grade": "ms-doc", "source": "support.microsoft.com Retrace your steps with Recall (read 2026-11-11)", "claim": "\"You can go to Windows Settings > Privacy & Security > Recall & Snapshots\" and \"with the Save snapshots option, move the toggle switch to On\". \"You need to opt in to saving snapshots.\" \"By default, saving snapshots for Recall aren't enabled.\" \"Every time you launch Recall or change Recall settings, you'll be asked to confirm that it's you by using Windows Hello.\"" }
+      ],
+      "references": [
+        { "title": "Manage Recall", "url": "https://learn.microsoft.com/en-us/windows/client-management/manage-recall" },
+        { "title": "Retrace your steps with Recall", "url": "https://support.microsoft.com/en-us/windows/ai/ai-features/retrace-your-steps-with-recall" },
+        { "title": "Policy CSP - WindowsAI", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowsai" }
+      ],
+      "notes": "Not VM-verified. Snapshot storage is not inspected because Microsoft documents no path. The three machine checks overlap with ai-001 to ai-003 on purpose: this entry is evaluated on its own, so a run that skipped those entries cannot report Recall as attested. Only HKLM values are read here; the per-user opt-in is covered by the manual check."
+    },
+    {
+      "id": "ai-005-click-to-do-off",
+      "module": "m3-ai",
+      "title": "Turn off Click to Do (device policy and per-user setting)",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Click to Do is on by default on Copilot+ PCs and analyses a screenshot of the screen. Microsoft says that analysis is always local, but its online actions put the selection into a Bing search or a Copilot prompt, and some diagnostic data is gathered. Turning it off removes a default-on screen-analysis feature. The device policy is documented in the WindowsAI CSP; the per-user value is the one a community tutorial gives for the Settings toggle.",
+      "impact": "Click to Do stops working. Other entry points such as Snipping Tool show a 'Couldn't open Click to Do' error (Microsoft). No effect on PCs that do not have Click to Do.",
+      "apply": [
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI", "name": "DisableClickToDo", "kind": "DWord", "data": 1, "scope": "machine" },
+        { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\Shell\\ClickToDo", "name": "DisableClickToDo", "kind": "DWord", "data": 1, "scope": "user" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI' -Name DisableClickToDo -ErrorAction SilentlyContinue).DisableClickToDo", "expected": "1" },
+          { "command": "(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\Shell\\ClickToDo' -Name DisableClickToDo -ErrorAction SilentlyContinue).DisableClickToDo", "expected": "1" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc", "source": "support.microsoft.com Click to Do: do more with what's on your screen (read 2026-11-11)", "claim": "\"The analysis of this screenshot is always performed locally on your device.\" \"Some diagnostic data is also gathered to keep Click to Do secure, up to date, and working.\" Search the web: \"Does a search for the selected text using Microsoft Edge and Bing\". Visual search with Bing: \"Does a visual search using Bing using your default web browser\". Ask Copilot: \"Copilot opens with your content in the prompt box.\" Settings > Privacy & security > Click to Do has an Off option (\"Click to Do is disabled\"). \"By default, Click to Do is enabled for Copilot+ PCs.\" Requires \"A Copilot+ PC or eligible Cloud PC\". Home is not mentioned." },
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP WindowsAI, DisableClickToDo (read 2026-11-10)", "claim": "Device and User scope, value DisableClickToDo under SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI: 0 (default) = enabled, 1 = disabled. Editions listed: Pro, Enterprise, Education, IoT; Home is not listed. The applicable-OS column lists only Windows Insider Preview." },
+        { "grade": "community", "source": "Eleven Forum tutorial: Enable or Disable Click to Do in Windows 11 (undated, read 2026-11-11)", "claim": "Option Two (current user, REG file): HKCU\\Software\\Microsoft\\Windows\\Shell\\ClickToDo, DWORD DisableClickToDo, 1 = disabled. Option Four (all users): HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI, DWORD DisableClickToDo = 1; its REG files also contain \"DisableClickToDo\"=- under the HKCU copy of that policy key, which deletes that value. States \"All editions can use Option Four to configure the same policy.\" The tutorial is written for Copilot+ PCs and does not say that the Settings toggle writes the HKCU value." }
+      ],
+      "references": [
+        { "title": "Click to Do: do more with what's on your screen", "url": "https://support.microsoft.com/windows/ai/ai-features/click-to-do-do-more-with-what-s-on-your-screen" },
+        { "title": "Policy CSP - WindowsAI", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowsai" },
+        { "title": "Eleven Forum: Enable or Disable Click to Do in Windows 11", "url": "https://www.elevenforum.com/t/enable-or-disable-click-to-do-in-windows-11.35166/latest" }
+      ],
+      "notes": "Not VM-verified, and the effect needs Copilot+ hardware. On such a machine, flip Settings > Privacy & security > Click to Do and diff HKCU to confirm that Software\\Microsoft\\Windows\\Shell\\ClickToDo is the backing value; delete the HKCU op if it is not. Whether retail 25H2 and 26H2 honour the policy is unconfirmed because the CSP lists only Insider Preview builds."
+    },
+    {
+      "id": "ai-006-copilot-app-removed",
+      "module": "m3-ai",
+      "title": "Remove the Microsoft Copilot app for all users",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "The Copilot app (package Microsoft.Copilot) is an ordinary Store package, so it can be removed on Home with the same cmdlets used for other inbox apps. The dedicated policy RemoveMicrosoftCopilotApp is documented for Enterprise, Education and IoT only, its registry value is not documented, and Home is reported as unsupported. The provisioned copy is removed as well so that new profiles do not receive the app.",
+      "impact": "Copilot disappears from Start, search and the taskbar, and its local data is deleted with it. Keyboards with a Copilot key have nothing to launch until the key is remapped, for example with PowerToys. The separate Microsoft 365 Copilot app is handled in module m4-appx.",
+      "apply": [
+        { "type": "appx", "package_name": "Microsoft.Copilot", "action": "remove", "deprovision": true, "all_users": true }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-AppxPackage -AllUsers -Name 'Microsoft.Copilot' | Measure-Object).Count", "expected": "0" },
+          { "command": "(Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.Copilot' } | Measure-Object).Count", "expected": "0" }
+        ]
+      },
+      "rollback": { "strategy": "store-reinstall", "reversibility": "partial", "limitation": "Reinstall the app from the Microsoft Store. Its local data is not restored, and Windows updates have been reported to bring the app back on their own." },
+      "risk": "low",
+      "evidence": [
+        { "grade": "third-party", "source": "Geekrewind, how to remove the Copilot app from Windows 11 (read 2026-11-11)", "claim": "Gives 'Get-AppxPackage -AllUsers -Name \"Microsoft.Copilot\" | Remove-AppxPackage -AllUsers', says it works on every Windows 11 edition including Home and needs administrator rights, and warns that later Windows updates sometimes restore the app. For Home it also points to a Registry method with a value named RemoveMicrosoftCopilotApp." },
+        { "grade": "third-party", "source": "Winaero, uninstall Copilot (read 2026-11-11)", "claim": "Matches the package with '*Microsoft.Copilot*' for the current user and, with -AllUsers, for all users. Gives the winget identifier Microsoft.Copilot_8wekyb3d8bbwe for uninstalling and 'winget install -s msstore --id 9NHT9RB2F4HD' for reinstalling." },
+        { "grade": "third-party", "source": "Digital Trends, 2026-05-25 (read 2026-11-11)", "claim": "\"Users can uninstall it through the Start menu or Installed Apps settings.\" The new Group Policy targets organisations. \"For Windows Home users, the policy itself is not officially available\", and the article reports a Registry workaround (a WindowsAI key with a RemoveMicrosoftCopilotApp value)." },
+        { "grade": "third-party", "source": "Office Watch, 2026-05-26 (read 2026-11-11)", "claim": "Says \"Microsoft Learn lists the policy as supported on Enterprise, Education, and IoT Enterprise / LTSC.\", notes that the description paragraph on that page also names Professional, quotes its own Group Policy section as \"This works on Windows 11 Pro, Enterprise, and Education.\", and states \"Windows 11 Home is not supported either way\". The policy acts only when \"all three\" hold: both Copilot apps are installed, the user did not install the Copilot app manually, and \"The Copilot app was not launched in the last 14 days\". Manual removal is given as \"Open Start, find one or both Copilot apps, right click, choose Uninstall.\"" },
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP WindowsAI, RemoveMicrosoftCopilotApp (read 2026-11-10)", "claim": "Device and User scope, registry location not documented, 1 = removal enabled. The table lists Enterprise, Education and IoT (not Pro) while the description also names Professional; Home is not listed." }
+      ],
+      "references": [
+        { "title": "Geekrewind: remove the Copilot app from Windows 11", "url": "https://geekrewind.com/how-to-remove-copilot-app-from-windows-11/" },
+        { "title": "Winaero: uninstall Copilot", "url": "https://winaero.com/uninstall-copilot" },
+        { "title": "Digital Trends: Microsoft will let you uninstall Copilot", "url": "https://www.digitaltrends.com/computing/microsoft-will-let-you-uninstall-copilot-app-as-windows-11-clean-up-moves-ahead/" },
+        { "title": "Office Watch: remove the Microsoft 365 Copilot app", "url": "https://office-watch.com/2026/remove-microsoft-365-copilot-app-windows-11/" },
+        { "title": "Policy CSP - WindowsAI", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowsai" }
+      ],
+      "notes": "Not VM-verified. The package name comes from third-party guides; none of the Microsoft pages read for this module names it. Deliberately not used: TurnOffWindowsCopilot (deprecated) and RemoveMicrosoftCopilotApp (not documented for Home, registry undocumented, table and description disagree; Digital Trends and Geekrewind report a Registry method for Home that is unverified); all are listed in docs/BACKLOG.md. The drift check (module m10) must report the package if a Windows update reinstalls it."
+    },
+    {
+      "id": "ai-007-paint-ai-off",
+      "module": "m3-ai",
+      "title": "Turn off Paint's AI features (Cocreator, Generative fill, Image Creator)",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Paint exposes three AI features and Microsoft documents one device policy for each. Setting all three removes those AI entry points from a bundled app without uninstalling it. The policies are documented for Pro, Enterprise, Education and IoT and not for Home, so they are written as inert-if-ignored.",
+      "impact": "Cocreator, Generative fill and Image Creator are expected to disappear from Paint; the rest of Paint is unchanged. Nothing changes if the installed Paint has none of them.",
+      "apply": [
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint", "name": "DisableCocreator", "kind": "DWord", "data": 1, "scope": "machine" },
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint", "name": "DisableGenerativeFill", "kind": "DWord", "data": 1, "scope": "machine" },
+        { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint", "name": "DisableImageCreator", "kind": "DWord", "data": 1, "scope": "machine" }
+      ],
+      "audit": {
+        "checks": [
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint' -Name DisableCocreator -ErrorAction SilentlyContinue).DisableCocreator", "expected": "1" },
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint' -Name DisableGenerativeFill -ErrorAction SilentlyContinue).DisableGenerativeFill", "expected": "1" },
+          { "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint' -Name DisableImageCreator -ErrorAction SilentlyContinue).DisableImageCreator", "expected": "1" }
+        ]
+      },
+      "rollback": { "strategy": "journal", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc-nonhome", "source": "learn.microsoft.com Policy CSP WindowsAI, Paint policies (read 2026-11-10)", "claim": "DisableCocreator, DisableGenerativeFill and DisableImageCreator are Device-scope only, at Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint: 0 (default) = enabled, 1 = disabled. Editions listed: Pro, Enterprise, Education, IoT; Home is not listed. Minimum builds: 22H2 10.0.22621.4870 and 24H2 10.0.26100.3360." }
+      ],
+      "references": [
+        { "title": "Policy CSP - WindowsAI", "url": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowsai" }
+      ],
+      "notes": "Not VM-verified; needs a Paint version that has the AI features. Device scope only, so there is no per-user variant."
+    },
+    {
+      "id": "ai-008-agentic-features-manual",
+      "module": "m3-ai",
+      "title": "Keep Experimental agentic features switched off (manual check)",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "manual",
+      "home_effective": "unverified",
+      "channel_class": "settings-backing",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Microsoft says \"Each agent operates using its own account, distinct from your personal user account.\" and \"An agent workspace is a separate, contained space in Windows where you can grant agents access to your apps and files\"; agents can be given access to six profile folders (Documents, Downloads, Desktop, Music, Pictures, Videos), and Microsoft warns that \"agentic AI applications introduce novel security risks, such as cross-prompt injection (XPIA)\". The setting is off by default and only an administrative user can turn it on, for all users of the device, so this entry only confirms that it stays off. No registry value is used because the one a community tutorial gives is not confirmed to be what the toggle writes.",
+      "impact": "Nothing is changed by the tool. The report prints one manual check.",
+      "manual_steps": [
+        "Open Settings > System > AI Components and find 'Experimental agentic features'.",
+        "Make sure 'Experimental agentic features' is Off. It is off by default, only an administrative user can turn it on, and once on it applies to every user of the PC.",
+        "If the toggle does not exist on your build, there is nothing to do."
+      ],
+      "audit": {
+        "manual_check": "Settings > System > AI Components > Experimental agentic features reads Off, or the toggle is absent on this build."
+      },
+      "rollback": { "strategy": "manual", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-doc", "source": "support.microsoft.com Experimental Agentic Features (page text dated 2025-10-16, updated 2025-11-17 and 2025-12-05; read 2026-11-12)", "claim": "\"In the Settings app on your Windows device, select System > AI Components > Experimental agentic features\". \"The experimental agentic features setting is off by default.\" \"This setting can only be enabled by an administrative user of the device\" and \"once enabled, it's enabled for all users on the device including other administrators and standard users.\" Agents can be given access to \"Documents, Downloads, Desktop, Music, Pictures, and Videos.\" \"Each agent operates using its own account, distinct from your personal user account.\" Warns that \"agentic AI applications introduce novel security risks, such as cross-prompt injection (XPIA)\". Availability is stated as \"This is now available on preview builds 26100.7344+.\" The page does not mention Windows Home or Pro and has no Applies To list." },
+        { "grade": "community", "source": "Eleven Forum tutorial: Enable or Disable Experimental agentic features in Windows 11 (undated, read 2026-11-11)", "claim": "Settings steps, plus REG files that set HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\IsoEnvBroker, value Enabled, to dword:00000001 (on) or dword:00000000 (off, the default); it does not say what that value does or that the Settings toggle writes it. Repeats the warning \"Experimental agentic features are still being tested and may impact the performance or security of your device.\" and names \"Starting with Windows 11 build 26220.7262 (Dev and Beta)\"." }
+      ],
+      "references": [
+        { "title": "Experimental agentic features (Microsoft Support)", "url": "https://support.microsoft.com/en-us/windows/ai/ai-features/experimental-agentic-features" },
+        { "title": "Eleven Forum: Enable or Disable Experimental agentic features in Windows 11", "url": "https://www.elevenforum.com/t/enable-or-disable-experimental-agentic-features-in-windows-11.42126/latest" }
+      ],
+      "notes": "Home availability is unconfirmed: Microsoft's page says the feature is available on preview builds 26100.7344+, and no source read says whether the toggle exists on stable 25H2 or 26H2 builds. Candidate for a future machine check: HKLM\\SYSTEM\\CurrentControlSet\\Services\\IsoEnvBroker, value Enabled (DWORD, 0 = off). The tutorial uses it in a REG file but does not say the toggle writes it, so confirm by registry diff in a VM before adding an audit. Agent-connector policies exist only for Enterprise, Education and IoT (see docs/BACKLOG.md)."
+    },
+    {
+      "id": "ai-009-gaming-copilot-manual",
+      "module": "m3-ai",
+      "title": "Review Gaming Copilot privacy settings in Game Bar (manual check)",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "manual",
+      "home_effective": "unverified",
+      "channel_class": "settings-backing",
+      "applicability": { "editions": ["Home"], "min_build": 26200 },
+      "rationale": "Gaming Copilot is part of Xbox Game Bar and, according to Neowin, can only be removed together with it. Its privacy controls (model training on text, screenshot capture) live in Game Bar settings and no registry value for them was found, so the tool lists the steps instead of writing an unverified value. Microsoft says the screenshots are not used to train AI models but that text or voice conversations may be.",
+      "impact": "Nothing is changed by the tool. Turning the two options off is expected to stop model training on text conversations and screenshot capture in Gaming Copilot; the effect is not verified.",
+      "manual_steps": [
+        "Press Win+G to open Xbox Game Bar, then open Settings (the gear icon).",
+        "Open Privacy settings and turn off 'Model training on text'. Microsoft's statement also names voice conversations, so turn off any other model-training option listed there.",
+        "Open Capture settings and turn off 'Enable screenshots (experimental)'.",
+        "If Game Bar has no Gaming Copilot widget on your PC, there is nothing to do."
+      ],
+      "audit": {
+        "manual_check": "Game Bar > Settings > Privacy: 'Model training on text' and any other model-training option listed there are Off. Game Bar > Settings > Capture: 'Enable screenshots (experimental)' is Off. Or Gaming Copilot is absent."
+      },
+      "rollback": { "strategy": "manual", "reversibility": "full" },
+      "risk": "low",
+      "evidence": [
+        { "grade": "ms-statement", "source": "Neowin, Microsoft denies accusations of screenshotting your gameplay to train Gaming Copilot (undated page, read 2026-11-11)", "claim": "Microsoft's statement as quoted: \"These screenshots are not used to train AI models\"; Gaming Copilot is optional and \"only has access to gameplay when you're playing a game and actively using it\"; \"Gaming Copilot may use its text or voice conversations with players to help train and improve AI.\" Players can adjust privacy settings under Settings > Privacy Settings in Game Bar. \"Neowin checked Gaming Copilot on several machines, and all of them had training turned off by default.\" Neowin says the only way to remove Gaming Copilot is to remove Game Bar altogether." },
+        { "grade": "community", "source": "MalwareTips thread on Gaming Copilot training and defaults (undated post, read 2026-11-11)", "claim": "Steps: Win+G, Settings gear, Privacy settings, toggle \"Model training on text\" to off, go back, Capture settings, toggle \"Enable screenshots (experimental)\". One user wrote \"I checked on a recent Windows 11, version 24H2 system and did not have a Privacy settings section.\"" },
+        { "grade": "third-party", "source": "TechSpot, Gaming Copilot automatically captures screenshots (undated page, read 2026-11-11)", "claim": "\"The automatic screenshot feature is enabled by default, according to RedbullCola\", a ResetEra user who analysed network traffic; \"it can be disabled through the Gaming Copilot settings in the Xbox Game Bar\"." }
+      ],
+      "references": [
+        { "title": "Neowin: Microsoft denies accusations of screenshotting your gameplay", "url": "https://www.neowin.net/news/microsoft-denies-accusations-of-screenshotting-your-gameplay-to-train-gaming-copilot" },
+        { "title": "MalwareTips: Gaming Copilot AI training and defaults", "url": "https://malwaretips.com/threads/report-gaming-copilot-ai-is-being-trained-by-watching-you-play-games-and-it-is-on-by-default.138069/" },
+        { "title": "TechSpot: Gaming Copilot automatically captures screenshots", "url": "https://www.techspot.com/news/109983-microsoft-gaming-copilot-automatically-captures-screenshots-but-you.html" }
+      ],
+      "notes": "The pages read carry no publication date, so labels and defaults may have changed, and the sources disagree on the default state (Neowin found training off, a forum user reported screenshots on): check both toggles. The tool never changes Game Bar settings because no registry backing value was found. Not VM-verified: walk through the steps once on a Home VM that has Game Bar and Gaming Copilot, then record build and date under 'verified'."
+    }
+  ]
+}

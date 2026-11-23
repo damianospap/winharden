@@ -1,0 +1,2 @@
+# Dev / CI only. The PowerShell engine has no Python dependency.
+jsonschema>=4.18

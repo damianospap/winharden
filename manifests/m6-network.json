@@ -1,0 +1,1304 @@
+{
+  "module": "m6-network",
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "net-001-smb1-feature-off",
+      "module": "m6-network",
+      "title": "Make sure the SMBv1 protocol feature is disabled",
+      "tier": "T0",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "flags": {
+        "requires_reboot": true
+      },
+      "rationale": "SMBv1 is the oldest version of the Windows file sharing protocol, and Microsoft says it \"has significant security vulnerabilities\". Windows 11 does not install it by default, so on a clean system the entry finds nothing to change; it exists for PCs where someone, or an old installer, switched the feature on. It is turned off with the command Microsoft documents.",
+      "impact": "Devices that can only speak SMBv1 (very old NAS boxes, scanners, Windows XP shares) can no longer be reached from this PC; everything that uses SMB 2 or 3 is unaffected. Turning the feature off needs a restart, so the plan reports one as pending.",
+      "apply": [
+        {
+          "type": "optional_feature",
+          "name": "SMB1Protocol",
+          "state": "Disabled"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "@(Get-WindowsOptionalFeature -Online -ErrorAction SilentlyContinue | Where-Object { $_.FeatureName -eq 'SMB1Protocol' -and $_.State -eq 'Enabled' }).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "partial",
+        "limitation": "The journal re-enables only the SMB1Protocol feature itself; if sub-features such as SMB1Protocol-Client or SMB1Protocol-Server were enabled before, they must be switched on again in Windows Optional Features."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com How to detect, enable and disable SMBv1, SMBv2, and SMBv3 in Windows (read 2026-11-15/16)",
+          "claim": "The command for a Windows client is \"Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol\". \"The computer restarts after you run the PowerShell commands to disable or enable SMBv1.\" \"SMBv1 isn't installed by default in any edition of Windows 11 or Windows Server 2019 and later versions.\" \"SMBv1 has significant security vulnerabilities\" is how the page begins its recommendation not to use it. The page applies to Windows 11, Windows 10 and Windows Server 2016 and later."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com How to detect, enable and disable SMBv1, SMBv2, and SMBv3 in Windows (read 2026-11-15/16)",
+          "claim": "In the text read the page names only the feature SMB1Protocol; the sub-features SMB1Protocol-Client and SMB1Protocol-Server are not named there, so this entry does not touch them."
+        }
+      ],
+      "references": [
+        {
+          "title": "How to detect, enable and disable SMBv1, SMBv2, and SMBv3 in Windows",
+          "url": "https://learn.microsoft.com/en-us/windows-server/storage/file-server/troubleshoot/detect-enable-and-disable-smbv1-v2-v3"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). Run Get-WindowsOptionalFeature -Online -FeatureName SMB1Protocol there: Microsoft's page says the feature is not installed by default, so the plan should show it as already off or as not present on this system."
+    },
+    {
+      "id": "net-002-wdigest-off",
+      "module": "m6-network",
+      "title": "Keep WDigest from storing clear-text passwords in memory",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "flags": {
+        "requires_reboot": true
+      },
+      "rationale": "WDigest is an old authentication provider. When its UseLogonCredential value is 1 it keeps the user's password in clear text in the memory of LSASS, where any tool that can read that process can take it; Microsoft's own description is that a value of 0 stops this. The entry writes 0, so a setting that software or an old script switched on is switched off again.",
+      "impact": "Programs that rely on WDigest to reuse the logon password, such as some old intranet sites that use Digest authentication, may ask for the password again. Nothing else changes.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\WDigest",
+          "name": "UseLogonCredential",
+          "kind": "DWord",
+          "data": 0,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\WDigest' -Name UseLogonCredential -ErrorAction SilentlyContinue).UseLogonCredential",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-statement",
+          "source": "techcommunity.microsoft.com The Importance of KB2871997 and KB2928120 for Credential Protection (read 2026-11-15/16)",
+          "claim": "The key is HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\SecurityProviders\\WDigest. \"If the UseLogonCredential value is set to 0, WDigest will not store credentials in memory.\" \"If the UseLogonCredential value is set to 1, WDigest will store credentials in memory.\" \"WDigest stores passwords in clear text in LSASS and the only way to prevent this is to disable WDigest.\" \"Even though you have installed KB2871997, it doesn't mitigate WDigest's storage of clear text passwords in LSASS memory.\""
+        },
+        {
+          "grade": "background",
+          "source": "techcommunity.microsoft.com The Importance of KB2871997 and KB2928120 for Credential Protection (read 2026-11-15/16)",
+          "claim": "The page is about the 2014 updates for Windows 7, 8, 8.1, Server 2008 R2 and Server 2012 and says nothing about Windows 11 or about editions. That the value is read by the WDigest provider itself, on every edition, and that a current Windows installation already defaults to 'do not store' is general knowledge, not stated on the page."
+        }
+      ],
+      "references": [
+        {
+          "title": "The Importance of KB2871997 and KB2928120 for Credential Protection",
+          "url": "https://techcommunity.microsoft.com/t5/core-infrastructure-and-security/the-importance-of-kb2871997-and-kb2928120-for-credential/ba-p/258478"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM, read the value before applying: if it is absent the default already protects the PC and the plan will still write 0 (a no-op in behaviour). The new value is read when the provider loads, so the plan reports a pending restart."
+    },
+    {
+      "id": "net-003-firewall-profiles-attest",
+      "module": "m6-network",
+      "title": "Attest that Windows Firewall is on for the Domain, Private and Public profiles",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "attest",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "This tool never turns the firewall off and never edits firewall rules (the Base Filtering Engine and Windows Defender Firewall services are on the never-touch list). Something else could have done so, so the report states whether all three profiles are on. A failing check means 'firewall not attested', never a silent pass.",
+      "impact": "Read-only. Prints three lines in the report and changes nothing, so there is nothing to roll back.",
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-NetFirewallProfile -Name Domain -ErrorAction SilentlyContinue).Enabled",
+            "expected": "True"
+          },
+          {
+            "command": "(Get-NetFirewallProfile -Name Private -ErrorAction SilentlyContinue).Enabled",
+            "expected": "True"
+          },
+          {
+            "command": "(Get-NetFirewallProfile -Name Public -ErrorAction SilentlyContinue).Enabled",
+            "expected": "True"
+          }
+        ],
+        "manual_check": "Windows Security > Firewall & network protection: the Domain, Private and Public networks each show the firewall as On."
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Get-NetFirewallProfile (read 2026-11-15/16)",
+          "claim": "Synopsis: \"Displays settings that apply to the per-profile configurations of the Windows Firewall with Advanced Security.\" \"The Get-NetFirewallProfile cmdlet displays the currently configured options for a specified profile.\" The page covers the NetSecurity module as documented for Windows Server 2025 and does not list the values of the Enabled property."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com MSFT_NetFirewallProfile class (read 2026-11-15/16)",
+          "claim": "Class description: \"Represents a particular firewall profile. Multiple profiles may be in effect on any interface at any given time.\" Enabled (uint16, read-only): \"Whether the firewall is enabled on this profile.\" The page does not list the values."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com Get-NetFirewallProfile (read 2026-11-15/16)",
+          "claim": "That the cmdlet prints True for a profile whose firewall is on is general knowledge of the NetSecurity module; it is not stated on the two pages read."
+        }
+      ],
+      "references": [
+        {
+          "title": "Get-NetFirewallProfile",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/netsecurity/get-netfirewallprofile"
+        },
+        {
+          "title": "MSFT_NetFirewallProfile class",
+          "url": "https://learn.microsoft.com/en-us/windows/win32/fwp/wmi/wfascimprov/msft-netfirewallprofile"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM, run Get-NetFirewallProfile | Select-Object Name, Enabled and compare with Windows Security > Firewall & network protection; if the property prints something other than True for a profile that is on, change the expected text."
+    },
+    {
+      "id": "net-004-llmnr-off",
+      "module": "m6-network",
+      "title": "Turn off LLMNR multicast name resolution",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "flags": {
+        "requires_reboot": true
+      },
+      "rationale": "When a name is not found in DNS, Windows can ask the whole local network with LLMNR. Anyone on the network can answer such a query and send the PC to a fake server, which then asks for the user's credentials. Microsoft says it plans to turn LLMNR off by default and calls the old multicast name protocols a needless expansion of the attack surface; this entry turns it off now with the policy value that exists for the purpose.",
+      "impact": "If DNS cannot find a name, the PC no longer asks other devices on the same network, so names of devices that exist only through multicast (an unconfigured printer or a small router) stop resolving by name; their IP addresses still work. Takes effect after a restart.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows NT\\DNSClient",
+          "name": "EnableMulticast",
+          "kind": "DWord",
+          "data": 0,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows NT\\DNSClient' -Name EnableMulticast -ErrorAction SilentlyContinue).EnableMulticast",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Policy CSP ADMX_DnsClient (read 2026-11-15/16)",
+          "claim": "Policy Turn_Off_Multicast: \"Specifies that link local multicast name resolution (LLMNR) is disabled on the DNS client.\" ADMX registry key Software\\Policies\\Microsoft\\Windows NT\\DNSClient, value name EnableMulticast."
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Policy CSP ADMX_DnsClient (read 2026-11-15/16)",
+          "claim": "The editions table lists Pro, Enterprise, Education and IoT Enterprise / IoT Enterprise LTSC. Home is not listed."
+        },
+        {
+          "grade": "community",
+          "source": "admx-offsec-nl.pages.dev reference page for the policy Turn off multicast name resolution (read 2026-11-15/16)",
+          "claim": "Reference page for the same policy: \"HKLM\\Software\\Policies\\Microsoft\\Windows NT\\DNSClient\\EnableMulticast (enabled) = 0\"; enabling the policy turns LLMNR off on all adapters, and disabling it leaves LLMNR on."
+        },
+        {
+          "grade": "third-party",
+          "source": "tenable.com audit item for CIS Microsoft Windows 10 Enterprise v4.0.0 L1, 18.6.4.4 Turn off multicast name resolution (read 2026-11-15/16)",
+          "claim": "CIS benchmark item, setting Enabled recommended: \"Link-Local Multicast Name Resolution (LLMNR) is a secondary name resolution protocol.\" The page says an attacker on the network can listen for LLMNR (UDP 5355) and NBT-NS (UDP 137) queries and answer them, and that full mitigation also needs NetBIOS over TCP/IP turned off on every adapter (entry net-005). Stated impact: if DNS fails, the system cannot ask other systems on the subnet for name resolution."
+        },
+        {
+          "grade": "ms-statement",
+          "source": "techcommunity.microsoft.com Aligning on mDNS: ramping down NetBIOS name resolution and LLMNR (page header read directly, body read through the mirror thewindowsupdate.com) (read 2026-11-15/16)",
+          "claim": "Page description, read directly: \"Describing our first step toward turning NetBIOS name resolution and LLMNR off by default.\" The body, read through a mirror, says these protocols are \"rarely used today\", that keeping them on \"needlessly expands the attack surface of devices\", and that the LLMNR default \"has not been changed in Windows yet\" (April 2022)."
+        }
+      ],
+      "references": [
+        {
+          "title": "Policy CSP - ADMX_DnsClient",
+          "url": "https://learn.microsoft.com/windows/client-management/mdm/policy-csp-admx-dnsclient"
+        },
+        {
+          "title": "Turn off multicast name resolution (ADMX reference)",
+          "url": "https://admx-offsec-nl.pages.dev/policy/windows/network/dns-client/turn-off-multicast-name-resolution/"
+        },
+        {
+          "title": "CIS 18.6.4.4 Turn off multicast name resolution (Tenable audit item)",
+          "url": "https://www.tenable.com/audits/items/CIS_Microsoft_Windows_10_Enterprise_v4.0.0_L1_BL.audit:770fb926dd47935329bfcf6f1247d4a6"
+        },
+        {
+          "title": "Aligning on mDNS: ramping down NetBIOS name resolution and LLMNR",
+          "url": "https://techcommunity.microsoft.com/blog/networkingblog/aligning-on-mdns-ramping-down-netbios-name-resolution-and-llmnr/3290816"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). The policy page does not list Home, so the value may be ignored there. On the VM: apply, restart, then run Resolve-DnsName -Name <a host that exists only in the hosts file or on the LAN> -LlmnrOnly (or watch UDP 5355 with a packet capture) and check that no LLMNR query leaves the PC; if the queries continue, mark the entry na."
+    },
+    {
+      "id": "net-005-netbios-off",
+      "module": "m6-network",
+      "title": "Turn off NetBIOS over TCP/IP on every network adapter",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "flags": {
+        "requires_reboot": true
+      },
+      "rationale": "NetBIOS name resolution is a 1980s broadcast protocol. Anyone on the same network can answer its queries and capture the credentials that Windows then sends; CISA recommends turning it off everywhere. Windows 11 uses it only as a fallback after DNS, mDNS and LLMNR fail, so it is rarely needed. The entry sets the per-adapter value that the adapter's own 'Disable NetBIOS over TCP/IP' setting writes.",
+      "impact": "Devices that can only be found by their NetBIOS name (very old NAS boxes, Windows XP computers, some old printers) are no longer found by name; they still work by IP address. File sharing by IP address or DNS name is unaffected. Takes effect when the adapter restarts or after a restart. Adapters added later are covered by the next verify or drift run.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters\\Interfaces\\Tcpip_*",
+          "name": "NetbiosOptions",
+          "kind": "DWord",
+          "data": 2,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "@(Get-ChildItem -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters\\Interfaces' -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -like 'Tcpip_*' -and (Get-ItemProperty -Path $_.PSPath -Name NetbiosOptions -ErrorAction SilentlyContinue).NetbiosOptions -ne 2 }).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com SetTcpipNetbios method of the Win32_NetworkAdapterConfiguration class (read 2026-11-15/16)",
+          "claim": "\"The SetTcpipNetbios method is used to set the default operation of NetBIOS over TCP/IP.\" TcpipNetbiosOptions: 0 = \"Enable Netbios via DHCP\", 1 = \"Enable Netbios\", 2 = \"Disable Netbios\". Return value 1 is \"Successful completion. Reboot required.\""
+        },
+        {
+          "grade": "community",
+          "source": "woshub.com How to disable NetBIOS over TCP/IP and LLMNR using GPO (read 2026-11-15/16)",
+          "claim": "Each adapter has a key under HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters\\Interfaces; to disable NetBIOS \"change the value of the NetbiosOptions parameter to 2 (it is 0 by default)\". The page calls LLMNR, NetBIOS and mDNS \"not secure\" protocols that \"can easily be used by attackers to implement spoofing, relay, and MITM attacks\"."
+        },
+        {
+          "grade": "third-party",
+          "source": "cisa.gov Eviction Strategies Tool, countermeasure CM0052 Disable NetBIOS Service (read 2026-11-15/16)",
+          "claim": "\"System administrators should disable NetBIOS over TCP/IP on all devices across the network.\" \"NetBIOS is able to be exploited by attackers to gather computer names, account credentials, and shared network resources.\" \"This countermeasure can disrupt functionality of systems that rely on NetBIOS.\" The page says the setting is made in the adapter settings or with a WMI script and that Group Policy cannot do it."
+        },
+        {
+          "grade": "ms-statement",
+          "source": "techcommunity.microsoft.com Aligning on mDNS: ramping down NetBIOS name resolution and LLMNR (page header read directly, body read through the mirror thewindowsupdate.com) (read 2026-11-15/16)",
+          "claim": "Read through a mirror: NetBIOS is \"rarely used today\" and keeping it on \"needlessly expands the attack surface of devices\"; \"NetBIOS is only used as a fallback after mDNS and LLMNR queries fail.\" A newer DNS client policy for NetBIOS exists (Policy CSP ADMX_DnsClient, DNS_Netbios) but the CSP page marks it Windows Insider Preview only, so it is not used."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com SetTcpipNetbios method of the Win32_NetworkAdapterConfiguration class (read 2026-11-15/16)",
+          "claim": "That the registry value NetbiosOptions is the one the adapter's 'Disable NetBIOS over TCP/IP' setting (IPv4 properties > Advanced > WINS) writes, on every edition, is general knowledge; the WMI page documents the method and values, not the registry location."
+        }
+      ],
+      "references": [
+        {
+          "title": "SetTcpipNetbios method of the Win32_NetworkAdapterConfiguration class",
+          "url": "https://learn.microsoft.com/en-ie/Windows/Win32/cimwin32prov/settcpipnetbios-method-in-class-win32-networkadapterconfiguration"
+        },
+        {
+          "title": "How to disable NetBIOS over TCP/IP and LLMNR using GPO (Windows OS Hub)",
+          "url": "https://woshub.com/how-to-disable-netbios-over-tcpip-and-llmnr-using-gpo/"
+        },
+        {
+          "title": "CM0052: Disable NetBIOS Service (CISA)",
+          "url": "https://www.cisa.gov/eviction-strategies-tool/info-countermeasures/CM0052"
+        },
+        {
+          "title": "Aligning on mDNS: ramping down NetBIOS name resolution and LLMNR",
+          "url": "https://techcommunity.microsoft.com/blog/networkingblog/aligning-on-mdns-ramping-down-netbios-name-resolution-and-llmnr/3290816"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM: apply, restart the adapter, then run nbtstat -n and check that no NetBIOS names are registered, and that Get-NetAdapter | Get-NetAdapterBinding still shows the adapter working. The wildcard Tcpip_* covers the IPv4 interface keys that exist at plan time; a new adapter is reported as drift by the next verify."
+    },
+    {
+      "id": "net-006-smb-client-signing",
+      "module": "m6-network",
+      "title": "Require SMB signing for connections this PC makes",
+      "tier": "T0",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "flags": {
+        "requires_reboot": true
+      },
+      "rationale": "SMB signing adds a signature to every SMB message. If someone changes a message on the way, the signature no longer matches, and the signature also stops relay attacks, where a man in the middle passes a login on to another server. Microsoft documents the client value RequireSecuritySignature and says signing is enabled in all versions of Windows. The entry makes the client refuse unsigned servers.",
+      "impact": "Connecting to a server that cannot sign (old NAS boxes, some router USB shares, old Samba) fails. Microsoft says its own page that in that case \"you might need to disable the requirement for SMB signing\". Connections to current Windows or Samba servers are unaffected.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Services\\LanManWorkstation\\Parameters",
+          "name": "RequireSecuritySignature",
+          "kind": "DWord",
+          "data": 1,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\LanManWorkstation\\Parameters' -Name RequireSecuritySignature -ErrorAction SilentlyContinue).RequireSecuritySignature",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com SMB signing overview (read 2026-11-15/16)",
+          "claim": "\"SMB signing is enabled in all versions of Windows.\" Client key: HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Services\\LanManWorkstation\\Parameters; value RequireSecuritySignature, REG_DWORD, \"0 (disable), 1 (enable)\". \"The signature also confirms the sender's and receiver's identities, and prevents relay attacks.\" \"If someone changes a message during transmission, the hash doesn't match\" \"The EnableSecuritySignature registry setting for SMB2 and later clients and servers is ignored.\" Warning: \"In this case, you might need to disable the requirement for SMB signing.\" (for environments with non-Microsoft file servers)."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Enable insecure guest logons in SMB2 and SMB3 (read 2026-11-15/16)",
+          "claim": "\"SMB signing is required by default for Windows 11, version 24H2, Windows Server 2025, and later builds which results in compatibility issues with guest authentication if signing doesn't succeed.\" The page does not say which editions this covers, so on this tool's minimum build (26200) the entry may only make an existing default explicit."
+        }
+      ],
+      "references": [
+        {
+          "title": "SMB signing overview",
+          "url": "https://learn.microsoft.com/en-us/windows-server/storage/file-server/smb-signing-overview"
+        },
+        {
+          "title": "Enable insecure guest logons in SMB2 and SMB3",
+          "url": "https://learn.microsoft.com/en-us/windows-server/storage/file-server/enable-insecure-guest-logons-smb2-and-smb3"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM, read Get-SmbClientConfiguration | Select-Object RequireSecuritySignature before and after: if it is already True, the entry changes nothing in behaviour. Then connect to a share on another Windows machine to confirm that normal SMB still works."
+    },
+    {
+      "id": "net-007-smb-insecure-guest-off",
+      "module": "m6-network",
+      "title": "Refuse insecure guest logons to SMB shares",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "An SMB server can let a client in as 'guest' without a password. Such logons do not use SMB signing or SMB encryption, so a man in the middle can read and change everything. Microsoft recommends not enabling insecure guest logons. The entry sets the policy value and the SMB client's own value, so the client refuses them whichever one the system reads.",
+      "impact": "Shares that require no password at all (some NAS boxes and router USB shares set to 'guest') can no longer be opened; use a user name and password on them. Shares with a normal login are unaffected.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\LanmanWorkstation",
+          "name": "AllowInsecureGuestAuth",
+          "kind": "DWord",
+          "data": 0,
+          "scope": "machine"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Services\\LanManWorkstation\\Parameters",
+          "name": "AllowInsecureGuestAuth",
+          "kind": "DWord",
+          "data": 0,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\LanmanWorkstation' -Name AllowInsecureGuestAuth -ErrorAction SilentlyContinue).AllowInsecureGuestAuth",
+            "expected": "0"
+          },
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\LanManWorkstation\\Parameters' -Name AllowInsecureGuestAuth -ErrorAction SilentlyContinue).AllowInsecureGuestAuth",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Enable insecure guest logons in SMB2 and SMB3 (read 2026-11-15/16)",
+          "claim": "\"Guest logons are vulnerable to adversary-in-the-middle attacks that can expose sensitive data on the network.\" \"Guest logons don't support standard security features such as SMB signing and SMB encryption even if the SMB client is set to allow guest logons.\" \"We recommend that you don't enable insecure guest logons.\" \"Windows 10 Home and Pro editions still allow the use of guest authentication by default, as they did previously.\" Event 31018 reads \"An administrator has enabled AllowInsecureGuestAuth.\""
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Policy CSP LanmanWorkstation (read 2026-11-15/16)",
+          "claim": "Policy \"Enable insecure guest logons\": \"If you disable this policy setting, the SMB client will reject insecure guest logons.\" ADMX registry key Software\\Policies\\Microsoft\\Windows\\LanmanWorkstation, value name AllowInsecureGuestAuth."
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Policy CSP LanmanWorkstation (read 2026-11-15/16)",
+          "claim": "The editions table lists Pro, Enterprise, Education and IoT Enterprise / IoT Enterprise LTSC. Home is not listed; the applicable system is Windows 10, version 1803 and later."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com Enable insecure guest logons in SMB2 and SMB3 (read 2026-11-15/16)",
+          "claim": "That the SMB client reads the value AllowInsecureGuestAuth in HKLM\\SYSTEM\\CurrentControlSet\\Services\\LanmanWorkstation\\Parameters (the value Set-SmbClientConfiguration -EnableInsecureGuestLogons writes) is general knowledge; the page read names the value only in an event text and does not give the key."
+        }
+      ],
+      "references": [
+        {
+          "title": "Enable insecure guest logons in SMB2 and SMB3",
+          "url": "https://learn.microsoft.com/en-us/windows-server/storage/file-server/enable-insecure-guest-logons-smb2-and-smb3"
+        },
+        {
+          "title": "Policy CSP - LanmanWorkstation",
+          "url": "https://learn.microsoft.com/windows/client-management/mdm/policy-csp-lanmanworkstation"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM: apply, then run Get-SmbClientConfiguration | Select-Object EnableInsecureGuestLogons (expect False) and try to open a guest-only share if one is available. If the cmdlet still prints True because Home ignores the policy key, keep only the second value."
+    },
+    {
+      "id": "net-008-anonymous-enumeration-off",
+      "module": "m6-network",
+      "title": "Block anonymous listing of accounts and shares",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Without these two values an anonymous connection to this PC may be allowed to list the names of its user accounts and shared folders. Microsoft says an unauthorized user \"could anonymously list account names and shared resources\" and use that to guess passwords or plan social engineering, and recommends enabling both related policies. The values are the ones those policies manage.",
+      "impact": "Only affects other devices that connect to this PC without logging in: they can no longer list its shares. Normal logins, and what this PC can see on other devices, are unaffected.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Lsa",
+          "name": "RestrictAnonymousSAM",
+          "kind": "DWord",
+          "data": 1,
+          "scope": "machine"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Lsa",
+          "name": "RestrictAnonymous",
+          "kind": "DWord",
+          "data": 1,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa' -Name RestrictAnonymousSAM -ErrorAction SilentlyContinue).RestrictAnonymousSAM",
+            "expected": "1"
+          },
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa' -Name RestrictAnonymous -ErrorAction SilentlyContinue).RestrictAnonymous",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com (archived Windows Server 2008 R2 page) Network access: Do not allow anonymous enumeration of SAM accounts (read 2026-11-15/16)",
+          "claim": "The Windows Server 2003 policies \"manage the registry entries RestrictAnonymousSAM and RestrictAnonymous, respectively\", both \"located in the HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Lsa\\ key\". Recommended countermeasure: \"Enable the Network access: Do not allow anonymous enumeration of SAM accounts setting.\" Default for client computers: Enabled. Warning: \"Misuse of this policy setting is a common error that can cause data loss or problems with data access or security.\" The page is archived and applies to Windows 7 and Server 2003/2008 (R2)."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com (archived Windows 10 page) Network access: Do not allow anonymous enumeration of SAM accounts and shares (read 2026-11-15/16)",
+          "claim": "\"An unauthorized user could anonymously list account names and shared resources\" and use that information \"to attempt to guess passwords or perform social-engineering attacks.\" Default for client computers: Disabled. Impact: \"Users who access file and print servers anonymously are unable to list the shared network resources\". The page is archived and lists only Windows 10; it does not name the registry value."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com (archived Windows Server 2008 R2 page) Network access: Do not allow anonymous enumeration of SAM accounts (read 2026-11-15/16)",
+          "claim": "That the value 1 is the 'enabled' setting of both policies, and that RestrictAnonymous belongs to the 'SAM accounts and shares' policy (the page lists the two values in the order of the two policies without saying so), is general knowledge; Windows 11 is not named on either page."
+        }
+      ],
+      "references": [
+        {
+          "title": "Network access: Do not allow anonymous enumeration of SAM accounts (archived)",
+          "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/jj852230(v=ws.10)"
+        },
+        {
+          "title": "Network access: Do not allow anonymous enumeration of SAM accounts and shares (archived)",
+          "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/security-policy-settings/network-access-do-not-allow-anonymous-enumeration-of-sam-accounts-and-shares"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM, compare reg query HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa /v RestrictAnonymous before and after, and run net view \\\\<this PC> from another machine without credentials to confirm that the share list is refused."
+    },
+    {
+      "id": "net-009-remote-registry-off",
+      "module": "m6-network",
+      "title": "Disable the Remote Registry service",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Remote Registry lets other computers read and change this PC's registry over the network. Microsoft's description is \"Enables remote users to modify registry settings on this computer. If you stop this service, only users on this computer can modify the registry.\" A home PC has no use for it, and it is a standard tool for attackers who already have a password.",
+      "impact": "Remote administration tools and remote registry editors can no longer reach this PC. Local registry editing is unaffected.",
+      "apply": [
+        {
+          "type": "service",
+          "name": "RemoteRegistry",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-Service -Name RemoteRegistry -ErrorAction SilentlyContinue).StartType",
+            "expected": "Disabled"
+          },
+          {
+            "command": "(Get-Service -Name RemoteRegistry -ErrorAction SilentlyContinue).Status",
+            "expected": "Stopped"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Security guidelines for disabling system services in Windows Server (read 2026-11-15/16)",
+          "claim": "For Windows Server 2016 with Desktop Experience the page lists Remote Registry (RemoteRegistry) as Automatic, recommendation \"Do not disable\", description \"Enables remote users to modify registry settings on this computer. If you stop this service, only users on this computer can modify the registry.\" The page says its guidance \"only applies to Windows Server 2016 with Desktop Experience, unless you're using it as a desktop replacement for end-users\", so the server advice not to disable it does not carry over to a home PC."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com Security guidelines for disabling system services in Windows Server (read 2026-11-15/16)",
+          "claim": "That the service is normally not running on Windows 11 Home and that the entry therefore usually changes only its start type is general knowledge; the page does not give Windows 11 defaults."
+        }
+      ],
+      "references": [
+        {
+          "title": "Security guidelines for disabling system services in Windows Server",
+          "url": "https://learn.microsoft.com/en-us/windows-server/security/windows-services/security-guidelines-for-disabling-system-services-in-windows-server"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM: Get-Service RemoteRegistry before and after; the service may already be Disabled, in which case the plan shows no change."
+    },
+    {
+      "id": "net-010-autorun-off",
+      "module": "m6-network",
+      "title": "Turn off AutoRun and AutoPlay for all drive types",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "AutoRun starts a program from a disc or drive as soon as it is inserted; it has been a standard way to spread malware by USB stick. Microsoft's guidance for turning it off is the NoDriveTypeAutoRun value with the data 0xFF, which its KB table describes as disabling AutoRun on all kinds of drives.",
+      "impact": "Nothing starts by itself when a disc, USB drive or phone is connected, and the AutoPlay prompt does not appear; files are opened from File Explorer as usual. Setup discs that relied on AutoRun must be started by hand.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+          "name": "NoDriveTypeAutoRun",
+          "kind": "DWord",
+          "data": 255,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer' -Name NoDriveTypeAutoRun -ErrorAction SilentlyContinue).NoDriveTypeAutoRun",
+            "expected": "255"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "third-party",
+          "source": "mskb.pkisolutions.com unofficial archive of Microsoft KB 967715 How to disable the Autorun functionality in Windows (read 2026-11-15/16)",
+          "claim": "The page is an unofficial archive of Microsoft KB 967715. It names HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\ (and the same key under HKEY_CURRENT_USER) and tells the reader to \"type 0xFF to disable all types of drives\"; its value table lists 0xFF as \"Disables AutoRun on all kinds of drives.\" The list of systems it applies to names Windows XP (including Home), Server 2003, Vista and Server 2008, not Windows 11."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Policy CSP Autoplay (read 2026-11-15/16)",
+          "claim": "Policy TurnOffAutoPlay: \"This policy setting allows you to turn off the Autoplay feature.\" \"If you enable this policy setting, Autoplay is disabled on CD-ROM and removable media drives, or disabled on all drives.\" ADMX registry key Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer."
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Policy CSP Autoplay (read 2026-11-15/16)",
+          "claim": "The editions table lists Pro, Enterprise, Education and IoT Enterprise / IoT Enterprise LTSC. Home is not listed; the applicable system is Windows 10, version 1703 and later. The page does not give the value name or data."
+        }
+      ],
+      "references": [
+        {
+          "title": "KB 967715 How to disable the Autorun functionality in Windows (unofficial archive)",
+          "url": "https://mskb.pkisolutions.com/kb/967715"
+        },
+        {
+          "title": "Policy CSP - Autoplay",
+          "url": "https://learn.microsoft.com/en-my/windows/client-management/mdm/policy-csp-autoplay"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM: apply, sign out and in, insert a USB drive or mount an ISO and check that no AutoPlay prompt appears. If it still does, the policy key is ignored on Home: mark the entry na."
+    },
+    {
+      "id": "net-011-powershell-v2-off",
+      "module": "m6-network",
+      "title": "Turn off the Windows PowerShell 2.0 feature",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "flags": {
+        "requires_reboot": true
+      },
+      "rationale": "Windows PowerShell 2.0 was deprecated in 2017 and has none of the security logging and scanning features that later versions have, so malware that asks for version 2 can avoid them. Microsoft is removing it from Windows 11 to \"improve Windows security\". On a system where it is already gone the plan says so and does nothing; where it is still there, it is turned off with the documented command.",
+      "impact": "Scripts and tools that explicitly ask for PowerShell 2.0 (powershell -Version 2) stop working or fall back to Windows PowerShell 5.1. PowerShell 5.1 and PowerShell 7 are unaffected.",
+      "apply": [
+        {
+          "type": "optional_feature",
+          "name": "MicrosoftWindowsPowerShellV2Root",
+          "state": "Disabled"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "@(Get-WindowsOptionalFeature -Online -ErrorAction SilentlyContinue | Where-Object { $_.FeatureName -like 'MicrosoftWindowsPowerShellV2*' -and $_.State -eq 'Enabled' }).Count",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "partial",
+        "limitation": "The journal re-enables only the MicrosoftWindowsPowerShellV2Root feature; if its child feature MicrosoftWindowsPowerShellV2 was enabled before, it must be switched on again in Windows Optional Features. Where Microsoft has removed the feature from Windows it cannot be enabled at all."
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "support.microsoft.com PowerShell 2.0 removal from Windows (read 2026-11-15/16)",
+          "claim": "The article says the removal is part of an effort \"to clean up legacy code, reduce the complexity of the PowerShell ecosystem, and improve Windows security\", that PowerShell 2.0 was deprecated in 2017, and that \"newer versions of PowerShell such as PowerShell 5.1 and PowerShell 7.x continue to be available and supported.\" It applies to Windows 11 version 24H2 (Home and Pro are listed) and Windows Server 2025, says Insider builds have had it removed since July 2025, and does not name build 26200 or the feature names."
+        },
+        {
+          "grade": "community",
+          "source": "windowsloop.com How to Disable PowerShell 2.0 on Windows 10/11 (read 2026-11-15/16)",
+          "claim": "Gives the command \"Disable-WindowsOptionalFeature -Online -FeatureName MicrosoftWindowsPowerShellV2Root\" for Windows 10 and 11 and says \"Since having the deprecated software is considered a security risk, you can simply disable PowerShell 2.0 to keep your computer safe and secure.\""
+        }
+      ],
+      "references": [
+        {
+          "title": "PowerShell 2.0 removal from Windows",
+          "url": "https://support.microsoft.com/help/5065506"
+        },
+        {
+          "title": "How to Disable PowerShell 2.0 on Windows 10/11 (WindowsLoop)",
+          "url": "https://windowsloop.com/disable-powershell-v2/"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM: Get-WindowsOptionalFeature -Online | Where-Object FeatureName -like 'MicrosoftWindowsPowerShellV2*'. On a fully updated 25H2 system the feature is probably gone and the plan reports it as not present; that is the expected result, and the entry stays as a safety net for systems that are not up to date."
+    },
+    {
+      "id": "net-012-smb-server-signing",
+      "module": "m6-network",
+      "title": "Require SMB signing for connections to this PC",
+      "tier": "T0",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "flags": {
+        "requires_reboot": true
+      },
+      "rationale": "The same protection as net-006, for the other direction: when other devices connect to a share on this PC, the server only accepts signed messages, so a man in the middle cannot change them or relay a login to this PC. Microsoft documents the server value RequireSecuritySignature next to the client one.",
+      "impact": "Devices that connect to shares on this PC must support signing. Current Windows, macOS, Linux and Android clients do; some older scanners, media players and NAS-style clients may not and will fail to connect. If this PC shares nothing, nothing changes.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Services\\LanManServer\\Parameters",
+          "name": "RequireSecuritySignature",
+          "kind": "DWord",
+          "data": 1,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\LanManServer\\Parameters' -Name RequireSecuritySignature -ErrorAction SilentlyContinue).RequireSecuritySignature",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com SMB signing overview (read 2026-11-15/16)",
+          "claim": "\"SMB signing is enabled in all versions of Windows.\" Server key: HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Services\\LanManServer\\Parameters; value RequireSecuritySignature, REG_DWORD, \"0 (disable), 1 (enable)\". \"The signature also confirms the sender's and receiver's identities, and prevents relay attacks.\" \"By default, domain controllers require SMB signing of anyone connecting to them\" (a domain-controller default, not a Home one). \"In this case, you might need to disable the requirement for SMB signing.\" (for environments with non-Microsoft file servers)."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com SMB signing overview (read 2026-11-15/16)",
+          "claim": "That scanners, media players and similar clients are the usual ones that cannot sign is the author's expectation, not a statement of the page."
+        }
+      ],
+      "references": [
+        {
+          "title": "SMB signing overview",
+          "url": "https://learn.microsoft.com/en-us/windows-server/storage/file-server/smb-signing-overview"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM: Get-SmbServerConfiguration | Select-Object RequireSecuritySignature before and after, then connect from a second machine to a share on the VM to confirm that a current client still connects."
+    },
+    {
+      "id": "net-013-lm-compat-level-5",
+      "module": "m6-network",
+      "title": "Send and accept only NTLMv2 (LAN Manager authentication level 5)",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "LM and NTLMv1 are old password hash formats that can be cracked quickly from captured traffic and are open to relay attacks; Microsoft says NTLMv1 \"is far more susceptible to man-in-the-middle and relay attacks\" and that its baselines recommend level 5. At level 5 this PC sends NTLMv2 only and refuses LM and NTLMv1 from others. The DISA STIG for Windows 11 requires the same value.",
+      "impact": "Servers or devices that can only use LM or NTLMv1 (very old NAS firmware, Windows XP-era Samba) can no longer log in to or be logged in from this PC. Anything made in the last 15 years supports NTLMv2, and Kerberos logons are unaffected.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Lsa",
+          "name": "LmCompatibilityLevel",
+          "kind": "DWord",
+          "data": 5,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa' -Name LmCompatibilityLevel -ErrorAction SilentlyContinue).LmCompatibilityLevel",
+            "expected": "5"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-statement",
+          "source": "techcommunity.microsoft.com Active Directory Hardening Series - Part 1 - Disabling NTLMv1 (read 2026-11-15/16)",
+          "claim": "The key is HKLM\\System\\CurrentControlSet\\Control\\Lsa\\LmCompatibilityLevel. \"NTLMv1 is far more susceptible to man-in-the-middle and relay attacks\" and \"adversaries can brute force captured packets to determine hashes.\" \"CIS and Microsoft baselines recommend setting Windows devices to level 5\", which is \"Send NTLMv2 response only. Refuse LM & NTLM.\" The post is dated 2023-09-21 (updated 2025-01-15), is about Active Directory and does not mention Windows 11 24H2."
+        },
+        {
+          "grade": "third-party",
+          "source": "stigviewer.com DISA STIG Microsoft Windows 11, finding V-253462 (STIG dated 2026-02-12) (read 2026-11-15/16)",
+          "claim": "STIG finding V-253462 (rule WN11-SO-000205, severity high), \"The LanMan authentication level must be set to send NTLMv2 response only, and to refuse LM and NTLM.\" Check: hive HKEY_LOCAL_MACHINE, path \\SYSTEM\\CurrentControlSet\\Control\\Lsa\\, value LmCompatibilityLevel, REG_DWORD, \"Value: 5\". Fix: Security Options setting \"Send NTLMv2 response only. Refuse LM & NTLM.\""
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com (archived Windows 2000 Server page) LAN Manager authentication level (read 2026-11-15/16)",
+          "claim": "Archived Windows 2000 Server page for the six options: the strictest is \"Send NTLMv2 response only\\refuse LM & NTLM\", where \"Clients use NTLMv2 authentication only\" and \"DCs refuse LM and NTLM (accept only NTLMv2 authentication).\" It warns that \"Win9x computers do not support NTLM.\" It does not name the registry value or Windows 11."
+        }
+      ],
+      "references": [
+        {
+          "title": "Active Directory Hardening Series - Part 1 - Disabling NTLMv1",
+          "url": "https://techcommunity.microsoft.com/t5/core-infrastructure-and-security/active-directory-hardening-series-part-1-disabling-ntlmv1/ba-p/3934787"
+        },
+        {
+          "title": "STIG finding V-253462 (WN11-SO-000205): LAN Manager authentication level",
+          "url": "https://www.stigviewer.com/stigs/microsoft_windows_11/2026-02-12/finding/V-253462"
+        },
+        {
+          "title": "LAN Manager authentication level (archived)",
+          "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-2000-server/cc938105(v=technet.10)"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). Home is not named by any source, and the page that explains the setting is for Windows 2000. On the VM: apply, then connect to a share on another Windows machine and to a NAS or Samba server if one is available; if a device fails with 'access denied', it needs NTLMv2 or must be excluded with -Exclude net-013*."
+    },
+    {
+      "id": "net-014-mdns-off",
+      "module": "m6-network",
+      "title": "Turn off mDNS multicast name resolution",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "flags": {
+        "requires_reboot": true
+      },
+      "rationale": "mDNS lets Windows resolve names ending in .local by asking the whole network. Like LLMNR and NetBIOS, anyone on the network can answer such a query, so the CIS benchmark for Windows 11 recommends turning it off. Microsoft's direction is the opposite: it wants mDNS to be the one multicast name protocol that stays on. This entry goes further than Microsoft, because the aim of profile 3 is to leave no name protocol that a stranger on the network can answer.",
+      "impact": "Names ending in .local (printers, NAS boxes, Apple devices, Home Assistant and similar) stop resolving; use their IP address or a DNS name instead. Takes effect after a restart.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters",
+          "name": "EnableMDNS",
+          "kind": "DWord",
+          "data": 0,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters' -Name EnableMDNS -ErrorAction SilentlyContinue).EnableMDNS",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "third-party",
+          "source": "tenable.com audit item for CIS Microsoft Windows 11 Enterprise v4.0.0 L1, 18.6.4.1 Configure multicast DNS (mDNS) protocol (read 2026-11-15/16)",
+          "claim": "CIS benchmark item, setting Disabled recommended: \"This policy setting determines if the DNS client will perform name resolution over Multicast DNS (mDNS).\" \"An attacker can listen on a network over UDP port 5353 and respond to them\". The page names the template \"Microsoft Windows 11 Release 24H2 Administrative Templates (or newer)\" and gives no registry value."
+        },
+        {
+          "grade": "community",
+          "source": "woshub.com How to disable NetBIOS over TCP/IP and LLMNR using GPO (read 2026-11-15/16)",
+          "claim": "Gives the command REG ADD \"HKLM\\SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters\" /v \"EnableMDNS\" /t REG_DWORD /d \"0\" /f and calls LLMNR, NetBIOS and mDNS \"not secure\" protocols that \"can easily be used by attackers to implement spoofing, relay, and MITM attacks.\""
+        },
+        {
+          "grade": "ms-statement",
+          "source": "techcommunity.microsoft.com Aligning on mDNS: ramping down NetBIOS name resolution and LLMNR (page header read directly, body read through the mirror thewindowsupdate.com) (read 2026-11-15/16)",
+          "claim": "Read through a mirror: \"The modern standard for multicast name discovery is mDNS.\" \"mDNS is the only multicast name resolution protocol on by default\" is stated as Microsoft's goal. So Microsoft keeps mDNS on; this entry is deliberately stricter."
+        }
+      ],
+      "references": [
+        {
+          "title": "CIS 18.6.4.1 Configure multicast DNS (mDNS) protocol (Tenable audit item)",
+          "url": "https://www.tenable.com/audits/items/CIS_Microsoft_Windows_11_Enterprise_v4.0.0_L1.audit:25e597da8d196ed7b095657dab100aaa"
+        },
+        {
+          "title": "How to disable NetBIOS over TCP/IP and LLMNR using GPO (Windows OS Hub)",
+          "url": "https://woshub.com/how-to-disable-netbios-over-tcpip-and-llmnr-using-gpo/"
+        },
+        {
+          "title": "Aligning on mDNS: ramping down NetBIOS name resolution and LLMNR",
+          "url": "https://techcommunity.microsoft.com/blog/networkingblog/aligning-on-mdns-ramping-down-netbios-name-resolution-and-llmnr/3290816"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). No Microsoft page documents the EnableMDNS value in the Dnscache key; the evidence is a community article and a CIS item. On the VM: apply, restart, run Resolve-DnsName with a .local name of a device on the LAN and check that it no longer resolves, and that DNS names still do."
+    },
+    {
+      "id": "net-015-ssdp-upnp-off",
+      "module": "m6-network",
+      "title": "Disable the SSDP Discovery and UPnP Device Host services",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "SSDP Discovery listens for and sends UPnP announcements on the local network, and UPnP Device Host lets this PC act as a UPnP device. Both are Manual-start and both are services Microsoft's server guidance lists as \"OK to disable\". Switching them off removes two network-facing components that a home PC does not need.",
+      "impact": "Windows stops discovering UPnP and DLNA devices (smart TVs, media servers, some routers) and stops hosting UPnP devices; features that depend on them, such as casting to a TV from Windows, may no longer find the device. Apps that have their own discovery code are unaffected.",
+      "apply": [
+        {
+          "type": "service",
+          "name": "upnphost",
+          "startup": "Disabled",
+          "stop": true
+        },
+        {
+          "type": "service",
+          "name": "SSDPSRV",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-Service -Name SSDPSRV -ErrorAction SilentlyContinue).StartType",
+            "expected": "Disabled"
+          },
+          {
+            "command": "(Get-Service -Name SSDPSRV -ErrorAction SilentlyContinue).Status",
+            "expected": "Stopped"
+          },
+          {
+            "command": "(Get-Service -Name upnphost -ErrorAction SilentlyContinue).StartType",
+            "expected": "Disabled"
+          },
+          {
+            "command": "(Get-Service -Name upnphost -ErrorAction SilentlyContinue).Status",
+            "expected": "Stopped"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Security guidelines for disabling system services in Windows Server (read 2026-11-15/16)",
+          "claim": "For Windows Server 2016 with Desktop Experience: SSDP Discovery (SSDPSRV), Manual, \"OK to disable\", \"Discovers networked devices and services that use the Simple Service Discovery Protocol (SSDP), such as Universal Plug and Play (UPnP) devices.\" UPnP Device Host (upnphost), Manual, \"OK to disable\", \"Allows this computer to host UPnP devices. If you stop this service, any hosted UPnP devices stop functioning\". The page says its guidance \"only applies to Windows Server 2016 with Desktop Experience, unless you're using it as a desktop replacement for end-users\" and also: \"We don't recommend applying policies that disable services that aren't by default by Microsoft.\""
+        }
+      ],
+      "references": [
+        {
+          "title": "Security guidelines for disabling system services in Windows Server",
+          "url": "https://learn.microsoft.com/en-us/windows-server/security/windows-services/security-guidelines-for-disabling-system-services-in-windows-server"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM: apply, then open Network in File Explorer and Settings > Bluetooth & devices to see what disappears. The upnphost operation is listed first so that its dependent service is stopped before SSDPSRV."
+    },
+    {
+      "id": "net-016-wsh-off",
+      "module": "m6-network",
+      "title": "Turn off Windows Script Host (wscript and cscript)",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Windows Script Host runs .vbs, .vbe, .js, .jse and .wsf files on a double-click, and a mail attachment or download of that kind is one of the oldest ways to run malware. Microsoft's scripting guide documents a machine-wide switch that makes wscript.exe and cscript.exe refuse to run. The same guide calls this a step for 'more desperate circumstances', so the entry is profile 3 only.",
+      "impact": "All scripts that run through wscript.exe or cscript.exe stop with the message \"Windows Script Host access is disabled on this machine\". That includes some installers, logon scripts, backup and inventory tools. PowerShell scripts and batch files are not affected.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Microsoft\\Windows Script Host\\Settings",
+          "name": "Enabled",
+          "kind": "DWord",
+          "data": 0,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows Script Host\\Settings' -Name Enabled -ErrorAction SilentlyContinue).Enabled",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "high",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com (archived Windows 2000 Scripting Guide page) Disabling Windows Script Host (read 2026-11-15/16)",
+          "claim": "\"To disable WSH for all users of a particular computer, create this entry:\" HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows Script Host\\Settings\\Enabled as a REG_DWORD set to 0 (the entry does not exist by default). Scripts that rely on WSH are then blocked, including VBScript and JScript, with the message \"Windows Script Host access is disabled on this machine. Contact your administrator for details.\" The page describes this as something to do \"in more desperate circumstances\"."
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com (archived Windows 2000 Scripting Guide page) Disabling Windows Script Host (read 2026-11-15/16)",
+          "claim": "The page is part of the archived Microsoft Windows 2000 Scripting Guide (last updated 2009-10-22) and names no editions or Windows 11 builds."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com (archived Windows 2000 Scripting Guide page) Disabling Windows Script Host (read 2026-11-15/16)",
+          "claim": "That wscript.exe and cscript.exe on Windows 11 still read this value, on every edition, is general knowledge; the page is 15 years old."
+        }
+      ],
+      "references": [
+        {
+          "title": "Disabling Windows Script Host (archived)",
+          "url": "https://learn.microsoft.com/en-us/previous-versions/tn-archive/ee198684(v=technet.10)"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM: apply, then double-click a .vbs file (for example one that only shows a message box): the access-disabled message must appear. If the script still runs, the value is no longer honored on Windows 11: mark the entry na."
+    },
+    {
+      "id": "net-017-print-spooler-off",
+      "module": "m6-network",
+      "title": "Disable the Print Spooler service (no printing at all)",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "opt_in": "no-printing",
+      "rationale": "The Print Spooler service has had many serious vulnerabilities, among them PrintNightmare, which let a remote attacker run code as SYSTEM. CERT/CC's first mitigation for it is to stop and disable the service. A PC that never prints can do without it. This entry is only applied when the run says -OptIn no-printing.",
+      "impact": "Printing stops completely: no local or network printer, and also no virtual printer such as Microsoft Print to PDF. To print again, roll the entry back or set the service to Automatic.",
+      "apply": [
+        {
+          "type": "service",
+          "name": "Spooler",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-Service -Name Spooler -ErrorAction SilentlyContinue).StartType",
+            "expected": "Disabled"
+          },
+          {
+            "command": "(Get-Service -Name Spooler -ErrorAction SilentlyContinue).Status",
+            "expected": "Stopped"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "high",
+      "evidence": [
+        {
+          "grade": "third-party",
+          "source": "kb.cert.org vulnerability note VU#383432 (Windows Print Spooler, PrintNightmare) (read 2026-11-15/16)",
+          "claim": "\"This vulnerability can be mitigated by stopping and disabling the Print Spooler service in Windows.\" Commands given: Stop-Service -Name Spooler -Force and Set-Service -Name Spooler -StartupType Disabled. \"Disabling the Print Spooler service disables the ability to print both locally and remotely.\" Impact: \"a remote, authenticated attacker may be able to execute arbitrary code with SYSTEM privileges on a vulnerable system.\" Note revised 2021-08-03."
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Security guidelines for disabling system services in Windows Server (read 2026-11-15/16)",
+          "claim": "For Windows Server 2016 with Desktop Experience: Print Spooler (Spooler), Automatic, \"OK to disable if not a print server or a DC\", \"This service spools print jobs and handles interaction with the printer.\""
+        },
+        {
+          "grade": "background",
+          "source": "kb.cert.org vulnerability note VU#383432 (Windows Print Spooler, PrintNightmare) (read 2026-11-15/16)",
+          "claim": "That virtual printers such as Microsoft Print to PDF also need the spooler is general knowledge, not stated on either page."
+        }
+      ],
+      "references": [
+        {
+          "title": "VU#383432: Microsoft Windows Print Spooler (CERT/CC)",
+          "url": "https://www.kb.cert.org/vuls/id/383432"
+        },
+        {
+          "title": "Security guidelines for disabling system services in Windows Server",
+          "url": "https://learn.microsoft.com/en-us/windows-server/security/windows-services/security-guidelines-for-disabling-system-services-in-windows-server"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM: apply with -OptIn no-printing, try to print to Microsoft Print to PDF (it should fail), then roll back and print again."
+    },
+    {
+      "id": "net-018-server-service-off",
+      "module": "m6-network",
+      "title": "Disable the Server service (no file or printer sharing from this PC)",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "opt_in": "no-file-sharing",
+      "rationale": "The Server service is what lets other computers open this PC's shared folders and printers, and it is the listener behind the SMB port (TCP 445) and the administrative shares. A PC that shares nothing does not need it, and without it the biggest remote attack surface on a Windows PC is closed. This entry is only applied when the run says -OptIn no-file-sharing.",
+      "impact": "Other computers can no longer connect to shared folders, shared printers, administrative shares or remote-management pipes on this PC. This PC can still connect to shares on other computers. Programs that use local named pipes over SMB may fail. Microsoft's server guidance says not to disable it on servers.",
+      "apply": [
+        {
+          "type": "service",
+          "name": "LanmanServer",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-Service -Name LanmanServer -ErrorAction SilentlyContinue).StartType",
+            "expected": "Disabled"
+          },
+          {
+            "command": "(Get-Service -Name LanmanServer -ErrorAction SilentlyContinue).Status",
+            "expected": "Stopped"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "high",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Security guidelines for disabling system services in Windows Server (read 2026-11-15/16)",
+          "claim": "For Windows Server 2016 with Desktop Experience: Server (LanmanServer), Automatic, recommendation \"Do not disable\", comment \"Needed for remote management, IPC$, SMB file sharing\", description \"Supports file, print, and named-pipe sharing over the network for this computer.\" The page says its guidance \"only applies to Windows Server 2016 with Desktop Experience, unless you're using it as a desktop replacement for end-users\"; a home PC is the case it excludes."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com Security guidelines for disabling system services in Windows Server (read 2026-11-15/16)",
+          "claim": "That the service is what listens on TCP 445 for incoming SMB connections is general knowledge, not stated on the page."
+        }
+      ],
+      "references": [
+        {
+          "title": "Security guidelines for disabling system services in Windows Server",
+          "url": "https://learn.microsoft.com/en-us/windows-server/security/windows-services/security-guidelines-for-disabling-system-services-in-windows-server"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM: apply with -OptIn no-file-sharing, then from a second machine try to open \\\\<VM>\\C$ and a shared folder (both must fail) and from the VM open a share on the second machine (must work). Get-SmbServerConfiguration stops working while the service is disabled, which is expected."
+    }
+  ]
+}

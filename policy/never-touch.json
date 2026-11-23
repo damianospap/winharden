@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "notice": "Hardcoded safety policy. A manifest entry that touches anything listed here is rejected by the validator (CI) and must be rejected again by the engine at runtime. Editing this file is a code change and needs review. Matching is case-insensitive.",
+
+  "services": [
+    "wuauserv", "UsoSvc", "WaaSMedicSvc", "BITS", "TrustedInstaller", "CryptSvc",
+    "msiserver", "ClipSVC", "AppXSvc", "InstallService", "LicenseManager",
+    "edgeupdate", "edgeupdatem",
+    "WinDefend", "WdNisSvc", "WdNisDrv", "WdFilter", "WdBoot", "SecurityHealthService", "wscsvc",
+    "mpssvc", "BFE",
+    "BDESVC", "wlidsvc", "TokenBroker", "TBS",
+    "EventLog", "RpcSs", "RpcEptMapper", "DcomLaunch", "Winmgmt", "Schedule", "ProfSvc", "gpsvc"
+  ],
+
+  "registry_prefixes": [
+    { "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\SecureBoot",
+      "reason": "Secure Boot state and certificate servicing" },
+    { "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WindowsUpdate",
+      "reason": "Windows Update client state" },
+    { "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+      "reason": "Windows Update policy" },
+    { "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\FVE",
+      "reason": "BitLocker policy and recovery key escrow" },
+    { "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\BitLocker",
+      "reason": "BitLocker / Device Encryption state" },
+    { "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\TPM",
+      "reason": "TPM policy" },
+    { "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\WindowsStore",
+      "reason": "Microsoft Store policy" },
+    { "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\EdgeUpdate",
+      "reason": "Edge and WebView2 Runtime updater policy" },
+    { "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\EdgeUpdate",
+      "reason": "Edge and WebView2 Runtime updater state" },
+    { "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\WindowsUpdate",
+      "reason": "Windows Update orchestration state" }
+  ],
+
+  "registry_values": [
+    { "hive": "HKLM", "path_prefix": "SOFTWARE\\Policies\\Microsoft\\Windows Defender",
+      "names": [
+        "DisableAntiSpyware", "DisableAntiVirus", "DisableRealtimeMonitoring",
+        "DisableBehaviorMonitoring", "DisableOnAccessProtection", "DisableIOAVProtection",
+        "DisableScanOnRealtimeEnable", "DisableRoutinelyTakingAction", "DisableBlockAtFirstSeen",
+        "SpynetReporting", "SubmitSamplesConsent", "MAPSReporting", "ServiceKeepAlive"
+      ],
+      "reason": "Defender engine stays on; cloud protection and sample submission stay on (hardening only)" },
+    { "hive": "HKLM", "path_prefix": "SOFTWARE\\Microsoft\\Windows Defender",
+      "names": [
+        "DisableAntiSpyware", "DisableAntiVirus", "DisableRealtimeMonitoring",
+        "DisableBehaviorMonitoring", "DisableOnAccessProtection", "DisableIOAVProtection",
+        "SpynetReporting", "SubmitSamplesConsent", "TamperProtection"
+      ],
+      "reason": "Defender engine state and Tamper Protection" },
+    { "hive": "HKLM", "path_prefix": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+      "names": ["EnableSmartScreen", "ShellSmartScreenLevel"],
+      "reason": "SmartScreen stays on" },
+    { "hive": "HKLM", "path_prefix": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer",
+      "names": ["SmartScreenEnabled"],
+      "reason": "SmartScreen stays on" },
+    { "hive": "HKLM", "path_prefix": "SOFTWARE\\Policies\\Microsoft\\Edge",
+      "names": ["SmartScreenEnabled", "SmartScreenPuaEnabled", "PreventSmartScreenPromptOverride"],
+      "reason": "SmartScreen stays on" },
+    { "hive": "HKCU", "path_prefix": "Software\\Microsoft\\Windows\\CurrentVersion\\AppHost",
+      "names": ["EnableWebContentEvaluation", "PreventOverride"],
+      "reason": "SmartScreen for apps stays on" },
+    { "hive": "HKLM", "path_prefix": "SYSTEM\\CurrentControlSet\\Control\\CI\\Config",
+      "names": ["VulnerableDriverBlocklistEnable"],
+      "reason": "Vulnerable driver blocklist stays on" }
+  ],
+
+  "appx_names": [
+    "Microsoft.WindowsStore", "Microsoft.StorePurchaseApp", "Microsoft.DesktopAppInstaller",
+    "Microsoft.Services.Store.Engagement",
+    "Microsoft.WindowsAppRuntime.*", "Microsoft.UI.Xaml.*", "Microsoft.VCLibs.*", "Microsoft.NET.Native.*",
+    "Microsoft.Win32WebViewHost", "Microsoft.Windows.CloudExperienceHost",
+    "Microsoft.AAD.BrokerPlugin", "Microsoft.AccountsControl",
+    "Microsoft.Windows.ShellExperienceHost", "Microsoft.Windows.StartMenuExperienceHost",
+    "Microsoft.SecHealthUI", "Microsoft.Windows.SecHealthUI", "Microsoft.Windows.Search",
+    "MicrosoftWindows.Client.CBS", "MicrosoftWindows.Client.Core",
+    "MicrosoftWindows.Client.FileExp", "MicrosoftWindows.Client.OOBE"
+  ],
+
+  "scheduled_tasks": [
+    "\\Microsoft\\Windows\\WindowsUpdate\\*",
+    "\\Microsoft\\Windows\\UpdateOrchestrator\\*",
+    "\\Microsoft\\Windows\\WaaSMedic\\*",
+    "\\Microsoft\\Windows\\Servicing\\*",
+    "\\Microsoft\\Windows\\InstallService\\*",
+    "\\Microsoft\\Windows\\Windows Defender\\*",
+    "\\Microsoft\\Windows\\BitLocker\\*",
+    "\\Microsoft\\Windows\\TPM\\*",
+    "\\Microsoft\\Windows\\PI\\*",
+    "\\Microsoft\\Windows\\SoftwareProtectionPlatform\\*",
+    "\\Microsoft\\Windows\\Clip\\*",
+    "\\Microsoft\\Windows\\License Manager\\*",
+    "\\MicrosoftEdgeUpdateTaskMachine*"
+  ],
+
+  "optional_features": [
+    "Windows-Defender-Default-Definitions"
+  ],
+
+  "servicing_adjacent": {
+    "services": ["DoSvc"],
+    "scheduled_tasks": [
+      "\\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser"
+    ]
+  },
+
+  "settings": {
+    "notice": "Allow-list, not a block-list: the engine writes only the names and values listed here, and every value only makes a protection stronger or an audit trail wider. Nothing in this section can switch Defender protection or auditing off. Names match case-insensitively; values are compared as text (2, true, block).",
+    "defender_pref": {
+      "MAPSReporting": [2],
+      "CloudBlockLevel": [2],
+      "EnableNetworkProtection": [1],
+      "PUAProtection": [1],
+      "EnableControlledFolderAccess": [1],
+      "DisableRealtimeMonitoring": [false],
+      "DisableBehaviorMonitoring": [false],
+      "DisableIOAVProtection": [false],
+      "DisableScriptScanning": [false],
+      "DisableBlockAtFirstSeen": [false]
+    },
+    "defender_asr": {
+      "56a863a9-875e-4185-98a7-b882c64b5ce5": ["block"],
+      "9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2": ["block"],
+      "e6db77e5-3df2-4cf1-b95a-636979351e5b": ["block"],
+      "be9ba2d9-53ea-4cdc-84e5-9b1eeee46550": ["block"],
+      "3b576869-a4ec-4529-8536-b80a7769e899": ["block"],
+      "92e97fa1-2edf-4476-bdd6-9dd0b4dddc7b": ["block"],
+      "d4f940ab-401b-4efc-aadc-ad5f3c50688a": ["block"],
+      "26190899-1602-49e8-8b27-eb1d0a1ce869": ["block"],
+      "75668c1f-73b5-4cf0-bb93-3ecf5cb7cc84": ["block"],
+      "7674ba52-37eb-4a4f-a9a1-f0f9a1619a2c": ["block"],
+      "d3e037e1-3eb8-44c8-a917-57927947596d": ["block"],
+      "5beb7efe-fd9a-4556-801d-275e5ffc04cc": ["block"],
+      "c1db55ab-c21a-4637-bb3f-a12568109d35": ["block"],
+      "b2b3f03d-6a65-4f7b-a9c7-1c7ef74a9ba4": ["block"],
+      "d1e49aac-8f56-4280-b9ba-993a6d77406c": ["block"],
+      "01443614-cd74-433a-b99e-2ecdc07bfc25": ["warn"]
+    },
+    "audit_policy": {
+      "0CCE9215-69AE-11D9-BED3-505054503030": ["success_failure"],
+      "0CCE9216-69AE-11D9-BED3-505054503030": ["success_failure"],
+      "0CCE921B-69AE-11D9-BED3-505054503030": ["success_failure"],
+      "0CCE923F-69AE-11D9-BED3-505054503030": ["success_failure"],
+      "0CCE9235-69AE-11D9-BED3-505054503030": ["success_failure"],
+      "0CCE9237-69AE-11D9-BED3-505054503030": ["success_failure"],
+      "0CCE922B-69AE-11D9-BED3-505054503030": ["success_failure"],
+      "0CCE922F-69AE-11D9-BED3-505054503030": ["success_failure"],
+      "0CCE9230-69AE-11D9-BED3-505054503030": ["success_failure"],
+      "0CCE9232-69AE-11D9-BED3-505054503030": ["success_failure"],
+      "0CCE9210-69AE-11D9-BED3-505054503030": ["success_failure"],
+      "0CCE9211-69AE-11D9-BED3-505054503030": ["success_failure"],
+      "0CCE9212-69AE-11D9-BED3-505054503030": ["success_failure"]
+    }
+  },
+
+  "cleanup": {
+    "notice": "Deny by default: a file_cleanup operation may name only a folder listed here, with the same scope. Folders are deliberately limited to caches, temporary files and diagnostic logs that Windows recreates. Nothing here is under Windows Update, servicing, the component store, the Store, Defender or the event logs.",
+    "roots": [
+      { "scope": "machine", "path": "%SystemRoot%\\Temp" },
+      { "scope": "machine", "path": "%SystemRoot%\\Minidump" },
+      { "scope": "machine", "path": "%ProgramData%\\Microsoft\\Windows\\WER\\ReportArchive" },
+      { "scope": "machine", "path": "%ProgramData%\\Microsoft\\Windows\\WER\\ReportQueue" },
+      { "scope": "user", "path": "%LocalAppData%\\Temp" },
+      { "scope": "user", "path": "%LocalAppData%\\CrashDumps" },
+      { "scope": "user", "path": "%LocalAppData%\\Microsoft\\Windows\\WER" }
+    ]
+  }
+}

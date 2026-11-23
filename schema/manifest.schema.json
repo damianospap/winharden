@@ -1,0 +1,334 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "winharden manifest file",
+  "description": "One file per module. Every setting is exactly one entry. Cross-field rules (R01-R21) live in tools/validate_manifests.py, not here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["module", "schema_version", "entries"],
+  "properties": {
+    "module": { "type": "string", "pattern": "^m[0-9]+-[a-z0-9-]+$" },
+    "schema_version": { "const": 1 },
+    "entries": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/entry" } }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "module", "title", "tier", "min_profile", "mode", "home_effective",
+        "channel_class", "rationale", "impact", "audit", "rollback", "risk",
+        "references", "evidence"
+      ],
+      "properties": {
+        "id": {
+          "description": "<module prefix>-<3 digits>-<slug>. Stable forever; never reused.",
+          "type": "string",
+          "pattern": "^[a-z]{2,4}-[0-9]{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "module": { "type": "string", "pattern": "^m[0-9]+-[a-z0-9-]+$" },
+        "title": { "type": "string", "minLength": 10, "maxLength": 120 },
+        "tier": {
+          "description": "T0 = supported mechanism, Home effect expected or verified. T1 = documented or widely used, Home effect may be unverified, reversible. T2 = unsupported path or servicing-adjacent, profile 3 only.",
+          "enum": ["T0", "T1", "T2"]
+        },
+        "min_profile": {
+          "description": "Profile N applies every entry with min_profile <= N. 1 = Classic, 2 = Private, 3 = Deep.",
+          "enum": [1, 2, 3]
+        },
+        "mode": {
+          "description": "enforce = engine applies and verifies. attest = engine only checks and reports. manual = user performs manual_steps; engine only reports.",
+          "enum": ["enforce", "once", "attest", "manual"]
+        },
+        "home_effective": {
+          "description": "verified = observed on Windows 11 Home (see 'verified'). expected = edition-independent mechanism (service, task, AppX or feature control, or a value the Settings UI itself writes) or documented for Home. unverified = documented only for Pro/Ent/Edu, or origin unknown; written as inert-if-ignored. na = not applicable on Home.",
+          "enum": ["verified", "expected", "unverified", "na"]
+        },
+        "channel_class": {
+          "enum": ["csp", "policy", "cmdlet", "settings-backing", "unsupported"]
+        },
+        "applicability": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "editions": { "type": "array", "minItems": 1, "items": { "const": "Home" } },
+            "min_build": { "type": "integer", "minimum": 26200 }
+          }
+        },
+        "requires_hardware": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "opt_in": {
+          "description": "Entry is left out of every profile unless the run names this tag with -OptIn. For changes that are right for some people only, such as removing OneDrive.",
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "flags": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "servicing_adjacent": { "type": "boolean" },
+            "requires_reboot": { "type": "boolean" },
+            "deletes_user_data": {
+              "description": "True when applying the entry deletes user-created data (notes, lists) that no journal can restore. The engine skips such entries unless the plan was made with -AcceptDataLoss. Rule R18 requires rollback reversibility=partial.",
+              "type": "boolean"
+            }
+          }
+        },
+        "rationale": { "type": "string", "minLength": 40 },
+        "impact": { "type": "string", "minLength": 20 },
+        "apply": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/operation" } },
+        "manual_steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 5 }
+        },
+        "audit": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "checks": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["command", "expected"],
+                "properties": {
+                  "locale_dependent": {
+                    "description": "True when the command prints text that Windows translates (auditpol, for example). On a system whose display language is not English the engine reports the check as skipped instead of failed; the state check still runs.",
+                    "type": "boolean"
+                  },
+                  "command": {
+                    "description": "Read-only, single-line PowerShell 5.1, single-quoted strings only. Linted by rule R10.",
+                    "type": "string",
+                    "minLength": 5
+                  },
+                  "expected": {
+                    "description": "Trimmed string form of the command output. Use <absent> when the output must be empty or null.",
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            "manual_check": {
+              "description": "How a person confirms the state when no safe machine check exists. Mandatory for mode=manual (R17); the report prints it as a human-confirmed item, never as a pass.",
+              "type": "string",
+              "minLength": 20
+            }
+          }
+        },
+        "rollback": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["strategy", "reversibility"],
+          "properties": {
+            "strategy": { "enum": ["journal", "store-reinstall", "manual"] },
+            "reversibility": { "enum": ["full", "partial"] },
+            "limitation": { "type": "string", "minLength": 20 }
+          }
+        },
+        "risk": { "enum": ["low", "medium", "high"] },
+        "unsupported_justification": { "type": "string" },
+        "verified": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["build", "date"],
+          "properties": {
+            "build": { "type": "string", "pattern": "^10\\.0\\.[0-9]{5}\\.[0-9]+$" },
+            "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+            "vm": { "type": "string" },
+            "observed": { "type": "string" }
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["grade", "source", "claim"],
+            "properties": {
+              "grade": {
+                "enum": ["ms-doc", "ms-doc-nonhome", "ms-statement", "third-party", "community", "background"]
+              },
+              "source": { "type": "string", "minLength": 3 },
+              "claim": { "type": "string", "minLength": 10 }
+            }
+          }
+        },
+        "references": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["title", "url"],
+            "properties": {
+              "title": { "type": "string", "minLength": 3 },
+              "url": { "type": "string", "pattern": "^https://[^\\s]+$" }
+            }
+          }
+        },
+        "notes": { "type": "string" }
+      }
+    },
+
+    "operation": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["registry", "service", "scheduled_task", "appx", "optional_feature", "setting", "file_cleanup"] }
+      },
+      "allOf": [
+        { "if": { "required": ["type"], "properties": { "type": { "const": "registry" } } },
+          "then": { "$ref": "#/$defs/op_registry" } },
+        { "if": { "required": ["type"], "properties": { "type": { "const": "service" } } },
+          "then": { "$ref": "#/$defs/op_service" } },
+        { "if": { "required": ["type"], "properties": { "type": { "const": "scheduled_task" } } },
+          "then": { "$ref": "#/$defs/op_scheduled_task" } },
+        { "if": { "required": ["type"], "properties": { "type": { "const": "appx" } } },
+          "then": { "$ref": "#/$defs/op_appx" } },
+        { "if": { "required": ["type"], "properties": { "type": { "const": "optional_feature" } } },
+          "then": { "$ref": "#/$defs/op_optional_feature" } },
+        { "if": { "required": ["type"], "properties": { "type": { "const": "setting" } } },
+          "then": { "$ref": "#/$defs/op_setting" } },
+        { "if": { "required": ["type"], "properties": { "type": { "const": "file_cleanup" } } },
+          "then": { "$ref": "#/$defs/op_file_cleanup" } }
+      ]
+    },
+
+    "op_registry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "hive", "path", "name", "kind", "data", "scope"],
+      "properties": {
+        "type": { "const": "registry" },
+        "hive": { "enum": ["HKLM", "HKCU"] },
+        "path": {
+          "description": "Key path below the hive. No hive prefix, no PowerShell drive prefix, no leading backslash.",
+          "type": "string",
+          "pattern": "^[^\\\\:/][^:/]*$"
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["DWord", "QWord", "String", "ExpandString", "MultiString"] },
+        "data": { "type": ["integer", "string", "array"], "items": { "type": "string" } },
+        "scope": {
+          "description": "machine = HKLM. user = HKCU, applied to every existing profile plus the Default user hive.",
+          "enum": ["machine", "user"]
+        },
+        "merge": {
+          "description": "hide-list = data is 'hide:a;b'. Tokens are added to an existing hide: list; an existing showonly: list aborts the entry instead of being overwritten.",
+          "enum": ["hide-list"]
+        }
+      }
+    },
+
+    "op_service": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "name", "startup", "stop"],
+      "properties": {
+        "type": { "const": "service" },
+        "name": { "type": "string", "pattern": "^[A-Za-z0-9_.$-]+$" },
+        "startup": { "enum": ["Disabled", "Manual", "Automatic", "AutomaticDelayed"] },
+        "stop": { "type": "boolean" }
+      }
+    },
+
+    "op_scheduled_task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "path", "name", "state", "if_missing"],
+      "properties": {
+        "type": { "const": "scheduled_task" },
+        "path": {
+          "description": "Task folder, starting and ending with a backslash. The root folder is a single backslash.",
+          "type": "string",
+          "pattern": "^\\\\(.*\\\\)?$"
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "state": { "const": "Disabled" },
+        "if_missing": { "enum": ["skip", "error"] }
+      }
+    },
+
+    "op_appx": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "package_name", "action", "deprovision", "all_users"],
+      "properties": {
+        "type": { "const": "appx" },
+        "package_name": {
+          "description": "Exact package name. Wildcards are rejected on purpose.",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+        },
+        "action": { "const": "remove" },
+        "deprovision": { "type": "boolean" },
+        "all_users": { "type": "boolean" }
+      }
+    },
+
+    "op_optional_feature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "name", "state"],
+      "properties": {
+        "type": { "const": "optional_feature" },
+        "name": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+        "state": { "const": "Disabled" }
+      }
+    },
+
+    "op_setting": {
+      "description": "A setting that has no registry value the engine may write: a Microsoft Defender preference (Set-MpPreference), an attack surface reduction rule action, or an advanced audit policy subcategory. The policy file lists every name and value the engine accepts.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "kind", "name", "value"],
+      "properties": {
+        "type": { "const": "setting" },
+        "kind": { "enum": ["defender_pref", "defender_asr", "audit_policy"] },
+        "name": {
+          "description": "defender_pref: the Set-MpPreference parameter. defender_asr: the rule GUID without braces. audit_policy: the subcategory GUID without braces.",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9-]+$"
+        },
+        "value": {
+          "description": "defender_pref: integer or boolean. defender_asr: block, audit or warn. audit_policy: none, success, failure or success_failure.",
+          "type": ["integer", "string", "boolean"]
+        },
+        "label": {
+          "description": "Optional human name that plans and reports show next to the kind, for example the name of an attack surface reduction rule. Display only; it does not change what is applied.",
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 120
+        }
+      }
+    },
+
+    "op_file_cleanup": {
+      "description": "Deletes files older than min_age_days below one allow-listed folder, once. Never follows links, never deletes folders other than emptied sub-folders.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "scope", "root", "pattern", "min_age_days", "recurse"],
+      "properties": {
+        "type": { "const": "file_cleanup" },
+        "scope": {
+          "description": "machine = the folder is the same for everyone. user = the root starts with %LOCALAPPDATA%, %APPDATA% or %USERPROFILE% and is resolved in every real user profile.",
+          "enum": ["machine", "user"]
+        },
+        "root": {
+          "description": "Folder with environment variables, exactly as listed in the cleanup section of the policy file.",
+          "type": "string",
+          "pattern": "^%[A-Za-z]+%(\\\\[A-Za-z0-9 ._()-]+)*$"
+        },
+        "pattern": {
+          "description": "File name wildcard (* and ?), no path separators.",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9 ._()*?-]+$"
+        },
+        "min_age_days": { "type": "integer", "minimum": 0, "maximum": 3650 },
+        "recurse": { "type": "boolean" }
+      }
+    }
+  }
+}

@@ -1,0 +1,4 @@
+# Keep LF on every checkout, including Windows clones with core.autocrlf=true: the engine's code fingerprint is a hash of
+# the file bytes, and tests/test_engine_static.py requires LF-only engine files.
+* text=auto eol=lf
+*.zip binary

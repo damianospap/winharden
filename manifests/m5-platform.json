@@ -1,0 +1,747 @@
+{
+  "module": "m5-platform",
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "plt-001-secure-boot-attest",
+      "module": "m5-platform",
+      "title": "Attest that Secure Boot is enabled",
+      "tier": "T0",
+      "min_profile": 1,
+      "mode": "attest",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Secure Boot makes the firmware start only boot software that carries a trusted signature, so malware that hides in the boot chain cannot load before Windows. Firmware and Secure Boot settings are on this tool's never-touch list, so it does not try to change them; the report states whether Secure Boot is on, and a 'no' is listed as a gap with the manual step.",
+      "impact": "Read-only: the entry prints its result in the report and changes nothing, so there is nothing to roll back. A failing check means Secure Boot is off or the PC starts in legacy BIOS mode.",
+      "audit": {
+        "checks": [
+          {
+            "command": "Confirm-SecureBootUEFI -ErrorAction SilentlyContinue",
+            "expected": "True"
+          }
+        ],
+        "manual_check": "System Information (msinfo32), item 'Secure Boot State', reads On. If it reads Off, enable Secure Boot in the firmware setup (the PC maker's manual says how); this tool never changes firmware settings."
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Confirm-SecureBootUEFI (read 2026-11-16)",
+          "claim": "Synopsis: \"Confirms that Secure Boot is enabled by checking the Secure Boot status on the local computer.\" \"If the computer supports Secure Boot and Secure Boot is enabled, this cmdlet returns $True.\" \"If the computer supports Secure Boot and Secure Boot is disabled, this cmdlet returns $False.\" On a BIOS (non-UEFI) computer the cmdlet prints \"Cmdlet not supported on this platform.\" The page is the SecureBoot module page for Windows Server 2025 with windows-11 in its metadata."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com Confirm-SecureBootUEFI (read 2026-11-16)",
+          "claim": "What Secure Boot protects against (malware in the boot chain) is general knowledge and is not stated on the page."
+        }
+      ],
+      "references": [
+        {
+          "title": "Confirm-SecureBootUEFI",
+          "url": "https://learn.microsoft.com/en-us/powershell/module/secureboot/confirm-securebootuefi"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On a Hyper-V generation 2 VM with Secure Boot on the command prints True; on a generation 1 VM it prints the 'not supported' text, the check output is then empty and the entry reports 'not attested', which is the expected result."
+    },
+    {
+      "id": "plt-002-tpm2-attest",
+      "module": "m5-platform",
+      "title": "Attest that a TPM 2.0 chip is present",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "attest",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "The TPM is the chip that holds disk-encryption keys and proves that the PC booted unchanged. Windows 11 expects TPM 2.0. TPM settings are on this tool's never-touch list, so the report only states whether a TPM 2.0 is there; entries that need it for their own protection are listed as gaps if it is missing.",
+      "impact": "Read-only: the entry prints its result in the report and changes nothing, so there is nothing to roll back. A failing check means no TPM 2.0 was found by WMI (for example the TPM is switched off in the firmware).",
+      "audit": {
+        "checks": [
+          {
+            "command": "@(Get-CimInstance -Namespace 'root\\cimv2\\security\\microsofttpm' -ClassName Win32_Tpm -ErrorAction SilentlyContinue | Where-Object { $_.SpecVersion -like '2.0*' }).Count",
+            "expected": "1"
+          }
+        ],
+        "manual_check": "Windows Security > Device security > Security processor details shows a specification version beginning with 2.0."
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Win32_Tpm class (read 2026-11-16)",
+          "claim": "The Win32_Tpm class \"represents the Trusted Platform Module (TPM), a hardware security chip that provides a root of trust for a computer system.\" Namespace Root\\CIMV2\\Security\\MicrosoftTpm. SpecVersion is \"The version of the Trusted Computing Group (TCG) specification that the TPM supports.\" The page's own example value is \"1.2, 2, 0\", which shows that the specification version is the first item of the comma-separated text."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com Win32_Tpm class (read 2026-11-16)",
+          "claim": "That a TPM 2.0 reports a SpecVersion that begins with 2.0, and that Windows 11 requires TPM 2.0, is general knowledge; the engine's own hardware check uses the same prefix test."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win32_Tpm class",
+          "url": "https://learn.microsoft.com/windows/win32/secprov/win32-tpm"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On a Hyper-V generation 2 VM with a virtual TPM the check counts one object whose SpecVersion begins with 2.0."
+    },
+    {
+      "id": "plt-003-secure-boot-certificates-attest",
+      "module": "m5-platform",
+      "title": "Attest that the 2023 Secure Boot certificates have been installed",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "attest",
+      "home_effective": "expected",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "The original Microsoft Secure Boot certificates from 2011 start to expire in June 2026. Microsoft delivers the replacement 2023 certificates through the monthly Windows updates and says the text value UEFICA2023Status reads \"Updated\" once a PC has them. A PC that has not received them can still start, but cannot take part in future Secure Boot protections. This tool never writes Secure Boot data, so the report only states the state.",
+      "impact": "Read-only: the entry prints its result in the report and changes nothing, so there is nothing to roll back. A failing check means the PC reports NotStarted or InProgress, or does not have the value yet.",
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\SecureBoot\\Servicing' -Name UEFICA2023Status -ErrorAction SilentlyContinue).UEFICA2023Status",
+            "expected": "Updated"
+          }
+        ],
+        "manual_check": "If the value is NotStarted or InProgress: install the latest Windows monthly update, restart, and look for a firmware (BIOS/UEFI) update from the PC maker; check again after a few restarts. This tool does not change Secure Boot data."
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-statement",
+          "source": "techcommunity.microsoft.com Windows IT Pro Blog post 4469235 on the Secure Boot certificate update (published 2025-11-13, updated 2026-05-29) (read 2026-11-16)",
+          "claim": "\"before the 2011 CAs start expiring in June of 2026\". \"Microsoft is delivering new Secure Boot certificates through Windows monthly updates\" and \"This option is enabled by default for devices that are ready for new certificates.\" \"Check that the text value of the UEFICA2023Status registry key reads as \"Updated.\"\" Event 1808 is described as \"This informational event indicates that the device has the required new Secure Boot certificates applied\". The post is dated 2025-11-13 (updated 2026-05-29). In the text read it does not say what happens to a PC that never gets the new certificates and does not mention October 2026."
+        },
+        {
+          "grade": "community",
+          "source": "woshub.com Updating UEFI Secure Boot certificates in Windows (FAQ) (read 2026-11-16)",
+          "claim": "Names the key HKLM:\\SYSTEM\\CurrentControlSet\\Control\\SecureBoot\\Servicing\\ and the value UEFICA2023Status with the three states NotStarted (\"the update has not started\"), InProgress and Updated (\"the update has been completed\"). Shows Get-SecureBootUEFI -Name db as the way to look for the certificate Windows UEFI CA 2023 in the firmware database. It gives no success event id and says nothing about how long InProgress may last."
+        }
+      ],
+      "references": [
+        {
+          "title": "Windows IT Pro Blog: Secure Boot certificate update (post 4469235)",
+          "url": "https://techcommunity.microsoft.com/blog/windows-itpro-blog/-/4469235"
+        },
+        {
+          "title": "Updating UEFI Secure Boot certificates in Windows (Windows OS Hub FAQ)",
+          "url": "https://woshub.com/updating-uefi-secure-boot-certificates-windows-faq/"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). A VM may not have the value at all (the check is then empty and the entry reports 'not attested'); the real answer needs a physical PC after the 2026 monthly updates."
+    },
+    {
+      "id": "plt-004-device-encryption-attest",
+      "module": "m5-platform",
+      "title": "Attest that the system drive is encrypted (BitLocker / device encryption)",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "attest",
+      "home_effective": "unverified",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "If a laptop is lost or stolen, an unencrypted drive can be read by anyone who removes it. Windows 11 encrypts the system drive by itself when the hardware conditions are met, and the user signs in with a Microsoft account or an Azure AD account. BitLocker and its recovery keys are on this tool's never-touch list, so the report only states whether C: is protected.",
+      "impact": "Read-only: the entry prints its result in the report and changes nothing, so there is nothing to roll back. A failing check means C: is not protected, or the PC does not offer the BitLocker WMI class (the check output is then empty).",
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-CimInstance -Namespace 'root\\cimv2\\security\\microsoftvolumeencryption' -ClassName Win32_EncryptableVolume -ErrorAction SilentlyContinue | Where-Object { $_.DriveLetter -eq 'C:' }).ProtectionStatus",
+            "expected": "1"
+          }
+        ],
+        "manual_check": "Settings > Privacy & security > Device encryption, or Control Panel > BitLocker Drive Encryption, shows the system drive as On. If it is Off and your PC offers it, sign in with a Microsoft account and turn it on (the recovery key is then saved to that account)."
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Win32_EncryptableVolume class (read 2026-11-16)",
+          "claim": "ProtectionStatus is \"The status of the volume, whether or not BitLocker is protecting the volume.\" Value 1 is \"PROTECTION ON\": \"The volume is fully encrypted and the encryption key for the volume is not available in the clear on the hard disk.\" Value 2 is \"PROTECTION UNKNOWN\", for example when the volume is locked. Namespace Root\\CIMV2\\Security\\MicrosoftVolumeEncryption. The page says its methods need administrator rights."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com BitLocker drive encryption in Windows 11 for OEMs (read 2026-11-16)",
+          "claim": "\"BitLocker automatic device encryption is enabled when:\" \"The device contains a TPM (Trusted Platform Module), either TPM 1.2 or TPM 2.0.\" \"UEFI Secure Boot is enabled.\" \"Platform is Modern Standby or HSTI compliant (this requirement has been removed since Windows 11 24H2)\". The page says protection is armed after sign-in with a Microsoft account or an Azure AD account."
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Win32_EncryptableVolume class (read 2026-11-16)",
+          "claim": "Neither the class page (first supported client: Windows Vista Enterprise and Ultimate) nor the OEM page names Windows Home, so whether Home exposes this WMI class and encrypts the drive is not documented there."
+        }
+      ],
+      "references": [
+        {
+          "title": "Win32_EncryptableVolume class",
+          "url": "https://learn.microsoft.com/en-ie/Windows/Win32/secprov/win32-encryptablevolume"
+        },
+        {
+          "title": "BitLocker drive encryption in Windows 11 for OEMs",
+          "url": "https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/oem-bitlocker"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM with a virtual TPM, run the check before and after turning on device encryption in Settings. If the WMI class is missing on Home, replace the check by a manual one. The check assumes the system drive is C:."
+    },
+    {
+      "id": "plt-005-builtin-accounts-attest",
+      "module": "m5-platform",
+      "title": "Attest that the built-in Administrator and Guest accounts are disabled",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "attest",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "The built-in Administrator and Guest accounts have the same name and the same ending of their SID on every Windows PC, which makes them the first accounts an attacker tries. Windows leaves both disabled; the report states that they still are. The tool does not create, enable or delete accounts.",
+      "impact": "Read-only: the entry prints its result in the report and changes nothing, so there is nothing to roll back. A failing check means one of the two accounts is enabled, or the account list could not be read.",
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-LocalUser -ErrorAction SilentlyContinue | Where-Object { $_.SID.Value -like 'S-1-5-21-*-500' }).Enabled",
+            "expected": "False"
+          },
+          {
+            "command": "(Get-LocalUser -ErrorAction SilentlyContinue | Where-Object { $_.SID.Value -like 'S-1-5-21-*-501' }).Enabled",
+            "expected": "False"
+          }
+        ],
+        "manual_check": "Computer Management > Local Users and Groups is not available on Home; run 'net user guest' and 'net user administrator' in a terminal and read the line 'Account active': it must say No for both."
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Local accounts (read 2026-11-16)",
+          "claim": "\"Windows setup disables the built-in Administrator account\" and \"it's a best practice to disable the Administrator account when possible\". \"By default, the Guest account is disabled and has a blank password.\" \"it's a best practice to leave the Guest account disabled, unless its use is necessary.\" \"don't use the Guest account over the network, and don't allow other computers to access it.\" The Administrator SID ends in -500 and the Guest SID is S-1-5-21-<SecurityAuthorityName>-501. The page applies to Windows 11."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com Local accounts (read 2026-11-16)",
+          "claim": "That the Get-LocalUser cmdlet (module Microsoft.PowerShell.LocalAccounts) is present in Windows PowerShell 5.1 on every edition and returns the SID in its SID property is general knowledge; it is not on the page."
+        }
+      ],
+      "references": [
+        {
+          "title": "Local accounts",
+          "url": "https://learn.microsoft.com/en-us/windows/security/identity-protection/access-control/local-accounts"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM, run Get-LocalUser | Select-Object Name, Enabled, SID; the accounts ending in -500 and -501 must show False. If Get-LocalUser is missing on Home, replace the check by a manual one."
+    },
+    {
+      "id": "plt-006-test-signing-manual",
+      "module": "m5-platform",
+      "title": "Check that Windows is not in test-signing mode (manual check)",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "manual",
+      "home_effective": "expected",
+      "channel_class": "cmdlet",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Test-signing mode lets Windows load drivers that nobody has signed for release, which is what a kernel rootkit needs. A PC with Secure Boot on cannot normally be put in this mode, so this is a short check for PCs where Secure Boot is off. Changing the boot configuration is outside what this tool does, so the entry only lists the steps.",
+      "impact": "Nothing is changed. The report lists the steps; if testsigning is on, turning it off needs a restart.",
+      "manual_steps": [
+        "Open Windows Terminal or Windows PowerShell as administrator.",
+        "Run: bcdedit /enum {current}",
+        "Read the lines 'testsigning' and 'nointegritychecks'. Neither may say Yes. A watermark 'Test Mode' in the lower right corner of the desktop also means test-signing is on.",
+        "If testsigning says Yes and you did not turn it on on purpose, run: bcdedit /set testsigning off, then restart."
+      ],
+      "audit": {
+        "manual_check": "The output of bcdedit /enum {current} has no line 'testsigning Yes' and no line 'nointegritychecks Yes', and the desktop shows no 'Test Mode' watermark."
+      },
+      "rollback": {
+        "strategy": "manual",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com The TESTSIGNING boot configuration option (read 2026-11-16)",
+          "claim": "\"To enable loading of test-signed drivers, use BCDEdit.exe to enable or disable the TESTSIGNING boot configuration option.\" Commands: \"Bcdedit.exe -set TESTSIGNING ON\" and \"Bcdedit.exe -set TESTSIGNING OFF\". Test-signing mode \"displays a watermark with the text \"Test Mode\" in the lower right corner of the desktop\". On a PC with Secure Boot on the page says bcdedit answers \"The value is protected by Secure Boot policy and cannot be modified or deleted\" and that Secure Boot must be disabled in the BIOS first."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com The TESTSIGNING boot configuration option (read 2026-11-16)",
+          "claim": "That bcdedit /enum prints the line nointegritychecks (another option that disables signature checks) is general knowledge; the page read does not mention it."
+        }
+      ],
+      "references": [
+        {
+          "title": "The TESTSIGNING boot configuration option",
+          "url": "https://learn.microsoft.com/windows-hardware/drivers/install/the-testsigning-boot-configuration-option"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM, run the steps once with test-signing off (no testsigning line, or 'No') and once with it on."
+    },
+    {
+      "id": "plt-007-uac-secure-desktop",
+      "module": "m5-platform",
+      "title": "Keep User Account Control on, with the secure desktop for prompts",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "flags": {
+        "requires_reboot": true
+      },
+      "rationale": "User Account Control is what asks before a program gets administrator rights. Two values keep it on and keep its prompt on the secure desktop, where other programs cannot click Yes for the user: EnableLUA and PromptOnSecureDesktop. Both are the Windows defaults, so the entry mostly guards against software or a script that switched them off.",
+      "impact": "No visible change on a PC that still has the defaults. If UAC had been switched off (EnableLUA 0), it is on again after a restart and programs that need administrator rights ask for it.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+          "name": "EnableLUA",
+          "kind": "DWord",
+          "data": 1,
+          "scope": "machine"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+          "name": "PromptOnSecureDesktop",
+          "kind": "DWord",
+          "data": 1,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System' -Name EnableLUA -ErrorAction SilentlyContinue).EnableLUA",
+            "expected": "1"
+          },
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System' -Name PromptOnSecureDesktop -ErrorAction SilentlyContinue).PromptOnSecureDesktop",
+            "expected": "1"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com (archived Windows 7 to Server 2012 R2 page) UAC Group Policy Settings and Registry Key Settings (read 2026-11-16)",
+          "claim": "Key HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System. EnableLUA \"1 (Default) = Enabled\"; if it is disabled \"the Security Center notifies you that the overall security of the operating system has been reduced.\" PromptOnSecureDesktop \"1 (Default) = Enabled\". The page is archived (2014-09-03) and applies to Windows 7 to Windows Server 2012 R2; it does not name Windows 11 or Home."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com (archived Windows 7 to Server 2012 R2 page) UAC Group Policy Settings and Registry Key Settings (read 2026-11-16)",
+          "claim": "That the same values and defaults apply on Windows 11 Home, that the Settings slider writes them, and that a change of EnableLUA needs a restart is general knowledge; the page read does not say so."
+        }
+      ],
+      "references": [
+        {
+          "title": "UAC Group Policy Settings and Registry Key Settings (archived)",
+          "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/dd835564(v=ws.10)"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM, read both values before applying; if they are already 1 the plan reports no change. Flip EnableLUA to 0 by hand, apply and restart to confirm that the entry brings it back."
+    },
+    {
+      "id": "plt-008-lsa-protection",
+      "module": "m5-platform",
+      "title": "Run the Local Security Authority as a protected process (LSA protection)",
+      "tier": "T1",
+      "min_profile": 2,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "flags": {
+        "requires_reboot": true
+      },
+      "rationale": "LSASS holds the logged-on users' credentials in memory. With LSA protection it runs as a protected process, so other programs cannot read its memory or inject code into it, which is what credential-stealing tools do. The entry writes the value 2, which Microsoft documents as the mode without a UEFI lock; unlike the value 1 it can be undone by writing 0 or deleting the value.",
+      "impact": "Any plug-in for the Local Security Authority that is not signed by Microsoft stops loading, for example an old third-party credential provider, smart-card minidriver or password filter. Debuggers and memory-dump tools can no longer read LSASS. Takes effect after a restart.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Lsa",
+          "name": "RunAsPPL",
+          "kind": "DWord",
+          "data": 2,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa' -Name RunAsPPL -ErrorAction SilentlyContinue).RunAsPPL",
+            "expected": "2"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Configure added LSA protection (read 2026-11-16)",
+          "claim": "Key HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Lsa, value RunAsPPL. \"To configure the feature with a UEFI variable, use a type of dword and a data value of 00000001.\" \"To configure the feature without a UEFI variable, use a type of dword and a data value of 00000002.\" \"When enabled without a UEFI lock, LSASS runs as a protected process, and this setting isn't stored in a UEFI variable.\" \"This value is only enforced on Windows 11 build 22H2 and later.\" \"Any plug-ins that are unsigned or aren't signed with a Microsoft signature fail to load in LSA.\" Audit mode (AuditLevel 8 under Image File Execution Options\\LSASS.exe) is on by default from 22H2; events 3033 and 3063 in Applications and Services Logs > Microsoft > Windows > CodeIntegrity > Operational list the plug-ins that would be blocked."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Configure added LSA protection (read 2026-11-16)",
+          "claim": "\"For client devices running Windows 11 version 22H2 and later, added LSA protection is enabled by default if the following criteria are met:\" (in the text read: a new installation and not an upgrade, an enterprise-joined device, and HVCI capability), so a standalone Home PC does not get it by default."
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Configure added LSA protection (read 2026-11-16)",
+          "claim": "The page's 'Applies to' line lists only Windows Server 2016, 2019, 2022 and 2025, and it does not mention Home; it configures the feature only through the registry, Group Policy and Intune."
+        }
+      ],
+      "references": [
+        {
+          "title": "Configure added LSA protection",
+          "url": "https://learn.microsoft.com/windows-server/security/credentials-protection-and-management/configuring-additional-lsa-protection"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). Before applying on a real PC, read the CodeIntegrity Operational log for events 3033 and 3063 (they name the plug-ins that would be blocked). If RunAsPPL is already 1 (with a UEFI lock) the plan would change it to 2; the UEFI variable keeps the lock either way, and -Exclude plt-008* keeps the 1. On the VM: apply, restart, and check with a process tool that lsass.exe is protected."
+    },
+    {
+      "id": "plt-009-vulnerable-driver-blocklist-attest",
+      "module": "m5-platform",
+      "title": "Attest that the Microsoft vulnerable driver blocklist is on",
+      "tier": "T1",
+      "min_profile": 1,
+      "mode": "attest",
+      "home_effective": "unverified",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "Some signed drivers have known bugs that let a program take over the kernel; malware loads such a driver on purpose. Microsoft keeps a blocklist of them and says it is on by default on all devices from Windows 11 22H2. The setting is on this tool's never-touch list, so no entry can switch it off; the report states whether it is still on.",
+      "impact": "Read-only: the entry prints its result in the report and changes nothing, so there is nothing to roll back. A failing check means the registry value is 0, which a community source documents as off; a missing value is the default, which is on.",
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\CI\\Config' -Name VulnerableDriverBlocklistEnable -ErrorAction SilentlyContinue).VulnerableDriverBlocklistEnable -ne 0",
+            "expected": "True"
+          }
+        ],
+        "manual_check": "Windows Security > Device security > Core isolation details shows 'Microsoft vulnerable driver blocklist' as On. If it is Off, turn it on there and restart; this tool never writes the setting."
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "support.microsoft.com KB5020779 The vulnerable driver blocklist after the October 2022 preview release (read 2026-11-16)",
+          "claim": "\"Microsoft introduced the vulnerable driver blocklist as an optional feature in Windows 10, version 1809.\" \"Starting with Windows 11, version 22H2, the blocklist is also enabled by default on all devices.\" On Windows 11 22H2 it can be switched in Windows Security > Device security > core isolation page (Microsoft Vulnerable Driver Blocklist), and the page tells the reader to restart after turning it off. It does not mention the registry value."
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "support.microsoft.com KB5020779 The vulnerable driver blocklist after the October 2022 preview release (read 2026-11-16)",
+          "claim": "The 'Applies to' list names Windows 10 Enterprise, Education, IoT Enterprise, LTSC and Windows 10 and 11 versions 21H2 and 22H2 'all editions'; Windows Home is not named."
+        },
+        {
+          "grade": "community",
+          "source": "geekrewind.com How to enable or disable Microsoft Vulnerable Driver Blocklist in Windows 11 (read 2026-11-16)",
+          "claim": "Gives HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\CI\\Config, value VulnerableDriverBlocklistEnable as a DWORD: 1 turns the blocklist on (the default), 0 turns it off; the change takes effect after a restart. The toggle and the registry method are unavailable while memory integrity, Smart App Control or S mode is on."
+        }
+      ],
+      "references": [
+        {
+          "title": "KB5020779: The vulnerable driver blocklist after the October 2022 preview release",
+          "url": "https://support.microsoft.com/help/5020779"
+        },
+        {
+          "title": "How to enable or disable Microsoft Vulnerable Driver Blocklist in Windows 11 (Geek Rewind)",
+          "url": "https://geekrewind.com/how-to-enable-or-disable-microsoft-vulnerable-driver-blocklist-in-windows-11/"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). No Microsoft page documents the registry value; on the VM, flip the Windows Security toggle and check that this value follows it, and note what the toggle and the value show while memory integrity is on."
+    },
+    {
+      "id": "plt-010-uac-always-notify",
+      "module": "m5-platform",
+      "title": "Make User Account Control ask for consent on the secure desktop every time",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "expected",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "rationale": "By default Windows does not prompt when one of its own programs asks for administrator rights. 'Always notify' prompts for all of them, on the secure desktop, so malware that finds a way to start a Windows program with elevation cannot do it silently. The entry writes ConsentPromptBehaviorAdmin 2, which Microsoft documents as \"Prompt for consent on the secure desktop\".",
+      "impact": "More prompts: opening Task Manager, Registry Editor, Device Manager and similar programs as administrator asks for confirmation every time. Standard users and the credential prompt are not changed. Takes effect at the next prompt.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+          "name": "ConsentPromptBehaviorAdmin",
+          "kind": "DWord",
+          "data": 2,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System' -Name ConsentPromptBehaviorAdmin -ErrorAction SilentlyContinue).ConsentPromptBehaviorAdmin",
+            "expected": "2"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "low",
+      "evidence": [
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com (archived Windows 7 to Server 2012 R2 page) UAC Group Policy Settings and Registry Key Settings (read 2026-11-16)",
+          "claim": "Key HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System. ConsentPromptBehaviorAdmin: \"2 = Prompt for consent on the secure desktop\"; \"5 (Default) = Prompt for consent for non-Windows binaries\". The page is archived (2014-09-03), applies to Windows 7 to Windows Server 2012 R2, and does not mention the UAC slider."
+        },
+        {
+          "grade": "background",
+          "source": "learn.microsoft.com (archived Windows 7 to Server 2012 R2 page) UAC Group Policy Settings and Registry Key Settings (read 2026-11-16)",
+          "claim": "That the 'Always notify' position of the UAC slider (Settings, or the old Control Panel page) writes ConsentPromptBehaviorAdmin 2 together with PromptOnSecureDesktop 1 on Windows 11 Home, and that the change applies at the next prompt, is general knowledge."
+        }
+      ],
+      "references": [
+        {
+          "title": "UAC Group Policy Settings and Registry Key Settings (archived)",
+          "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/dd835564(v=ws.10)"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). On the VM, apply and then open Registry Editor as administrator; the consent prompt must appear on the dimmed secure desktop. Compare the slider position in the UAC settings dialog with the value."
+    },
+    {
+      "id": "plt-011-memory-integrity",
+      "module": "m5-platform",
+      "title": "Turn on memory integrity (hypervisor-protected code integrity)",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "settings-backing",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "requires_hardware": "virtualization",
+      "flags": {
+        "requires_reboot": true
+      },
+      "rationale": "Memory integrity runs the check that decides which drivers may load inside a small protected virtual machine that the rest of Windows cannot reach, so even a driver bug cannot be used to load unsigned kernel code. Microsoft turns it on by default for clean installs on suitable hardware; this entry turns it on for the other PCs. It writes only the Enabled value, and leaves WasEnabledBy and EnabledBootId unset, as Microsoft advises for high-security systems.",
+      "impact": "Drivers that are not compatible with memory integrity stop working; Microsoft warns that \"Some applications and hardware device drivers may be incompatible with memory integrity.\" On some PCs it lowers game performance a little. Takes effect after a restart; if the PC cannot start, Windows's own safeguard may turn it off again.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity",
+          "name": "Enabled",
+          "kind": "DWord",
+          "data": 1,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity' -Name Enabled -ErrorAction SilentlyContinue).Enabled",
+            "expected": "1"
+          },
+          {
+            "command": "(Get-CimInstance -ClassName Win32_DeviceGuard -Namespace 'root\\Microsoft\\Windows\\DeviceGuard' -ErrorAction SilentlyContinue).SecurityServicesRunning -contains 2",
+            "expected": "True"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "high",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Enable virtualization-based protection of code integrity (read 2026-11-16)",
+          "claim": "The page shows the key where it explains how to turn memory integrity off: reg add \"HKLM\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity\" /v \"Enabled\" followed by /t REG_DWORD /d 0 /f. Settings path: \"Windows Security > Device security > Core isolation details > Memory integrity\". Check: Get-CimInstance -ClassName Win32_DeviceGuard -Namespace root\\Microsoft\\Windows\\DeviceGuard; SecurityServicesRunning contains 2 when memory integrity is running (\"If present, memory integrity is running.\"), and VirtualizationBasedSecurityStatus 2 means \"VBS is enabled and running.\" \"Some applications and hardware device drivers may be incompatible with memory integrity.\" The page applies to Windows 11, Windows 10 and Windows Server 2016 to 2022."
+        },
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Memory integrity and VBS enablement (read 2026-11-16)",
+          "claim": "Memory integrity is \"turned on by default on clean installs of Windows 11\" on PCs that meet the hardware and driver conditions, and \"Auto-enablement pertains only to clean installs, not upgrades of existing devices.\" \"On other systems that don't meet the memory integrity auto-enablement requirements, customers can opt in using any of the methods described in how to enable memory integrity.\" \"IT Pros and end users always have the final control of whether memory integrity is enabled.\" For OEM images it lists Enabled=1, WasEnabledBy=1 and EnabledBootId under the same key, and says that for high security systems WasEnabledBy and EnabledBootId should not be set. In the text read, if the system crashes during boot an auto-disable safeguard may turn memory integrity off."
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Enable virtualization-based protection of code integrity (read 2026-11-16)",
+          "claim": "Windows Home is not mentioned on either page."
+        }
+      ],
+      "references": [
+        {
+          "title": "Enable virtualization-based protection of code integrity",
+          "url": "https://learn.microsoft.com/en-us/windows/security/hardware-security/enable-virtualization-based-protection-of-code-integrity"
+        },
+        {
+          "title": "Memory integrity and VBS enablement",
+          "url": "https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/oem-hvci-enablement"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). The registry page documents the value only for turning the feature off, so that Enabled=1 alone turns it on, without also setting EnableVirtualizationBasedSecurity, is an assumption: on the VM, switch memory integrity on in Windows Security, note every value that changes under HKLM\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard, and add any that are missing here. The second check is true only after a restart on hardware with virtualization."
+    },
+    {
+      "id": "plt-012-kernel-dma-block-all",
+      "module": "m5-platform",
+      "title": "Block external devices that are incompatible with Kernel DMA Protection",
+      "tier": "T1",
+      "min_profile": 3,
+      "mode": "enforce",
+      "home_effective": "unverified",
+      "channel_class": "policy",
+      "applicability": {
+        "editions": [
+          "Home"
+        ],
+        "min_build": 26200
+      },
+      "flags": {
+        "requires_reboot": true
+      },
+      "rationale": "A device plugged into a Thunderbolt or USB4 port can read all memory through direct memory access (DMA), which defeats every other protection. Windows blocks it when the PC has Kernel DMA Protection; for devices whose drivers do not support it, the default is to allow them after the user signs in. The entry sets the policy to block them always, which is the value the DISA STIG for Windows 11 requires.",
+      "impact": "External PCIe devices whose drivers are not compatible with DMA remapping (older Thunderbolt docks, external graphics cards, some capture devices) do not work at all, even after sign-in; devices with compatible drivers are unaffected. Takes effect after a restart.",
+      "apply": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Kernel DMA Protection",
+          "name": "DeviceEnumerationPolicy",
+          "kind": "DWord",
+          "data": 0,
+          "scope": "machine"
+        }
+      ],
+      "audit": {
+        "checks": [
+          {
+            "command": "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Kernel DMA Protection' -Name DeviceEnumerationPolicy -ErrorAction SilentlyContinue).DeviceEnumerationPolicy",
+            "expected": "0"
+          }
+        ]
+      },
+      "rollback": {
+        "strategy": "journal",
+        "reversibility": "full"
+      },
+      "risk": "medium",
+      "evidence": [
+        {
+          "grade": "ms-doc",
+          "source": "learn.microsoft.com Policy CSP DmaGuard (read 2026-11-16)",
+          "claim": "DeviceEnumerationPolicy: \"Enumeration policy for external DMA-capable devices incompatible with DMA remapping.\" Values: 0 \"Block all (Most restrictive).\", 1 \"Only after log in/screen unlock.\" (default), 2 \"Allow all (Least restrictive).\" ADMX key Software\\Policies\\Microsoft\\Windows\\Kernel DMA Protection; the page names the ADMX element DmaGuardEnumerationPolicy and gives no separate registry value name. Applies to Windows 10 version 1809 and later."
+        },
+        {
+          "grade": "ms-doc-nonhome",
+          "source": "learn.microsoft.com Policy CSP DmaGuard (read 2026-11-16)",
+          "claim": "The editions table marks Pro, Enterprise, Education and IoT Enterprise / IoT Enterprise LTSC; Home is not listed."
+        },
+        {
+          "grade": "third-party",
+          "source": "stigviewer.com DISA STIG Microsoft Windows 11, finding V-253426 (STIG dated 2026-02-12) (read 2026-11-16)",
+          "claim": "STIG finding V-253426 (rule WN11-EP-000310, severity medium), \"Windows 11 Kernel (Direct Memory Access) DMA Protection must be enabled.\" Check: HKEY_LOCAL_MACHINE, path \\Software\\Policies\\Microsoft\\Windows\\Kernel DMA Protection, value DeviceEnumerationPolicy, REG_DWORD, expected value 0. Fix: policy \"Enumeration policy for external devices incompatible with Kernel DMA Protection\" Enabled with \"Block All\". The STIG is dated 2026-02-12."
+        }
+      ],
+      "references": [
+        {
+          "title": "Policy CSP - DmaGuard",
+          "url": "https://learn.microsoft.com/windows/client-management/mdm/policy-csp-dmaguard"
+        },
+        {
+          "title": "STIG finding V-253426 (WN11-EP-000310): Kernel DMA Protection",
+          "url": "https://www.stigviewer.com/stigs/microsoft_windows_11/2026-02-12/finding/V-253426"
+        }
+      ],
+      "notes": "Not VM-verified (VM = a Windows 11 Home virtual machine). This cannot be proven in a VM: it needs a physical PC with Kernel DMA Protection (msinfo32 shows 'Kernel DMA Protection: On') and an external PCIe device whose driver is not DMA-remapping compatible. The value name DeviceEnumerationPolicy comes from the STIG; the policy page names only the ADMX element."
+    }
+  ]
+}
