@@ -1,0 +1,115 @@
+name: unzip
+
+on:
+  push:
+    paths:
+      - winharden.zip
+  workflow_dispatch:
+    inputs:
+      zip:
+        description: Path of the zip inside the repository
+        type: string
+        default: winharden.zip
+      target:
+        description: Folder to unpack into ("." is the repository root)
+        type: string
+        default: "."
+      delete_zip:
+        description: Remove the zip after unpacking
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: unzip-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  unzip:
+    if: github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Unpack, commit and push
+        # The inputs reach the script only as environment variables; they are never pasted into the script text.
+        env:
+          ZIP: ${{ inputs.zip || 'winharden.zip' }}
+          TARGET: ${{ inputs.target || '.' }}
+          DELETE_ZIP: ${{ inputs.delete_zip }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+
+          fail() { echo "::error::$*"; exit 1; }
+
+          # unzip exits with 1 for warnings (for example backslash separators in a zip made on Windows) and with
+          # 2 or more for errors.
+          run_unzip() {
+            local rc=0
+            unzip "$@" || rc=$?
+            [ "$rc" -le 1 ] || fail "unzip failed (exit code $rc)"
+            [ "$rc" -eq 0 ] || echo "::warning::unzip finished with warnings, check the log above"
+          }
+
+          # The inputs must name a place inside the repository and must not point into .git.
+          check_path() {
+            case "$2" in
+              ''|/*|*..*|*\\*|.git|.git/*|*/.git|*/.git/*)
+                fail "$1 must be a relative path inside the repository, got '$2'" ;;
+            esac
+          }
+          check_path zip "$ZIP"
+          check_path target "$TARGET"
+
+          if [ ! -f "./$ZIP" ] || [ -L "./$ZIP" ]; then
+            if [ "$EVENT" = push ]; then
+              echo "::notice::$ZIP is not in the repository any more, nothing to unpack."
+              exit 0
+            fi
+            fail "$ZIP is not a regular file in the repository"
+          fi
+
+          # Unpack into a scratch folder first, so the repository changes only when every check below has passed.
+          work="$(mktemp -d "${RUNNER_TEMP:-/tmp}/unzip.XXXXXX")"
+          run_unzip -qo "./$ZIP" -d "$work"
+
+          [ -z "$(find "$work" -type l -print -quit)" ] || fail "$ZIP contains symbolic links, which are not unpacked"
+
+          # A single top-level folder is dropped, so that README.md lands in the target folder itself. A hidden one
+          # (.github, .git) is content, not a wrapper, and stays.
+          shopt -s nullglob dotglob
+          top=("$work"/*)
+          shopt -u nullglob dotglob
+          [ "${#top[@]}" -gt 0 ] || fail "$ZIP is empty"
+          src="$work"
+          if [ "${#top[@]}" -eq 1 ] && [ -d "${top[0]}" ] && [[ "${top[0]##*/}" != .* ]]; then src="${top[0]}"; fi
+
+          [ ! -e "$src/.git" ] || fail "$ZIP contains a .git folder, which would overwrite the repository's own"
+          if [ -e "$src/.github/workflows" ]; then
+            echo "::warning::.github/workflows in the zip is skipped (the token cannot change workflow files)."
+            rm -rf "$src/.github/workflows"
+          fi
+
+          dest="./$TARGET"
+          mkdir -p "$dest"
+          cp -a "$src"/. "$dest"/
+          echo "Unpacked $(find "$src" -type f | wc -l) files from $ZIP into $TARGET."
+
+          if [ "${DELETE_ZIP:-true}" = true ]; then rm -f "./$ZIP"; fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          if git diff --cached --quiet; then
+            echo "::notice::The repository already matches the zip, nothing to commit."
+            exit 0
+          fi
+          message="Unpack $ZIP"
+          [ "$TARGET" = . ] || message="$message into $TARGET"
+          git commit -q -m "$message"
+          git push
