@@ -1,99 +1,97 @@
 # winharden
 
-Debloating and hardening for **Windows 11 Home**: plan before every change, rollback through a journal, and verification using independent checks.
+Debloat και hardening για **Windows 11 Home**: plan πριν από κάθε αλλαγή, αναίρεση από journal, επαλήθευση με ανεξάρτητους ελέγχους.
 
-Each setting is an entry in a JSON manifest, with its rationale, user impact, verification command, rollback method, and sources with evidence grades. The engine reads the manifests, shows what will change, requests approval, records every change before making it, and verifies the result. It does not use the network or download anything: there is no `irm | iex`.
+Κάθε ρύθμιση είναι ένα entry σε manifest JSON, με αιτιολόγηση, επίπτωση για τον χρήστη, εντολή ελέγχου, τρόπο αναίρεσης και πηγές με βαθμό αξιοπιστίας. Ο engine διαβάζει τα manifests, δείχνει τι θα αλλάξει, ζητά έγκριση, καταγράφει κάθε αλλαγή πριν την κάνει και ελέγχει το αποτέλεσμα. Δεν χρησιμοποιεί δίκτυο και δεν κατεβάζει τίποτα: δεν υπάρχει `irm | iex`.
 
-|  |  |
-| --- | --- |
-| Platform | Windows 11 Home 25H2 (build 26200) through build 26999 |
-| Runtime | Windows PowerShell 5.1, 64-bit, running as Administrator. No dependencies |
-| Contents | 133 entries across 10 modules, 3 profiles, and 5 entries available only with `-OptIn` |
-| Version | 0.1.0 |
-| Status | **Early-stage.** Tested on one VM, not yet on a physical machine |
+| | |
+|---|---|
+| Πλατφόρμα | Windows 11 Home 25H2 (build 26200) έως build 26999 |
+| Runtime | Windows PowerShell 5.1, 64-bit, ως Administrator. Καμία εξάρτηση |
+| Περιεχόμενο | 133 entries σε 10 modules, 3 profiles και 5 entries που μπαίνουν μόνο με `-OptIn` |
+| Έκδοση | 0.1.0 |
+| Κατάσταση | **Πρώιμη.** Έχει τρέξει σε μία VM, όχι ακόμη σε πραγματικό μηχάνημα |
 
-> Read the Status section before running it, and test it first in a VM with a snapshot.
+> Διάβασε την ενότητα [Κατάσταση](#κατάσταση) πριν το τρέξεις, και δοκίμασέ το πρώτα σε VM με snapshot.
 
-## Table of Contents
+## Περιεχόμενα
 
-- Status
-- Principles and Limitations
-- Requirements
-- Quick Start
-- Profiles and Modules
-- Commands and Options
-- Security Model
-- Verification and Reports
-- Files Written by the Tool
-- Drift Monitoring
-- Manifests
-- Architecture
-- Development and Testing
-- Troubleshooting
-- Security and Vulnerability Reporting
-- Documentation
-- License and Liability
+- [Κατάσταση](#κατάσταση)
+- [Αρχές και όρια](#αρχές-και-όρια)
+- [Απαιτήσεις](#απαιτήσεις)
+- [Γρήγορη εκκίνηση](#γρήγορη-εκκίνηση)
+- [Profiles και modules](#profiles-και-modules)
+- [Εντολές και επιλογές](#εντολές-και-επιλογές)
+- [Μοντέλο ασφαλείας](#μοντέλο-ασφαλείας)
+- [Επαλήθευση και αναφορές](#επαλήθευση-και-αναφορές)
+- [Αρχεία που γράφει το εργαλείο](#αρχεία-που-γράφει-το-εργαλείο)
+- [Παρακολούθηση drift](#παρακολούθηση-drift)
+- [Manifests](#manifests)
+- [Αρχιτεκτονική](#αρχιτεκτονική)
+- [Ανάπτυξη και έλεγχοι](#ανάπτυξη-και-έλεγχοι)
+- [Αντιμετώπιση προβλημάτων](#αντιμετώπιση-προβλημάτων)
+- [Ασφάλεια και αναφορά προβλημάτων](#ασφάλεια-και-αναφορά-προβλημάτων)
+- [Έγγραφα](#έγγραφα)
+- [Άδεια και ευθύνη](#άδεια-και-ευθύνη)
 
-## Status
+## Κατάσταση
 
-Early-stage release. This table describes what has and has not been demonstrated so far.
+Πρώιμη έκδοση. Ο πίνακας λέει τι έχει αποδειχθεί και τι όχι.
 
-| Topic | Current Status |
-| --- | --- |
-| Where it has run | On **one** Windows 11 Home VM with PowerShell 5.1. Not yet on a physical machine |
-| What was run | `selftest`, `plan`, `apply -Profile 3`, `verify -Profile 3`, and the `rollback` of the first apply. The tester reported that the rollback was correct; its output was not recorded |
-| What the VM revealed | Three false failures in `selftest` (D20) and `ERROR` on 29 entries because their audits could not run (D21). These were fixed and confirmed on the VM. Change D22 (`verify` explaining why an entry was not applied) has not yet been run on Windows |
-| Entries that passed the verification protocol | **0 out of 133.** 90 are `expected` and 43 are `unverified`: policies that Home may ignore |
-| Not yet tested | The drift task (`install-drift`) and physical hardware: TPM, Secure Boot, BitLocker, memory integrity |
-| Independent review | Not performed |
-| Open items | `docs/BACKLOG.md`, together with the ownership exceptions from the first `apply` reported by the tester, which have not yet been documented |
-| Automated checks | Hundreds of Python tests covering the manifests, the shared vectors used by both linters, and the PowerShell code as text. PowerShell is not executed in the development environment, so these checks do not prove its behavior on Windows |
+| Θέμα | Σήμερα |
+|---|---|
+| Πού έχει τρέξει | Σε **μία** VM Windows 11 Home με PowerShell 5.1. Όχι ακόμη σε πραγματικό μηχάνημα |
+| Τι έτρεξε | `selftest`, `plan`, `apply -Profile 3`, `verify -Profile 3` και το `rollback` του πρώτου apply. Ο δοκιμαστής ανέφερε ότι το rollback ήταν σωστό· η έξοδός του δεν έχει καταγραφεί |
+| Τι βρήκε η VM | Τρία ψευδή λάθη του `selftest` (D20) και `ERROR` σε 29 entries, επειδή το audit τους δεν μπορούσε να τρέξει (D21). Διορθώθηκαν και επιβεβαιώθηκαν στη VM. Η αλλαγή D22 (το `verify` εξηγεί γιατί ένα entry δεν εφαρμόστηκε) δεν έχει ακόμη τρέξει σε Windows |
+| Entries που πέρασαν το πρωτόκολλο επαλήθευσης | **0 από 133.** Τα 90 είναι `expected` και τα 43 `unverified`: policies που το Home μπορεί να αγνοεί |
+| Δεν έχει δοκιμαστεί | Το drift task (`install-drift`) και πραγματικό υλικό: TPM, Secure Boot, BitLocker, memory integrity |
+| Ανεξάρτητη αναθεώρηση | Δεν έχει γίνει |
+| Ανοιχτά σημεία | `docs/BACKLOG.md`, μαζί με τις εξαιρέσεις (ownership) του πρώτου `apply` που ανέφερε ο δοκιμαστής και δεν έχουν ακόμη καταγραφεί |
+| Αυτόματοι έλεγχοι | Εκατοντάδες tests σε Python πάνω στα manifests, στα κοινά vectors των δύο linters και στον κώδικα PowerShell ως κείμενο. Το PowerShell δεν εκτελείται στο περιβάλλον ανάπτυξης, οπότε αυτοί οι έλεγχοι δεν αποδεικνύουν τη συμπεριφορά στα Windows |
 
-> **Before any****`apply`****:** create a Windows 11 Home VM with a snapshot and follow `docs/VERIFY-PROTOCOL.md`. Profile 3 may break legacy applications and drivers. Do not run it first on the machine you use.
+> **Πριν από οποιοδήποτε `apply`:** φτιάξε VM Windows 11 Home με snapshot και ακολούθησε το [`docs/VERIFY-PROTOCOL.md`](docs/VERIFY-PROTOCOL.md). Το profile 3 μπορεί να σπάσει παλιά προγράμματα και drivers. Μην το τρέξεις πρώτα στο μηχάνημα που χρησιμοποιείς.
 
-## Principles and Limitations
+## Αρχές και όρια
 
-| Principle | Implementation |
-| --- | --- |
-| Plan before making changes | `plan` reads the system and shows the "before → after" state for every target. `apply` requires approval bound to the plan hash |
-| Record before writing | Every target is first written to the journal (HMAC-SHA256 chain) and only then changed. Every change is read back |
-| Transaction per entry | If a step fails, the targets within the same entry that were changed are restored before the next entry begins |
-| Rollback with declared limitations | `rollback` restores state from the journal. Anything that cannot be restored (removed applications, deleted files) is declared `partial` in the entry and the plan before the change |
-| Independent verification | `verify` checks twice: the engine reads the targets, and the manifest's read-only verification commands are executed |
-| Honesty about Home | Policies documented by Microsoft only for Pro and above are marked `unverified`, with instructions for verification in a VM. No entry becomes `verified` without an observation on Home, including the build and date (R05) |
-| Never-touch list | `policy/never-touch.json`: Windows Update, Store, Defender engine, Secure Boot, TPM, and BitLocker. The validator checks it, and the engine checks it again when loading the manifests |
-| No network access | The engine makes no network calls, and manifest verification commands containing network access are rejected by the linter |
-| Idempotent | A second `apply` on a system that is already compliant reports "Nothing to change" and creates no checkpoint |
+| Αρχή | Πώς υλοποιείται |
+|---|---|
+| Plan πριν από αλλαγή | Το `plan` διαβάζει το σύστημα και δείχνει «πριν → μετά» για κάθε στόχο. Το `apply` ζητά έγκριση που δένεται στο hash του plan |
+| Καταγραφή πριν από εγγραφή | Κάθε στόχος γράφεται πρώτα στο journal (αλυσίδα HMAC-SHA256) και μετά αλλάζει. Κάθε αλλαγή διαβάζεται πίσω |
+| Transaction ανά entry | Αν αποτύχει ένα βήμα, επανέρχονται οι στόχοι του ίδιου entry που είχαν αλλάξει, πριν ξεκινήσει το επόμενο entry |
+| Αναίρεση με δηλωμένα όρια | Το `rollback` επαναφέρει από το journal. Ό,τι δεν επανέρχεται (αφαιρεμένες εφαρμογές, διαγραμμένα αρχεία) δηλώνεται `partial` στο entry και στο plan, πριν την αλλαγή |
+| Ανεξάρτητη επαλήθευση | Το `verify` ελέγχει δύο φορές: ο engine διαβάζει τους στόχους, και τρέχουν οι read-only εντολές ελέγχου του manifest |
+| Ειλικρίνεια για το Home | Policy που η Microsoft τεκμηριώνει μόνο για Pro και πάνω σημειώνεται `unverified`, με οδηγία επαλήθευσης σε VM. Κανένα entry δεν γίνεται `verified` χωρίς παρατήρηση σε Home, με build και ημερομηνία (R05) |
+| Λίστα που δεν αγγίζεται | `policy/never-touch.json`: Windows Update, Store, μηχανή του Defender, Secure Boot, TPM, BitLocker. Την ελέγχει ο validator και την ξανα-ελέγχει ο engine όταν φορτώνει τα manifests |
+| Χωρίς δίκτυο | Ο engine δεν έχει καμία κλήση δικτύου, και οι εντολές ελέγχου των manifests απορρίπτονται από τον lint αν έχουν |
+| Idempotent | Δεύτερο `apply` σε σύστημα που ήδη συμφωνεί: «Nothing to change», κανένα checkpoint |
 
-Limitations, i.e. what the tool **does not** do:
+Όρια, δηλαδή τι το εργαλείο **δεν** κάνει:
 
-- It does not disable diagnostic data collection. Home does not allow Level 0: the tool retains Required (`tel-001`).
-- It never disables Windows Update, SmartScreen, the firewall, or Defender. It only hardens Defender.
-- It does not modify Secure Boot, TPM, or BitLocker: it only checks them (`attest`).
-- It does not uninstall OneDrive: it blocks startup and sign-in with a personal account (opt-in) and provides manual uninstallation steps (D18).
-- It does not support any edition other than Home, or any build earlier than 25H2.
-- It is a local, single-machine tool: there is no central management and it does not send reports anywhere.
-- XCCDF export is an output format: it is not a benchmark compliance certification and has not been validated with NIST tools.
-- Also out of scope: WDAC and App Control, outbound default-deny, schannel configuration, ETW, and LAPS (`docs/THREAT-MODEL.md`, §1).
+- Δεν σβήνει τα διαγνωστικά δεδομένα. Το Home δεν επιτρέπει επίπεδο 0: το εργαλείο κρατά το Required (`tel-001`).
+- Δεν απενεργοποιεί ποτέ Windows Update, SmartScreen, firewall ή Defender. Για τον Defender κάνει μόνο hardening.
+- Δεν αλλάζει Secure Boot, TPM και BitLocker: τα ελέγχει μόνο (`attest`).
+- Δεν απεγκαθιστά το OneDrive: μπλοκάρει την εκκίνηση και τη σύνδεση με προσωπικό λογαριασμό (opt-in) και δίνει χειροκίνητα βήματα για την απεγκατάσταση (D18).
+- Δεν υποστηρίζει άλλη έκδοση από Home, ούτε build πριν από το 25H2.
+- Είναι τοπικό εργαλείο για ένα μηχάνημα: δεν έχει κεντρική διαχείριση και δεν στέλνει αναφορές πουθενά.
+- Η εξαγωγή XCCDF είναι μορφή αποτελεσμάτων: δεν είναι πιστοποίηση συμμόρφωσης με benchmark και δεν έχει επικυρωθεί με εργαλεία του NIST.
+- Εκτός πεδίου είναι επίσης WDAC και App Control, outbound default-deny, ρύθμιση schannel, ETW και LAPS (`docs/THREAT-MODEL.md`, §1).
 
-## Requirements
+## Απαιτήσεις
 
-|  |  |
-| --- | --- |
-| Operating System | Windows 11 **Home**, build 26200 through 26999 |
-| Shell | Windows PowerShell 5.1 (`powershell.exe`) only, 64-bit |
-| Permissions | Administrator |
-| Platform | Secure Boot enabled and TPM 2.0 enabled. Without these, `apply` stops unless `-AllowPlatformGaps` is specified |
-| System State | No pending reboot |
-| Network | Not required |
+| | |
+|---|---|
+| Λειτουργικό | Windows 11 **Home**, build 26200 έως 26999 |
+| Shell | Μόνο Windows PowerShell 5.1 (`powershell.exe`), 64-bit |
+| Δικαιώματα | Administrator |
+| Πλατφόρμα | Secure Boot ενεργό και TPM 2.0 ενεργό. Χωρίς αυτά το `apply` σταματά, εκτός αν δοθεί `-AllowPlatformGaps` |
+| Κατάσταση συστήματος | Καμία εκκρεμής επανεκκίνηση |
+| Δίκτυο | Δεν χρειάζεται |
 
-The preflight check covers permissions, 64-bit architecture, Windows edition and build, pending reboot status, Secure Boot, and TPM before making any changes. Each check has a code and a diagnostic message (see the table in Security Model). It does not check the PowerShell version: always launch the tool using `powershell.exe`.
+Ο έλεγχος preflight καλύπτει, πριν από την αλλαγή, τα δικαιώματα, το 64-bit, την έκδοση και το build των Windows, την εκκρεμή επανεκκίνηση, το Secure Boot και το TPM, με κωδικό και διάγνωση (πίνακας στο [Μοντέλο ασφαλείας](#μοντέλο-ασφαλείας)). Δεν ελέγχει την έκδοση του PowerShell: ξεκίνα το εργαλείο πάντα με το `powershell.exe`.
 
-## Quick Start
+## Γρήγορη εκκίνηση
 
-Use a Windows 11 Home VM with a snapshot. Open Windows PowerShell using "Run as administrator", navigate to the project directory, and run:
-
-powershell
+Σε VM Windows 11 Home με snapshot. Άνοιξε το Windows PowerShell με «Run as administrator», πήγαινε στον φάκελο του έργου και τρέξε:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\winharden.ps1 selftest
@@ -104,347 +102,340 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\winharden.ps1 checkpoi
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\winharden.ps1 rollback -To latest
 ```
 
-`-ExecutionPolicy Bypass` applies only to this process and does not change the system's execution policy.
+Το `-ExecutionPolicy Bypass` ισχύει μόνο για αυτή τη διεργασία και δεν αλλάζει την πολιτική του συστήματος.
 
-1. **`selftest`** runs the engine tests against an in-memory system. It changes nothing. `apply` runs it again before making any changes and refuses to continue if it fails.
-2. **`plan`** reads the system and shows what will change and why. It changes nothing. It saves the plan and prints the command that applies exactly that plan.
-3. **`apply`** displays the plan and asks you to type `APPLY`. It then creates a restore point (best effort) and a checkpoint, applies changes entry by entry, runs `verify`, and generates reports. If a reboot is required, it says so at the end. Non-interactive usage: `apply -Profile 1 -Yes -PlanId <id>`.
-4. **`verify`** compares the system against the manifests (Verification and Reports). Use the same `-Profile` as the one used with `apply`.
-5. **`checkpoints`** verifies the journal and prints the checkpoints. **`rollback -To latest`** undoes the changes from the most recent `apply` and asks you to type `ROLLBACK`.
+1. **`selftest`** τρέχει τα tests του engine πάνω σε σύστημα στη μνήμη. Δεν αλλάζει τίποτα. Το `apply` το ξανατρέχει πριν αλλάξει οτιδήποτε και αρνείται να συνεχίσει αν αποτύχει.
+2. **`plan`** διαβάζει το σύστημα και δείχνει τι θα αλλάξει και γιατί. Δεν αλλάζει τίποτα. Σώζει το plan και τυπώνει την εντολή που εφαρμόζει ακριβώς αυτό.
+3. **`apply`** δείχνει το plan και ζητά να γράψεις `APPLY`. Μετά δημιουργεί σημείο επαναφοράς (best effort) και checkpoint, εφαρμόζει entry προς entry, τρέχει `verify` και γράφει τις αναφορές. Αν χρειάζεται επανεκκίνηση, το λέει στο τέλος. Μη διαδραστικά: `apply -Profile 1 -Yes -PlanId <id>`.
+4. **`verify`** συγκρίνει το σύστημα με τα manifests ([Επαλήθευση και αναφορές](#επαλήθευση-και-αναφορές)). Δώσε το ίδιο `-Profile` με το `apply`.
+5. **`checkpoints`** επαληθεύει το journal και τυπώνει τα checkpoints. Το **`rollback -To latest`** αναιρεί τις αλλαγές του τελευταίου `apply` και ζητά να γράψεις `ROLLBACK`.
 
-The plan has the following format (`<…>` represents values populated by the engine):
-
-text
+Το plan έχει αυτή τη μορφή (τα `<…>` είναι τιμές που συμπληρώνει ο engine):
 
 ```text
-Plan <id>  profile <N>  engine <version>
+Plan <id>  profile <N>  engine <έκδοση>
   to change: <n> entries (<m> targets)   already compliant: <n>   not applicable: <n>   blocked: <n>
 
 [CHANGE] <entry id>  (profile <p>, risk <low|medium|high>, Home effect: <home_effective>)
-    <title>
-    <target>:  <before>  ->  <after>
+    <τίτλος>
+    <στόχος>:  <πριν>  ->  <μετά>
     needs a restart to take effect
 [BLOCKED] <entry id>  (profile <p>, risk <…>, Home effect: <…>)
-    <title>
-    <reason>
+    <τίτλος>
+    <ο λόγος>
 ```
 
-| Plan Status | Meaning |
-| --- | --- |
-| `CHANGE` | Will be changed. Each target is displayed with its before and after values |
-| `SKIP` | Not applicable here: the service, task, feature, or directory is missing, or the build or edition does not match |
-| `BLOCKED` | Will not be changed: a closed gate, missing hardware, or something the engine cannot safely modify (e.g. a value with an unsupported type or an unreadable state) |
+| Κατάσταση στο plan | Σημασία |
+|---|---|
+| `CHANGE` | Θα αλλάξει. Εμφανίζεται κάθε στόχος με την τιμή πριν και μετά |
+| `SKIP` | Δεν ισχύει εδώ: λείπει η υπηρεσία, το task, το feature ή ο φάκελος, ή δεν ταιριάζει το build ή η έκδοση |
+| `BLOCKED` | Δεν θα αλλάξει: κλειστή πύλη, υλικό που λείπει, ή κάτι που ο engine δεν μπορεί να αλλάξει με ασφάλεια (π.χ. τιμή με τύπο που δεν αποθηκεύεται, κατάσταση που δεν διαβάζεται) |
 
-Entries that are already compliant are counted ("already compliant") but are not displayed. At the end, the plan lists entries that were not selected and require `-OptIn`, entries that are read-only checks (`attest`), and entries that require manual action.
+Τα entries που συμφωνούν ήδη μετρώνται («already compliant») αλλά δεν εμφανίζονται. Στο τέλος το plan αναφέρει όσα δεν επιλέχθηκαν και θέλουν `-OptIn`, όσα ελέγχονται μόνο (`attest`) και όσα είναι χειροκίνητα.
 
-## Profiles and Modules
+## Profiles και modules
 
-Each profile includes all lower-numbered profiles: profile N includes every entry with `min_profile` up to N. Risk increases the minimum required profile: `medium` starts at profile 2, while `high` is restricted to profile 3 (R16).
+Κάθε profile περιέχει τα χαμηλότερα: το profile N παίρνει κάθε entry με `min_profile` έως N. Το ρίσκο ανεβάζει το ελάχιστο profile: `medium` από το 2, `high` μόνο στο 3 (R16).
 
-| Profile | Name | New Entries | Total | Contents |
-| --- | --- | --- | --- | --- |
-| 1 | Classic | 36 | 36 | Everything a WinUtil-style tool would do: telemetry, ads, basic bloat, temporary files, SMB1 and WDigest off, and read-only platform checks. Goal: break nothing |
-| 2 | Private | 46 | 82 | Privacy and attack surface: Defender hardening, legacy protocols, LSA protection, UAC, and more applications |
-| 3 | Deep | 46 | 128 | Deep changes: most ASR rules, Controlled Folder Access, auditing, memory integrity, Kernel DMA, and full application removal. May break legacy applications and drivers |
+| Profile | Όνομα | Νέα | Σύνολο | Τι περιέχει |
+|---|---|---|---|---|
+| 1 | Classic | 36 | 36 | Ό,τι θα έκανε ένα εργαλείο τύπου WinUtil: τηλεμετρία, διαφημίσεις, βασικό bloat, προσωρινά αρχεία, SMB1 και WDigest off, και έλεγχοι ανάγνωσης για την πλατφόρμα. Στόχος: να μη σπάει τίποτα |
+| 2 | Private | 46 | 82 | Ιδιωτικότητα και επιφάνεια επίθεσης: Defender hardening, παλιά πρωτόκολλα, LSA protection, UAC, περισσότερες εφαρμογές |
+| 3 | Deep | 46 | 128 | Βαθιές αλλαγές: οι περισσότεροι ASR κανόνες, Controlled Folder Access, audit, memory integrity, Kernel DMA, πλήρης αφαίρεση εφαρμογών. Μπορεί να σπάσει παλιά προγράμματα και drivers |
 
-Five entries are outside all profiles and are included only with `-OptIn <name>`:
+Πέντε entries είναι εκτός κάθε profile και μπαίνουν μόνο με `-OptIn <όνομα>`:
 
-| `-OptIn` | Entries | What It Does |
-| --- | --- | --- |
-| `no-printing` | 1 | Disables the Print Spooler service (`net-017`): no printers, including virtual printers such as Microsoft Print to PDF |
-| `no-file-sharing` | 1 | Disables the Server service (`net-018`): no other machine can connect to this machine's shared folders or printers |
-| `no-onedrive` | 3 | Prevents OneDrive from starting (`one-002`) and blocks sign-in with a personal Microsoft account (`one-003`). `one-004` is manual: it provides uninstallation steps, and the engine changes nothing |
+| `-OptIn` | Entries | Τι κάνει |
+|---|---|---|
+| `no-printing` | 1 | Απενεργοποιεί την υπηρεσία Print Spooler (`net-017`): κανένας εκτυπωτής, ούτε εικονικός όπως το Microsoft Print to PDF |
+| `no-file-sharing` | 1 | Απενεργοποιεί την υπηρεσία Server (`net-018`): κανένα άλλο μηχάνημα δεν συνδέεται σε κοινόχρηστους φακέλους ή εκτυπωτές αυτού |
+| `no-onedrive` | 3 | Εμποδίζει την εκκίνηση του OneDrive (`one-002`) και τη σύνδεση με προσωπικό λογαριασμό Microsoft (`one-003`). Το `one-004` είναι χειροκίνητο: βήματα απεγκατάστασης, ο engine δεν αλλάζει τίποτα |
 
-| Module | Prefix | Contents | Entries |
-| --- | --- | --- | --- |
-| M1 telemetry | `tel` | Diagnostics, feedback, advertising ID, CEIP, DiagTrack, Error Reporting, online speech | 11 |
-| M2 consumer | `ads` | Ads and suggestions in Start, lock screen, Settings, search, widgets | 11 |
-| M3 AI | `ai` | Recall (disabled and attested in every profile), Copilot, Click to Do, Paint AI | 9 |
-| M4 AppX | `appx` | Removal of preinstalled applications (exact names, provisioned and `-AllUsers` pairs) | 30 |
-| M5 platform | `plt` | Secure Boot, TPM 2.0, system encryption (checks), UAC, LSA protection, memory integrity, Kernel DMA | 12 |
+| Module | Prefix | Περιεχόμενο | Entries |
+|---|---|---|---|
+| M1 telemetry | `tel` | Διαγνωστικά, feedback, advertising ID, CEIP, DiagTrack, Error Reporting, online speech | 11 |
+| M2 consumer | `ads` | Διαφημίσεις και προτάσεις σε Start, lock screen, Settings, search, widgets | 11 |
+| M3 AI | `ai` | Recall (απενεργοποιημένο και βεβαιωμένο σε κάθε profile), Copilot, Click to Do, Paint AI | 9 |
+| M4 AppX | `appx` | Αφαίρεση προεγκατεστημένων εφαρμογών (ονόματα ακριβή, ζεύγος provisioned και `-AllUsers`) | 30 |
+| M5 platform | `plt` | Secure Boot, TPM 2.0, κρυπτογράφηση συστήματος (έλεγχοι), UAC, LSA protection, memory integrity, Kernel DMA | 12 |
 | M6 network | `net` | SMB1, WDigest, LLMNR, NetBIOS, SMB signing, NTLM, mDNS, SSDP, Script Host, spooler | 18 |
-| M7 Defender | `def` | Hardening only: cloud protection, ASR rules, Network Protection, Controlled Folder Access | 28 |
-| M8 cleanup | `cln` | Temporary files and junk (only sourced paths, only files older than one day) | 4 |
-| M9 audit | `aud` | Advanced Audit Policy and PowerShell script block logging | 6 |
-| M10 OneDrive | `one` | Blocking folder redirection to OneDrive, opt-in blocking, and manual uninstallation | 4 |
+| M7 Defender | `def` | Μόνο hardening: cloud protection, ASR κανόνες, Network Protection, Controlled Folder Access | 28 |
+| M8 cleanup | `cln` | Προσωρινά αρχεία και σκουπίδια (μόνο διαδρομές με πηγή, μόνο αρχεία παλαιότερα από μία ημέρα) | 4 |
+| M9 audit | `aud` | Advanced Audit Policy και PowerShell script block logging | 6 |
+| M10 OneDrive | `one` | Μπλοκάρισμα μετακίνησης φακέλων στο OneDrive, opt-in αποκλεισμός και χειροκίνητη απεγκατάσταση | 4 |
 
-The prefix can be used with `-Only` and `-Exclude` (`-Only 'tel-*'`). The complete list is available in `docs/REFERENCE.md` (generated from the manifests, with profile, risk, and channel for each entry) and through the `list -Profile 3` command.
+Το prefix ταιριάζει με `-Only` και `-Exclude` (`-Only 'tel-*'`). Η πλήρης λίστα είναι στο [`docs/REFERENCE.md`](docs/REFERENCE.md) (παράγεται από τα manifests, με profile, ρίσκο και κανάλι ανά entry) και στην εντολή `list -Profile 3`.
 
-## Commands and Options
+## Εντολές και επιλογές
 
-In the examples, `<ps>` means `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\winharden.ps1`.
+Στα παραδείγματα το `<ps>` σημαίνει `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\winharden.ps1`.
 
-| Command | Description | Changes Settings |
-| --- | --- | --- |
-| `help` | Displays help | No |
-| `list` | Lists entries with id, profile, tier, mode, risk, and `home_effective` (`-Profile` and `-Only` filter the results) | No |
-| `plan` | Shows what will change and why, and saves the plan | No |
-| `apply` | Plan, approval, application, `verify`, and reports | **Yes** |
-| `verify` | Checks the system against the manifests and generates reports | No |
-| `rollback` | Restores everything changed after a checkpoint | **Yes** |
-| `checkpoints` | Verifies the journal and prints the checkpoints | No |
-| `status` | Displays platform information, preflight status, journal status, and drift task status | No |
-| `selftest` | Runs the engine tests against an in-memory system | No |
-| `install-drift` | Installs the drift task and a protected copy of the tool | **Yes** |
-| `remove-drift` | Removes the drift task (and the copy with `-RemoveFiles`) | **Yes** |
-| `drift` | The command executed by the drift task: `verify` and reporting. With `-Reapply`, it reapplies changes | Only with `-Reapply` |
+| Εντολή | Τι κάνει | Αλλάζει ρυθμίσεις |
+|---|---|---|
+| `help` | Εμφανίζει τη βοήθεια | Όχι |
+| `list` | Λίστα entries με id, profile, tier, mode, ρίσκο και `home_effective` (`-Profile` και `-Only` φιλτράρουν) | Όχι |
+| `plan` | Δείχνει τι θα αλλάξει και γιατί, και σώζει το plan | Όχι |
+| `apply` | Plan, έγκριση, εφαρμογή, `verify`, αναφορές | **Ναι** |
+| `verify` | Ελέγχει το σύστημα με τα manifests και γράφει αναφορές | Όχι |
+| `rollback` | Επαναφέρει ό,τι άλλαξε μετά από ένα checkpoint | **Ναι** |
+| `checkpoints` | Επαληθεύει το journal και τυπώνει τα checkpoints | Όχι |
+| `status` | Δείχνει στοιχεία πλατφόρμας, preflight, journal και drift task | Όχι |
+| `selftest` | Τρέχει τα tests του engine πάνω σε σύστημα στη μνήμη | Όχι |
+| `install-drift` | Εγκαθιστά το drift task και ένα προστατευμένο αντίγραφο του εργαλείου | **Ναι** |
+| `remove-drift` | Αφαιρεί το drift task (και με `-RemoveFiles` το αντίγραφο) | **Ναι** |
+| `drift` | Η εντολή που τρέχει το drift task: `verify` και αναφορά. Με `-Reapply` ξαναεφαρμόζει | Μόνο με `-Reapply` |
 
-Commands that do not change settings may still write to the state directory (logs, plans, reports): see Files Written by the Tool.
+Οι εντολές που δεν αλλάζουν ρυθμίσεις μπορεί να γράψουν στον φάκελο κατάστασης (log, plans, αναφορές): δες [Αρχεία που γράφει το εργαλείο](#αρχεία-που-γράφει-το-εργαλείο).
 
-| Option | Applies To | Description |
-| --- | --- | --- |
-| `-Profile N` | `list`, `plan`, `apply`, `verify`, `drift`, `install-drift` | Selects profile 1, 2, or 3 (default: 1). Each profile includes all lower-numbered profiles |
-| `-Only <pattern>` | `list`, `plan`, `apply`, `verify`, `drift` | Includes only entries whose IDs match (wildcards: `tel-*`). `install-drift` does not pass this option to the task |
-| `-Exclude <patterns>` | `plan`, `apply`, `verify`, `drift`, `install-drift` | Excludes entries. Comma-separated list: `'appx-*,def-020*'` |
-| `-OptIn <name>` | `plan`, `apply`, `verify`, `drift`, `install-drift` | Includes entries requiring explicit opt-in (`no-printing`, `no-file-sharing`, `no-onedrive`) |
-| `-PlanId <id>` | `apply` | The ID of the plan you reviewed, as displayed by `plan` or `apply` |
-| `-Yes` | `apply`, `rollback` | `apply`: approves without prompting, only when used with the correct `-PlanId`. `rollback`: skips the `ROLLBACK` confirmation prompt |
-| `-To <checkpoint>` | `rollback` | The checkpoint (see `checkpoints`) or `latest` for the most recent one |
-| `-AcceptDataLoss` | `plan`, `apply`, `verify`, `drift` | Opens the gate for entries that delete user data that no rollback can restore. `verify` uses it only to indicate which gates are closed. `install-drift` never passes it to the task |
-| `-AllowServicingAdjacent` | `plan`, `apply`, `verify`, `drift`, `install-drift` | Opens the gate for entries that affect components adjacent to Windows servicing. `install-drift` also passes it to the task |
-| `-AllowPlatformGaps` | All commands that perform preflight checks | Continues without Secure Boot or TPM 2.0. Entries that require them remain blocked |
-| `-AllowUntestedBuild` | Same as above | A build newer than 26999 becomes a warning instead of a blocker |
-| `-AllowOtherEdition` | Same as above | A non-Home edition becomes a warning. The manifests' Home-specific notes do not describe it |
-| `-IgnorePendingReboot` | Same as above | A pending reboot becomes a warning |
-| `-NoRestorePoint` | `apply` | Does not create a system restore point |
-| `-SkipSelfTest` | `apply`, `drift`, `install-drift` | Skips `selftest`. Not recommended |
-| `-TrustJournal` | `apply`, `rollback`, `drift` | Continues even if journal verification fails. Use only if you are certain nobody has modified it |
-| `-Quick` | `verify` | Checks status only, without running audit commands |
-| `-OutDir <directory>` | `apply`, `verify`, `drift` | Writes reports there instead of `reports\<run>` |
-| `-Reapply` | `install-drift`, `drift` | Reapplies changes that have drifted (for `install-drift`: configures the task to do so). The task never receives `-AcceptDataLoss`, so it never touches entries that delete data |
-| `-RemoveFiles` | `remove-drift` | Also deletes the installed copy |
+| Επιλογή | Ισχύει για | Τι κάνει |
+|---|---|---|
+| `-Profile N` | `list`, `plan`, `apply`, `verify`, `drift`, `install-drift` | Επιλέγει profile 1, 2 ή 3 (προεπιλογή 1). Κάθε profile περιέχει τα χαμηλότερα |
+| `-Only <μοτίβο>` | `list`, `plan`, `apply`, `verify`, `drift` | Μόνο entries με id που ταιριάζει (wildcards: `tel-*`). Το `install-drift` δεν το περνά στο task |
+| `-Exclude <μοτίβα>` | `plan`, `apply`, `verify`, `drift`, `install-drift` | Αφήνει έξω entries. Λίστα με κόμμα: `'appx-*,def-020*'` |
+| `-OptIn <όνομα>` | `plan`, `apply`, `verify`, `drift`, `install-drift` | Περιλαμβάνει entries που θέλουν ρητή επιλογή (`no-printing`, `no-file-sharing`, `no-onedrive`) |
+| `-PlanId <id>` | `apply` | Το id του plan που έλεγξες, όπως το έδειξε το `plan` ή το `apply` |
+| `-Yes` | `apply`, `rollback` | `apply`: έγκριση χωρίς ερώτηση, μόνο μαζί με το σωστό `-PlanId`. `rollback`: παραλείπει την ερώτηση `ROLLBACK` |
+| `-To <checkpoint>` | `rollback` | Το checkpoint (δες `checkpoints`) ή `latest` για το πιο πρόσφατο |
+| `-AcceptDataLoss` | `plan`, `apply`, `verify`, `drift` | Ανοίγει την πύλη για entries που σβήνουν δεδομένα χρήστη που κανένα rollback δεν επαναφέρει. Το `verify` τη χρησιμοποιεί μόνο για να πει ποιες πύλες είναι κλειστές. Το `install-drift` δεν την περνά ποτέ στο task |
+| `-AllowServicingAdjacent` | `plan`, `apply`, `verify`, `drift`, `install-drift` | Ανοίγει την πύλη για entries που αγγίζουν στοιχεία κοντά στο servicing των Windows. Το `install-drift` την περνά και στο task |
+| `-AllowPlatformGaps` | όλες τις εντολές που ελέγχουν preflight | Συνεχίζει χωρίς Secure Boot ή TPM 2.0. Entries που τα χρειάζονται μένουν blocked |
+| `-AllowUntestedBuild` | όμοια | Το build νεότερο από 26999 γίνεται προειδοποίηση αντί για blocker |
+| `-AllowOtherEdition` | όμοια | Η έκδοση που δεν είναι Home γίνεται προειδοποίηση. Οι σημειώσεις Home των manifests δεν την περιγράφουν |
+| `-IgnorePendingReboot` | όμοια | Η εκκρεμής επανεκκίνηση γίνεται προειδοποίηση |
+| `-NoRestorePoint` | `apply` | Δεν δημιουργεί σημείο επαναφοράς συστήματος |
+| `-SkipSelfTest` | `apply`, `drift`, `install-drift` | Παραλείπει το `selftest`. Δεν συνιστάται |
+| `-TrustJournal` | `apply`, `rollback`, `drift` | Συνεχίζει ενώ η επαλήθευση του journal απέτυχε. Μόνο αν είσαι βέβαιος ότι κανείς δεν το άλλαξε |
+| `-Quick` | `verify` | Μόνο έλεγχος κατάστασης, χωρίς εντολές audit |
+| `-OutDir <φάκελος>` | `apply`, `verify`, `drift` | Γράφει τις αναφορές εκεί αντί για το `reports\<run>` |
+| `-Reapply` | `install-drift`, `drift` | Ξαναεφαρμόζει όσα ξέφυγαν (στο `install-drift`: το task). Το task δεν παίρνει ποτέ `-AcceptDataLoss`, άρα δεν αγγίζει entries που σβήνουν δεδομένα |
+| `-RemoveFiles` | `remove-drift` | Σβήνει και το εγκατεστημένο αντίγραφο |
 
-Examples:
-
-powershell
+Παραδείγματα:
 
 ```powershell
-<ps> list -Profile 3                               # what profile 3 contains
-<ps> plan -Profile 2 -Exclude 'appx-*'             # profile 2 without application removal
-<ps> plan -Profile 1 -OptIn no-printing            # profile 1 and disabling the spooler
-<ps> apply -Profile 2 -Yes -PlanId <id>            # applies exactly the plan you reviewed
+<ps> list -Profile 3                               # τι περιέχει το profile 3
+<ps> plan -Profile 2 -Exclude 'appx-*'             # profile 2 χωρίς αφαίρεση εφαρμογών
+<ps> plan -Profile 1 -OptIn no-printing            # profile 1 και απενεργοποίηση του spooler
+<ps> apply -Profile 2 -Yes -PlanId <id>            # εφαρμόζει ακριβώς το plan που έλεγξες
 <ps> verify -Profile 3 -OutDir C:\winharden-reports
-<ps> rollback -To cp-<run>                         # restore to a specific checkpoint
+<ps> rollback -To cp-<run>                         # επιστροφή σε συγκεκριμένο checkpoint
 ```
 
-| Exit Code | Meaning |
-| --- | --- |
-| 0 | Completed without failures |
-| 1 | Completed with failures: reverted entry, `fail` or `error` in `verify`, rollback failure, or `selftest` failure |
-| 2 | Refused to start: preflight failure, incorrect usage (e.g. `rollback` without `-To`), or approval not provided |
-| 3 | Integrity error or internal error: `selftest` failure before `apply`, journal verification failure, or rejected manifests |
+| Κωδικός εξόδου | Σημασία |
+|---|---|
+| 0 | Ολοκληρώθηκε χωρίς αποτυχίες |
+| 1 | Ολοκληρώθηκε με αποτυχίες: entry που επανήλθε, `fail` ή `error` στο `verify`, αποτυχία του rollback ή του `selftest` |
+| 2 | Αρνήθηκε να ξεκινήσει: preflight, λάθος χρήση (π.χ. `rollback` χωρίς `-To`) ή δεν δόθηκε έγκριση |
+| 3 | Σφάλμα ακεραιότητας ή εσωτερικό σφάλμα: αποτυχία του `selftest` πριν από το `apply`, journal που δεν επαληθεύεται, manifests που απορρίφθηκαν |
 
-## Security Model
+## Μοντέλο ασφαλείας
 
-Security protections are layered: each layer covers what the previous one could miss. The complete threat model is available in `docs/THREAT-MODEL.md`.
+Οι προστασίες είναι στρώματα: κάθε ένα καλύπτει ό,τι θα ξέφευγε από το προηγούμενο. Το πλήρες threat model είναι στο [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md).
 
-### Before Making Changes
+### Πριν από την αλλαγή
 
-**Preflight.** Every check has a code and a diagnostic message that a human can act on. `apply` stops on any blocker. Other commands that perform preflight (`plan`, `verify`, `rollback`, `drift`, `install-drift`, `remove-drift`) stop only on PF01 through PF04, so they can also work on VMs without Secure Boot or TPM.
+**Preflight.** Κάθε έλεγχος έχει κωδικό και διάγνωση που ένας άνθρωπος μπορεί να ακολουθήσει. Το `apply` σταματά σε κάθε blocker. Οι άλλες εντολές που κάνουν preflight (`plan`, `verify`, `rollback`, `drift`, `install-drift`, `remove-drift`) σταματούν μόνο στα PF01 έως PF04, ώστε να δουλεύουν και σε VM χωρίς Secure Boot ή TPM.
 
-| Code | Check | If It Fails |
-| --- | --- | --- |
-| PF01 | Running as Administrator | Open Windows PowerShell using "Run as administrator" |
-| PF02 | 64-bit Windows and 64-bit PowerShell (in 32-bit PowerShell, registry writes would go to Wow6432Node) | Launch 64-bit Windows PowerShell. 32-bit Windows is not supported |
-| PF03 | Build between 26200 and 26999 | Update Windows. For a newer build: `-AllowUntestedBuild`, at your own risk |
-| PF04 | Home edition | `-AllowOtherEdition`, at your own risk |
-| PF05 | No pending reboot | Restart and run again, or use `-IgnorePendingReboot` |
-| PF06 | Secure Boot enabled | Enable it in UEFI (the tool never changes it), or use `-AllowPlatformGaps` |
-| PF07 | TPM 2.0 enabled | Enable fTPM or PTT in UEFI, or use `-AllowPlatformGaps` |
-| PF08 | Warning: BitLocker or Device Encryption is enabled on the system drive | Make sure you have the recovery key |
-| PF09 | Warning: running as SYSTEM | Audits that read HKCU are skipped; the status check covers every profile |
+| Κωδικός | Έλεγχος | Αν αποτύχει |
+|---|---|---|
+| PF01 | Τρέχει ως Administrator | Άνοιξε το Windows PowerShell με «Run as administrator» |
+| PF02 | 64-bit Windows και 64-bit PowerShell (σε 32-bit PowerShell οι εγγραφές registry θα πήγαιναν στο Wow6432Node) | Ξεκίνα το 64-bit Windows PowerShell. Τα 32-bit Windows δεν υποστηρίζονται |
+| PF03 | Build από 26200 έως 26999 | Ενημέρωσε τα Windows. Για νεότερο build: `-AllowUntestedBuild`, με δική σου ευθύνη |
+| PF04 | Έκδοση Home | `-AllowOtherEdition`, με δική σου ευθύνη |
+| PF05 | Καμία εκκρεμής επανεκκίνηση | Κάνε επανεκκίνηση και ξανατρέξε, ή `-IgnorePendingReboot` |
+| PF06 | Secure Boot ενεργό | Ενεργοποίησέ το στο UEFI (το εργαλείο δεν το αλλάζει ποτέ), ή `-AllowPlatformGaps` |
+| PF07 | Ενεργό TPM 2.0 | Ενεργοποίησε fTPM ή PTT στο UEFI, ή `-AllowPlatformGaps` |
+| PF08 | Προειδοποίηση: BitLocker ή Device Encryption στον δίσκο συστήματος | Βεβαιώσου ότι έχεις το recovery key |
+| PF09 | Προειδοποίηση: τρέχει ως SYSTEM | Τα audits που διαβάζουν HKCU παραλείπονται· ο έλεγχος κατάστασης καλύπτει κάθε profile |
 
-**Never-touch list.** `policy/never-touch.json` is code: any entry that touches something on this list is rejected by the validator (R07) and again by the engine when loading the manifests. A manifest set containing any problem is rejected in its entirety. The shared vectors in `tests/vectors/never-touch.json` run against both implementations (Python and PowerShell).
+**Λίστα που δεν αγγίζεται.** Το `policy/never-touch.json` είναι κώδικας: entry που αγγίζει κάτι από αυτά απορρίπτεται από τον validator (R07) και ξανά από τον engine όταν φορτώνει τα manifests. Ένα manifest set με οποιοδήποτε πρόβλημα απορρίπτεται ολόκληρο. Τα κοινά vectors `tests/vectors/never-touch.json` τρέχουν και στις δύο υλοποιήσεις (Python και PowerShell).
 
-| Category | Protected Components |
-| --- | --- |
-| Services (34) | Windows Update, servicing and installation (`wuauserv`, `UsoSvc`, `WaaSMedicSvc`, `BITS`, `TrustedInstaller`, `CryptSvc`, `msiserver`), Store (`ClipSVC`, `AppXSvc`, `InstallService`, `LicenseManager`), Edge updater, Defender and Security Center, firewall (`mpssvc`, `BFE`), BitLocker (`BDESVC`), identity and TPM (`wlidsvc`, `TokenBroker`, `TBS`), core infrastructure (`EventLog`, `RpcSs`, `Winmgmt`, `Schedule`, `gpsvc`, and others) |
-| AppX applications (21 patterns) | Store, App Installer, runtime packages (`WindowsAppRuntime`, `UI.Xaml`, `VCLibs`, `NET.Native`), sign-in and accounts (`CloudExperienceHost`, `AAD.BrokerPlugin`, `AccountsControl`), shells (Shell, Start, Search, `Client.*`), and Security Health UI |
-| Scheduled tasks (13 patterns) | `WindowsUpdate`, `UpdateOrchestrator`, `WaaSMedic`, `Servicing`, `InstallService`, `Windows Defender`, `BitLocker`, `TPM`, `PI`, `SoftwareProtectionPlatform`, `Clip`, `License Manager`, and the Edge update task |
-| Registry | 10 keys (Secure Boot, Windows Update, BitLocker, TPM, Store, EdgeUpdate) and 7 groups of values that would disable Defender (and Tamper Protection), SmartScreen, or the vulnerable driver blocklist |
+| Κατηγορία | Τι προστατεύεται |
+|---|---|
+| Υπηρεσίες (34) | Windows Update, servicing και εγκατάσταση (`wuauserv`, `UsoSvc`, `WaaSMedicSvc`, `BITS`, `TrustedInstaller`, `CryptSvc`, `msiserver`), Store (`ClipSVC`, `AppXSvc`, `InstallService`, `LicenseManager`), updater του Edge, Defender και Security Center, firewall (`mpssvc`, `BFE`), BitLocker (`BDESVC`), ταυτότητα και TPM (`wlidsvc`, `TokenBroker`, `TBS`), βασική υποδομή (`EventLog`, `RpcSs`, `Winmgmt`, `Schedule`, `gpsvc` και άλλες) |
+| Εφαρμογές AppX (21 μοτίβα) | Store, App Installer, πακέτα runtime (`WindowsAppRuntime`, `UI.Xaml`, `VCLibs`, `NET.Native`), είσοδος και λογαριασμοί (`CloudExperienceHost`, `AAD.BrokerPlugin`, `AccountsControl`), κελύφη (Shell, Start, Search, `Client.*`) και Security Health UI |
+| Scheduled tasks (13 μοτίβα) | `WindowsUpdate`, `UpdateOrchestrator`, `WaaSMedic`, `Servicing`, `InstallService`, `Windows Defender`, `BitLocker`, `TPM`, `PI`, `SoftwareProtectionPlatform`, `Clip`, `License Manager` και το task του Edge update |
+| Registry | 10 κλειδιά (Secure Boot, Windows Update, BitLocker, TPM, Store, EdgeUpdate) και 7 ομάδες τιμών που θα απενεργοποιούσαν Defender (και Tamper Protection), SmartScreen ή το vulnerable driver blocklist |
 | Optional features (1) | `Windows-Defender-Default-Definitions` |
 
-Defender settings (10 preferences, 16 ASR rules) and audit policy subcategories (13) work in the opposite direction, as allow-lists: only explicitly listed settings are permitted, and only when they strengthen protection or provide a richer audit trail. File cleanup is permitted only in the 7 directories listed in the `cleanup` allow-list.
+Οι ρυθμίσεις του Defender (10 preferences, 16 ASR κανόνες) και τα audit policy subcategories (13) λειτουργούν αντίστροφα, ως allow-list: επιτρέπονται μόνο όσα αναφέρονται ρητά, και μόνο προς πιο ισχυρή προστασία ή πιο πλούσιο ίχνος. Ο καθαρισμός αρχείων επιτρέπεται μόνο στους 7 φακέλους της λίστας `cleanup`.
 
-**Gates.** Entries with risks that should not be decided silently remain excluded from `apply` until a gate is explicitly opened. `plan` displays them as `BLOCKED` with the reason.
+**Πύλες.** Entries με ρίσκο που δεν πρέπει να αποφασίζεται σιωπηλά μένουν εκτός `apply` μέχρι να ανοίξει ρητά μια πύλη. Το `plan` τα δείχνει ως `BLOCKED` με τον λόγο.
 
-| Gate | What It Excludes | Entries | How to Open |
-| --- | --- | --- | --- |
-| `deletes_user_data` | Entries that delete user data that no rollback can restore | `appx-006` (Sticky Notes), `appx-007` (Microsoft To Do) | `-AcceptDataLoss` |
-| `servicing_adjacent` | Entries that affect components adjacent to Windows servicing | `tel-008` (Compatibility Appraiser task) | `-AllowServicingAdjacent` |
-| `requires_hardware` | Entries requiring hardware: virtualization for `plt-011`, active Defender for `def-001` through `def-028` | 29 | No flag: remain blocked while the required hardware or capability is unavailable |
+| Πύλη | Τι κρατά εκτός | Entries | Άνοιγμα |
+|---|---|---|---|
+| `deletes_user_data` | Entries που σβήνουν δεδομένα χρήστη που κανένα rollback δεν επαναφέρει | `appx-006` (Sticky Notes), `appx-007` (Microsoft To Do) | `-AcceptDataLoss` |
+| `servicing_adjacent` | Entries που αγγίζουν στοιχεία κοντά στο servicing των Windows | `tel-008` (task Compatibility Appraiser) | `-AllowServicingAdjacent` |
+| `requires_hardware` | Entries που χρειάζονται υλικό: virtualization για το `plt-011`, ενεργός Defender για τα `def-001` έως `def-028` | 29 | Κανένα flag: μένουν blocked όσο το υλικό λείπει |
 
-Additionally, 14 entries have `requires_reboot`: the plan indicates that their effects become visible after a restart.
+Επιπλέον, 14 entries έχουν `requires_reboot`: το plan σημειώνει ότι το αποτέλεσμα φαίνεται μετά από επανεκκίνηση.
 
-### During Changes
+### Κατά την αλλαγή
 
-- **Self-test.** `apply`, `drift`, and `install-drift` run `selftest` first. If it fails, the engine does not modify the system (exit code 3).
-- **Approval.** The plan ID consists of the first 12 digits of a hash covering the profile, manifests, gates, and, for every entry being changed, every target with its before and after values. If any of these changes, the ID changes, and `-Yes` with the old ID refuses to modify anything. Interactive approval requires typing `APPLY`.
-- **Transaction and journal.** Each entry is a transaction group: the previous state of every target is written to the journal before the change, the change is read back, and if a step fails, all targets within that entry are restored before the next entry begins. Each journal record carries an HMAC-SHA256 over its contents and the previous record's MAC: deletion, reordering, or modification of a record becomes detectable. If journal verification fails, the engine neither writes to it nor performs a rollback.
-- **Restore point.** Created before `apply`, on a best-effort basis. The actual rollback mechanism is the journal.
-- **One execution at a time.** Machine-wide mutex (`Global\winharden-engine`). The state directory is writable only by SYSTEM and Administrators.
+- **Selftest.** Τα `apply`, `drift` και `install-drift` τρέχουν πρώτα το `selftest`. Αν αποτύχει, ο engine δεν αλλάζει το σύστημα (κωδικός 3).
+- **Έγκριση.** Το id του plan είναι τα πρώτα 12 ψηφία ενός hash που καλύπτει το profile, τα manifests, τις πύλες και, για κάθε entry που αλλάζει, κάθε στόχο με την τιμή πριν και μετά. Αν κάτι από αυτά αλλάξει, το id αλλάζει, και το `-Yes` με το παλιό id αρνείται να αλλάξει οτιδήποτε. Διαδραστικά ζητείται η λέξη `APPLY`.
+- **Transaction και journal.** Κάθε entry είναι ομάδα: η προηγούμενη κατάσταση κάθε στόχου γράφεται στο journal πριν από την αλλαγή, η αλλαγή διαβάζεται πίσω, και αν αποτύχει ένα βήμα επανέρχονται όλοι οι στόχοι του entry πριν ξεκινήσει το επόμενο. Κάθε εγγραφή του journal φέρει HMAC-SHA256 πάνω στο περιεχόμενό της και στο MAC της προηγούμενης: διαγραφή, αναδιάταξη ή αλλαγή γραμμής φαίνεται. Αν η επαλήθευση του journal αποτύχει, ο engine δεν γράφει σε αυτό ούτε κάνει rollback.
+- **Σημείο επαναφοράς.** Δημιουργείται πριν από το `apply`, ως best effort. Το πραγματικό rollback είναι το journal.
+- **Μία εκτέλεση τη φορά.** Mutex ανά μηχάνημα (`Global\winharden-engine`). Ο φάκελος κατάστασης γράφεται μόνο από SYSTEM και Administrators.
 
-### After Changes
+### Μετά την αλλαγή
 
-- **Verification.** `apply` finishes by running `verify` (Verification and Reports).
-- **Rollback.** Restores every target recorded after the checkpoint to the state it had at that time, starting with the most recent record. Restoring a recorded state is idempotent, so transaction records that have already been reverted do not cause problems. It then reads every target again and reports any that differ.
+- **Επαλήθευση.** Το `apply` τελειώνει με `verify` ([Επαλήθευση και αναφορές](#επαλήθευση-και-αναφορές)).
+- **Rollback.** Επαναφέρει κάθε στόχο που καταγράφηκε μετά το checkpoint στην κατάσταση που είχε τότε, ξεκινώντας από την πιο πρόσφατη εγγραφή. Η επαναφορά μιας καταγεγραμμένης κατάστασης είναι idempotent, οπότε εγγραφές transaction που είχαν ήδη επανέλθει δεν βλάπτουν. Μετά διαβάζει ξανά κάθε στόχο και αναφέρει όσους διαφέρουν.
 
-### What It Does Not Guarantee
+### Τι δεν εγγυάται
 
-- The journal provides tamper evidence against anyone who is not an administrator. An administrator can rewrite both the key and the journal.
-- Removed applications are not restored by the engine: they must be reinstalled from the Store. Deleted files are not restored. Both are declared `partial`.
-- `selftest` checks the engine's logic against an in-memory system. It does not prove that Windows accepts every write: that is what `verify` and `docs/VERIFY-PROTOCOL.md` are for.
-- Manifests are code executed as Administrator. The audit linter and never-touch list catch mistakes, but they do not replace a review, and the manifests are not signed.
-- Microsoft may restore or ignore settings through an update. The drift task detects this; it does not prevent it.
+- Το journal είναι ένδειξη παραποίησης (tamper-evidence) απέναντι σε όποιον δεν είναι administrator. Ένας administrator μπορεί να ξαναγράψει και το κλειδί και το journal.
+- Οι αφαιρεμένες εφαρμογές δεν επανέρχονται από τον engine: ξαναμπαίνουν από το Store. Τα διαγραμμένα αρχεία δεν επανέρχονται. Και τα δύο δηλώνονται `partial`.
+- Το `selftest` ελέγχει τη λογική του engine πάνω σε σύστημα στη μνήμη. Δεν αποδεικνύει ότι τα Windows δέχονται κάθε εγγραφή: αυτό το κάνουν το `verify` και το [`docs/VERIFY-PROTOCOL.md`](docs/VERIFY-PROTOCOL.md).
+- Τα manifests είναι κώδικας που τρέχει ως Administrator. Ο lint των audits και η λίστα never-touch πιάνουν λάθη, δεν αντικαθιστούν το review, και δεν υπάρχει υπογραφή των manifests.
+- Η Microsoft μπορεί να επαναφέρει ή να αγνοήσει ρυθμίσεις με ένα update. Το drift task το εντοπίζει, δεν το αποκλείει.
 
-## Verification and Reports
+## Επαλήθευση και αναφορές
 
-`verify` checks every entry in the specified profile using two independent methods:
+Το `verify` ελέγχει κάθε entry του profile που δίνεις με δύο ανεξάρτητους τρόπους:
 
-1. **State check.** The engine reads every target (for `scope: user`, every user profile) and compares it against the manifest.
-2. **Audit.** The manifest's read-only commands are executed and their output is compared against the expected value. Each command first passes through the linter (single line, single quotes only, allow-listed verbs, no aliases, native executables, redirections, or network access; `auditpol /get` is the exception) and runs in a ConstrainedLanguage runspace. If the command's cmdlet is not available there, as observed in the VM with modules relying on CIM (Defender, ScheduledTasks, NetSecurity), the command is retried once in a FullLanguage runspace after passing the linter. In that case, the linter is the only barrier (D21).
+1. **Έλεγχος κατάστασης.** Ο engine διαβάζει κάθε στόχο (για `scope: user`, κάθε profile χρήστη) και τον συγκρίνει με το manifest.
+2. **Audit.** Τρέχουν οι read-only εντολές του manifest και η έξοδός τους συγκρίνεται με την αναμενόμενη τιμή. Κάθε εντολή περνά πρώτα από lint (μία γραμμή, μόνο single quotes, λίστα επιτρεπτών ρημάτων, χωρίς aliases, native exes, redirections ή δίκτυο· εξαίρεση το `auditpol /get`) και τρέχει σε runspace ConstrainedLanguage. Αν το cmdlet της εντολής δεν βρίσκεται εκεί, όπως παρατηρήθηκε στη VM με modules που στηρίζονται σε CIM (Defender, ScheduledTasks, NetSecurity), η εντολή ξανατρέχει μία φορά σε runspace FullLanguage, μετά τον lint, που τότε είναι το μόνο φράγμα (D21).
 
-| Entry Status | Meaning |
-| --- | --- |
-| `pass` | All checks agree with the manifest |
-| `fail` | A target is not in the desired state, or an audit returns a different value. The reason is recorded in the report |
-| `error` | A target cannot be read, or an audit could not run |
-| `na` | Not applicable here: different build or edition, missing hardware, or no target exists on the system (missing service or task) |
-| `manual` | Requires human intervention: the tool neither changes nor verifies the setting. The steps are included in the report |
+| Κατάσταση entry | Σημασία |
+|---|---|
+| `pass` | Όλοι οι έλεγχοι συμφωνούν με το manifest |
+| `fail` | Ένας στόχος δεν είναι στην επιθυμητή κατάσταση, ή ένα audit επιστρέφει άλλη τιμή. Ο λόγος γράφεται στην αναφορά |
+| `error` | Ένας στόχος δεν διαβάζεται, ή ένα audit δεν μπόρεσε να τρέξει |
+| `na` | Δεν ισχύει εδώ: άλλο build ή έκδοση, υλικό που λείπει, ή κανένας στόχος δεν υπάρχει στο σύστημα (υπηρεσία ή task που δεν υπάρχει) |
+| `manual` | Θέλει άνθρωπο: το εργαλείο δεν αλλάζει ούτε ελέγχει τη ρύθμιση. Τα βήματα είναι στην αναφορά |
 
-What you should know when reading the results:
+Τι πρέπει να ξέρεις όταν διαβάζεις το αποτέλεσμα:
 
-- `verify` checks only the profile you specify and, without `-Profile`, checks only profile 1. After `apply -Profile 3`, run `verify -Profile 3`.
-- `verify` always compares the system against the manifest, not against what `apply` did. An entry skipped by `apply` because a gate is closed is reported as `fail`, and the reason identifies the gate (`Apply skips this entry: …`, D22).
-- An audit may be skipped (`skipped`) without changing the entry's status: when the command is language-dependent and Windows is not running in English (13 of the 203 audits), and when the tool runs as SYSTEM and the command reads HKCU. In these cases, the entry is judged based on the state check.
-- `attest` entries (9) are checked through audits only and are never modified. `once` entries (cleanup) have no state to verify: `apply` prints what it did.
-- The exit code is 1 if there is at least one `fail` or `error`.
+- Το `verify` ελέγχει μόνο το profile που δίνεις και, χωρίς `-Profile`, μόνο το 1. Μετά από `apply -Profile 3` τρέξε `verify -Profile 3`.
+- Το `verify` συγκρίνει πάντα το σύστημα με το manifest, όχι με ό,τι έκανε το `apply`. Ένα entry που το `apply` παραλείπει επειδή μια πύλη είναι κλειστή βγαίνει `fail`, και ο λόγος λέει ποια πύλη (`Apply skips this entry: …`, D22).
+- Ένα audit μπορεί να παραλειφθεί (`skipped`) χωρίς να αλλάξει την κατάσταση του entry: όταν η εντολή εξαρτάται από τη γλώσσα και τα Windows δεν είναι στα αγγλικά (13 από τα 203 audits), και όταν το εργαλείο τρέχει ως SYSTEM και η εντολή διαβάζει HKCU. Τότε το entry κρίνεται από τον έλεγχο κατάστασης.
+- Τα entries `attest` (9) ελέγχονται μόνο με audits και δεν αλλάζουν ποτέ. Τα `once` (καθαρισμός) δεν έχουν κατάσταση να ελεγχθεί: το `apply` τυπώνει τι έκανε.
+- Ο κωδικός εξόδου είναι 1 όταν υπάρχει έστω ένα `fail` ή `error`.
 
-`verify` (and `apply` at the end of its run) generates four files in `%ProgramData%\winharden\reports\<run>`, or in the directory specified by `-OutDir`:
+Το `verify` (και το `apply` στο τέλος του) γράφει τέσσερα αρχεία στο `%ProgramData%\winharden\reports\<run>`, ή στον φάκελο του `-OutDir`:
 
-| File | Contents |
-| --- | --- |
-| `winharden-report.json` | Complete results, for machine-readable processing |
-| `winharden-report.html` | The same results in human-readable format |
-| `winharden-poam.csv` | POA&M template for exceptions, i.e. anything that does not comply |
-| `winharden-xccdf.xml` | Minimal XCCDF 1.2 results export |
+| Αρχείο | Περιεχόμενο |
+|---|---|
+| `winharden-report.json` | Πλήρες αποτέλεσμα, για μηχανική ανάγνωση |
+| `winharden-report.html` | Το ίδιο για ανθρώπους |
+| `winharden-poam.csv` | Πρότυπο POA&M για τις εξαιρέσεις, δηλαδή ό,τι δεν συμφωνεί |
+| `winharden-xccdf.xml` | Ελάχιστη εξαγωγή αποτελεσμάτων σε XCCDF 1.2 |
 
-Reports are local files and are not uploaded anywhere. Each report includes the engine version and code fingerprint, computer name, a list of its limitations (for example, for `unverified` entries, `pass` means "the value was written and read back", not "Windows enforces it"), and, for every profile, a Recall status line: `attested-off`, `not-attested`, or `not-checked` when `ai-004` was not part of the run.
+Οι αναφορές είναι τοπικά αρχεία και δεν ανεβαίνουν πουθενά. Κάθε αναφορά φέρει την έκδοση και το code fingerprint του engine, το όνομα του υπολογιστή, τη λίστα των ορίων της (για παράδειγμα ότι για τα `unverified` το `pass` σημαίνει «η τιμή γράφτηκε και διαβάζεται πίσω», όχι «τα Windows την τηρούν») και, σε κάθε profile, μια γραμμή για το Recall: `attested-off`, `not-attested`, ή `not-checked` όταν το `ai-004` δεν ήταν μέρος του run.
 
-## Files Written by the Tool
-
-text
+## Αρχεία που γράφει το εργαλείο
 
 ```text
-%ProgramData%\winharden\            SYSTEM and Administrators only
-  journal\journal.jsonl             HMAC-SHA256 chain: before-states, checkpoints
-  journal\journal.key               chain key
-  plans\plan-<id>.json              every plan that was displayed
+%ProgramData%\winharden\            μόνο SYSTEM και Administrators
+  journal\journal.jsonl             αλυσίδα HMAC-SHA256: before-states, checkpoints
+  journal\journal.key               το κλειδί της αλυσίδας
+  plans\plan-<id>.json              κάθε plan που εμφανίστηκε
   reports\<run>\                    winharden-report.json|html, winharden-poam.csv, winharden-xccdf.xml
-  logs\winharden.jsonl              structured log, one JSON object per line
-  drift-state.json                  result of the most recent drift task execution
-%ProgramFiles%\winharden\           copy of the tool for the drift task (only after install-drift)
+  logs\winharden.jsonl              δομημένο log, ένα JSON ανά γραμμή
+  drift-state.json                  αποτέλεσμα της τελευταίας εκτέλεσης του drift task
+%ProgramFiles%\winharden\           αντίγραφο του εργαλείου για το drift task (μόνο μετά από install-drift)
 ```
 
-Access control uses well-known SIDs so that it works on every Windows language.
+Ο έλεγχος πρόσβασης χρησιμοποιεί well-known SIDs, ώστε να δουλεύει σε κάθε γλώσσα των Windows.
 
-## Drift Monitoring
+## Παρακολούθηση drift
 
-After an update, Windows may restore settings and applications. `install-drift` installs a task that detects this.
+Μετά από update τα Windows μπορούν να επαναφέρουν ρυθμίσεις και εφαρμογές. Το `install-drift` εγκαθιστά ένα task που το εντοπίζει.
 
-- **What runs.** Task `\winharden\winharden-drift`, running as SYSTEM, every Sunday at 03:00 and at every startup, for the profile (and the `-Exclude` and `-OptIn` options) specified during `install-drift`. It executes `drift`: `verify`, reporting, and saving the result to `drift-state.json`. If the build has changed since the previous run (feature update), it reports this.
-- **Verification only.** Unless installation was performed with `-Reapply`: in that case, it reapplies changes that have drifted, but never entries that delete data (the task never receives `-AcceptDataLoss`). `-AllowServicingAdjacent` is passed to the task only if specified during installation.
-- **Protection.** A SYSTEM task that runs scripts is a privilege-escalation path if an unprivileged user can modify those scripts. Files are copied to a Program Files directory, and if anyone other than SYSTEM, Administrators, TrustedInstaller, and CREATOR OWNER can write there, installation fails before the task is registered.
-- **Same behavior as****`verify`****.** Entries excluded from `apply` by a closed gate are reported as failures.
-- **Checking.** `status` shows whether the task exists and its last execution. `remove-drift` removes it.
+- **Τι τρέχει.** Task `\winharden\winharden-drift`, ως SYSTEM, κάθε Κυριακή στις 03:00 και σε κάθε εκκίνηση, για το profile (και τα `-Exclude` και `-OptIn`) που δόθηκαν στο `install-drift`. Εκτελεί το `drift`: `verify`, αναφορά, και αποθήκευση του αποτελέσματος στο `drift-state.json`. Αν το build άλλαξε από την προηγούμενη εκτέλεση (feature update), το αναφέρει.
+- **Μόνο επαλήθευση.** Εκτός αν η εγκατάσταση έγινε με `-Reapply`: τότε ξαναεφαρμόζει όσα ξέφυγαν, ποτέ entries που σβήνουν δεδομένα (το task δεν παίρνει ποτέ `-AcceptDataLoss`). Το `-AllowServicingAdjacent` περνά στο task μόνο αν δοθεί στην εγκατάσταση.
+- **Προστασία.** Ένα task SYSTEM που τρέχει scripts είναι δρόμος ανύψωσης δικαιωμάτων αν ένας απλός χρήστης μπορεί να τα αλλάξει. Τα αρχεία αντιγράφονται σε φάκελο του Program Files, και αν κάποιος εκτός από SYSTEM, Administrators, TrustedInstaller και CREATOR OWNER μπορεί να γράψει εκεί, η εγκατάσταση αποτυγχάνει πριν καταχωριστεί το task.
+- **Όπως το `verify`.** Entries που κρατά εκτός `apply` μια κλειστή πύλη εμφανίζονται ως αποτυχίες.
+- **Έλεγχος.** Το `status` δείχνει αν το task υπάρχει και την τελευταία εκτέλεση. Το `remove-drift` το αφαιρεί.
 
-The drift task has not been tested on Windows (Status).
+Το drift task δεν έχει δοκιμαστεί σε Windows ([Κατάσταση](#κατάσταση)).
 
 ## Manifests
 
-One file per module in `manifests/`. Each setting is exactly one entry, with an ID that never changes and is never reused: `<prefix>-<3 digits>-<name>`.
+Ένα αρχείο ανά module στο `manifests/`. Κάθε ρύθμιση είναι ακριβώς ένα entry, με id που δεν αλλάζει και δεν ξαναχρησιμοποιείται: `<prefix>-<3 ψηφία>-<όνομα>`.
 
-### Entry Fields
+### Πεδία ενός entry
 
-| Field | Required | Description |
-| --- | --- | --- |
-| `id`, `module`, `title` | yes | Entry identity |
-| `tier` | yes | Trust tier of the mechanism (see below) |
-| `min_profile` | yes | The minimum profile from which the entry is included (1, 2, or 3) |
-| `opt_in` | no | If present, the entry is included only with `-OptIn <name>` |
-| `mode` | yes | What the engine does (see below) |
-| `home_effective` | yes | Whether the result has been observed on Home (see below) |
-| `verified` | no | Build, date, VM, and observation. Required when `home_effective` is `verified` (R05) |
-| `channel_class` | yes | Change channel: `csp`, `policy`, `cmdlet`, `settings-backing`, `unsupported` |
-| `unsupported_justification` | no | Justification if the channel is `unsupported` (R04) |
-| `applicability` | no | Editions and minimum build |
-| `requires_hardware` | no | Hardware that must be present; otherwise, the entry remains blocked |
-| `rationale`, `impact` | yes | Why the change is made and what it changes for the user |
-| `apply` | no | List of operations (see below) |
-| `audit` | yes | Read-only commands with expected values (`checks`), or `manual_check` |
-| `rollback` | yes | Strategy and `reversibility` (`full` or `partial`, with limitation) |
-| `manual_steps` | no | Instructions for the user (`manual` mode) |
-| `flags` | no | `servicing_adjacent`, `requires_reboot`, `deletes_user_data` |
-| `risk` | yes | `low`, `medium`, or `high` |
-| `evidence`, `references` | yes | Every claim with an evidence grade, and the corresponding links |
-| `notes` | no | For `unverified` entries: how to verify them in a VM |
+| Πεδίο | Υποχρεωτικό | Τι λέει |
+|---|---|---|
+| `id`, `module`, `title` | ναι | Ταυτότητα του entry |
+| `tier` | ναι | Βαθμίδα εμπιστοσύνης του μηχανισμού (παρακάτω) |
+| `min_profile` | ναι | Από ποιο profile και πάνω μπαίνει (1, 2 ή 3) |
+| `opt_in` | όχι | Αν υπάρχει, το entry μπαίνει μόνο με `-OptIn <όνομα>` |
+| `mode` | ναι | Τι κάνει ο engine (παρακάτω) |
+| `home_effective` | ναι | Αν το αποτέλεσμα έχει παρατηρηθεί σε Home (παρακάτω) |
+| `verified` | όχι | Build, ημερομηνία, VM και παρατήρηση. Απαιτείται όταν `home_effective` είναι `verified` (R05) |
+| `channel_class` | ναι | Το κανάλι αλλαγής: `csp`, `policy`, `cmdlet`, `settings-backing`, `unsupported` |
+| `unsupported_justification` | όχι | Αιτιολόγηση, αν το κανάλι είναι `unsupported` (R04) |
+| `applicability` | όχι | Εκδόσεις και ελάχιστο build |
+| `requires_hardware` | όχι | Υλικό που πρέπει να υπάρχει, αλλιώς το entry μένει blocked |
+| `rationale`, `impact` | ναι | Γιατί, και τι θα αλλάξει για τον χρήστη |
+| `apply` | όχι | Η λίστα των operations (παρακάτω) |
+| `audit` | ναι | Read-only εντολές με αναμενόμενη τιμή (`checks`), ή `manual_check` |
+| `rollback` | ναι | Στρατηγική και `reversibility` (`full` ή `partial`, με όριο) |
+| `manual_steps` | όχι | Βήματα για τον χρήστη (mode `manual`) |
+| `flags` | όχι | `servicing_adjacent`, `requires_reboot`, `deletes_user_data` |
+| `risk` | ναι | `low`, `medium` ή `high` |
+| `evidence`, `references` | ναι | Κάθε ισχυρισμός με βαθμό πηγής, και οι σύνδεσμοι |
+| `notes` | όχι | Για τα `unverified`: πώς θα επαληθευτεί σε VM |
 
-### Values and Distribution
+### Τιμές και κατανομή
 
-| `mode` | Entries | Meaning |
-| --- | --- | --- |
-| `enforce` | 115 | The engine applies and verifies |
-| `once` | 4 | One-time operation (file cleanup): there is no state to verify |
-| `attest` | 9 | Verification and reporting only, never modification |
-| `manual` | 5 | Instructions for the user; the engine reports them |
+| `mode` | Entries | Σημασία |
+|---|---|---|
+| `enforce` | 115 | Ο engine εφαρμόζει και ελέγχει |
+| `once` | 4 | Μία φορά (καθαρισμός αρχείων): δεν υπάρχει κατάσταση να ελεγχθεί |
+| `attest` | 9 | Μόνο έλεγχος και αναφορά, ποτέ αλλαγή |
+| `manual` | 5 | Βήματα για τον χρήστη, ο engine τα αναφέρει |
 
-| `home_effective` | Entries | Meaning |
-| --- | --- | --- |
-| `verified` | 0 | Observed on Home (with build and date) |
-| `expected` | 90 | Version-independent mechanism: service, task, AppX, feature, or a value written by Settings itself |
-| `unverified` | 43 | Policy that Home may ignore. `notes` explains how to verify it |
-| `na` | 0 | Not applicable to Home, so it is not applied (R14) |
+| `home_effective` | Entries | Σημασία |
+|---|---|---|
+| `verified` | 0 | Παρατηρήθηκε σε Home (με build και ημερομηνία) |
+| `expected` | 90 | Μηχανισμός ανεξάρτητος από την έκδοση: υπηρεσία, task, AppX, feature, ή τιμή που γράφει το ίδιο το Settings |
+| `unverified` | 43 | Policy που το Home μπορεί να αγνοεί. Το `notes` λέει πώς να επαληθευτεί |
+| `na` | 0 | Δεν ισχύει στο Home, οπότε δεν εφαρμόζεται (R14) |
 
-| `tier` | Entries | Meaning |
-| --- | --- | --- |
-| `T0` | 23 | Supported mechanism, with the result on Home expected or observed. Requires an `ms-doc` or `ms-statement` source (R03) |
-| `T1` | 110 | Documented or widely used, reversible. The result on Home may be `unverified` |
-| `T2` | 0 | Unsupported channel or servicing-adjacent, profile 3 only (R02, R04) |
+| `tier` | Entries | Σημασία |
+|---|---|---|
+| `T0` | 23 | Υποστηριζόμενος μηχανισμός, αποτέλεσμα στο Home αναμενόμενο ή παρατηρημένο. Θέλει πηγή `ms-doc` ή `ms-statement` (R03) |
+| `T1` | 110 | Τεκμηριωμένο ή ευρέως χρησιμοποιούμενο, αναστρέψιμο. Το αποτέλεσμα στο Home μπορεί να είναι `unverified` |
+| `T2` | 0 | Μη υποστηριζόμενο κανάλι ή servicing-adjacent, μόνο profile 3 (R02, R04) |
 
-| `risk` | Entries | Meaning |
-| --- | --- | --- |
-| `low` | 92 | From profile 1 |
-| `medium` | 32 | From profile 2 |
-| `high` | 9 | Profile 3 only |
+| `risk` | Entries | Σημασία |
+|---|---|---|
+| `low` | 92 | Από το profile 1 |
+| `medium` | 32 | Από το profile 2 |
+| `high` | 9 | Μόνο στο profile 3 |
 
-Evidence grades (`evidence[].grade`) indicate how much confidence to place in each claim:
+Οι βαθμοί πηγής (`evidence[].grade`) λένε πόσο να εμπιστευτείς κάθε ισχυρισμό:
 
-| Grade | Meaning |
-| --- | --- |
-| `ms-doc` | Microsoft documentation for the setting |
-| `ms-doc-nonhome` | Microsoft documentation that does not mention Home (e.g. Pro, Enterprise, Education only). The entry is therefore `unverified` |
-| `ms-statement` | Microsoft statement outside the setting's documentation: blog post, announcement, or response |
-| `third-party` | Third-party source with a methodology, e.g. an audit item from a benchmark |
-| `community` | Forum, tutorial, list, or script from another tool |
-| `background` | Previous knowledge that has not been rechecked. Explicitly declared as such |
+| Βαθμός | Σημασία |
+|---|---|
+| `ms-doc` | Τεκμηρίωση της Microsoft για τη ρύθμιση |
+| `ms-doc-nonhome` | Τεκμηρίωση της Microsoft που δεν κατονομάζει το Home (π.χ. μόνο Pro, Enterprise, Education). Το entry είναι τότε `unverified` |
+| `ms-statement` | Δήλωση της Microsoft εκτός της τεκμηρίωσης της ρύθμισης: blog, ανακοίνωση, απάντηση |
+| `third-party` | Τρίτη πηγή με μέθοδο, π.χ. audit item ενός benchmark |
+| `community` | Φόρουμ, tutorial, λίστα ή script άλλου εργαλείου |
+| `background` | Προηγούμενη γνώση που δεν ξαναελέγχθηκε. Δηλώνεται ρητά |
 
 ### Operations
 
-| Type | Operations | What It Changes |
-| --- | --- | --- |
-| `registry` | 66 | Registry value in HKLM or HKCU (for HKCU: every existing user profile and the Default user hive) |
-| `setting` | 39 | Defender preference, ASR rule, or audit policy subcategory (allow-list) |
-| `appx` | 31 | Package removal for all users: both installed and provisioned packages |
-| `service` | 7 | Service startup type and state |
-| `scheduled_task` | 7 | Disables a task |
-| `file_cleanup` | 7 | Cleans files older than one day, only in allow-listed directories |
-| `optional_feature` | 3 | Disables a Windows optional feature |
+| Τύπος | Operations | Τι αλλάζει |
+|---|---|---|
+| `registry` | 66 | Τιμή registry, σε HKLM ή HKCU (για HKCU: κάθε υπάρχον profile και το Default user hive) |
+| `setting` | 39 | Defender preference, ASR κανόνας ή audit policy subcategory (allow-list) |
+| `appx` | 31 | Αφαίρεση πακέτου για όλους τους χρήστες: το εγκατεστημένο και το provisioned |
+| `service` | 7 | Τρόπος εκκίνησης και κατάσταση υπηρεσίας |
+| `scheduled_task` | 7 | Απενεργοποίηση task |
+| `file_cleanup` | 7 | Καθαρισμός αρχείων παλαιότερων από μία ημέρα, μόνο σε φακέλους της allow-list |
+| `optional_feature` | 3 | Απενεργοποίηση Windows optional feature |
 
-### Example
+### Παράδειγμα
 
-\<details\> \<summary\>The \<code\>tel-001-diagnostic-data-required\</code\> entry, with one source and one link instead of all of them\</summary\>
-
-json
+<details>
+<summary>Το entry <code>tel-001-diagnostic-data-required</code>, με μία πηγή και ένα link αντί για όλες</summary>
 
 ```json
 {
@@ -504,98 +495,93 @@ json
 }
 ```
 
-\</details\>
+</details>
 
-### Validator Rules
+### Κανόνες του validator
 
-`tools/validate_manifests.py` enforces the schema (`schema/manifest.schema.json`) and 21 additional rules.
+Το `tools/validate_manifests.py` εφαρμόζει το schema (`schema/manifest.schema.json`) και 21 κανόνες πάνω από αυτό.
 
-\<details\> \<summary\>Rules R01 through R21\</summary\>
+<details>
+<summary>Οι κανόνες R01 έως R21</summary>
 
-| Rule | What It Enforces |
-| --- | --- |
-| R01 | The ID is unique |
-| R02 | Tier T2 is allowed only in profile 3 |
-| R03 | T0 requires an `ms-doc` or `ms-statement` source, `home_effective` of `verified` or `expected`, and a supported channel |
-| R04 | An unsupported channel requires T2 and a justification of at least 40 characters |
-| R05 | `home_effective: verified` requires the `verified` object with build and date |
-| R06 | `enforce` and `once` must have `apply`; `attest` and `manual` must not, and `manual` must have `manual_steps` |
-| R07 | No operation may touch the never-touch list or go outside the allow-lists (settings, cleanup directories) |
-| R08 | Partial reversibility must declare a limitation (at least 20 characters), and AppX removal must always be `partial` |
-| R09 | No duplicate source links |
-| R10 | Every audit command must pass the linter (single line, single quotes, read-only verbs only, no aliases or network access) |
-| R11 | The hive must match the `scope` (HKLM with machine, HKCU with user) |
-| R12 | A servicing-adjacent component requires `flags.servicing_adjacent` and profile 3 |
-| R13 | The entry's `module` must match the file it belongs to |
-| R14 | `home_effective: na` must not be applied |
-| R15 | Data must match `kind` (and `merge: hide-list` requires a String beginning with `hide:`) |
-| R16 | Risk determines the minimum profile: `medium` from profile 2, `high` from profile 3 |
-| R17 | `enforce` and `attest` require `audit.checks`; `once` requires checks or `manual_check`; `manual` requires `manual_check` |
-| R18 | `deletes_user_data` applies only to `enforce` and `once` and cannot be `full` |
-| R19 | `once` applies only to file cleanup, with `partial` reversibility, and cleanup must use `once` |
-| R20 | Wildcards are allowed only in the final path segment, under a fixed parent key, and not together with `merge` |
-| R21 | A `setting` value must have the correct JSON type for `kind` |
+| Κανόνας | Τι επιβάλλει |
+|---|---|
+| R01 | Το id είναι μοναδικό |
+| R02 | Το tier T2 μπαίνει μόνο στο profile 3 |
+| R03 | Το T0 θέλει πηγή `ms-doc` ή `ms-statement`, `home_effective` `verified` ή `expected`, και όχι μη υποστηριζόμενο κανάλι |
+| R04 | Μη υποστηριζόμενο κανάλι σημαίνει T2 και αιτιολόγηση τουλάχιστον 40 χαρακτήρων |
+| R05 | Το `home_effective: verified` θέλει το αντικείμενο `verified` με build και ημερομηνία |
+| R06 | Τα `enforce` και `once` έχουν `apply`, τα `attest` και `manual` δεν έχουν, και το `manual` έχει `manual_steps` |
+| R07 | Κανένα operation δεν αγγίζει τη λίστα never-touch ή βγαίνει από τις allow-lists (settings, φάκελοι καθαρισμού) |
+| R08 | Η μερική αναστρεψιμότητα δηλώνει όριο (τουλάχιστον 20 χαρακτήρες), και η αφαίρεση AppX είναι πάντα `partial` |
+| R09 | Δεν υπάρχουν διπλοί σύνδεσμοι στις πηγές |
+| R10 | Κάθε εντολή audit περνά τον lint (μία γραμμή, single quotes, μόνο read-only ρήματα, χωρίς aliases και δίκτυο) |
+| R11 | Το hive ταιριάζει με το `scope` (HKLM με machine, HKCU με user) |
+| R12 | Στοιχείο κοντά στο servicing θέλει `flags.servicing_adjacent` και profile 3 |
+| R13 | Το `module` του entry είναι αυτό του αρχείου |
+| R14 | Το `home_effective: na` δεν εφαρμόζεται |
+| R15 | Τα δεδομένα ταιριάζουν με το `kind` (και το `merge: hide-list` θέλει String που ξεκινά με `hide:`) |
+| R16 | Το ρίσκο θέλει ελάχιστο profile: `medium` από το 2, `high` από το 3 |
+| R17 | Τα `enforce` και `attest` έχουν `audit.checks`, το `once` έχει checks ή `manual_check`, το `manual` έχει `manual_check` |
+| R18 | Το `deletes_user_data` ισχύει μόνο για `enforce` και `once` και δεν μπορεί να είναι `full` |
+| R19 | Το `once` ισχύει μόνο για καθαρισμό αρχείων, με `partial` αναστρεψιμότητα, και ο καθαρισμός θέλει `once` |
+| R20 | Wildcard επιτρέπεται μόνο στο τελευταίο τμήμα της διαδρομής, κάτω από σταθερό γονικό κλειδί, και όχι μαζί με `merge` |
+| R21 | Η τιμή ενός `setting` έχει τον σωστό τύπο JSON για το `kind` |
 
-\</details\>
+</details>
 
-## Architecture
-
-text
+## Αρχιτεκτονική
 
 ```text
-winharden.ps1      CLI: commands, approval, exit codes
-engine/            the engine: Windows PowerShell 5.1, ASCII only, no dependencies
-manifests/         10 JSON files, one per module
+winharden.ps1      CLI: εντολές, έγκριση, κωδικοί εξόδου
+engine/            ο engine: Windows PowerShell 5.1, μόνο ASCII, χωρίς εξαρτήσεις
+manifests/         10 αρχεία JSON, ένα ανά module
 schema/            manifest.schema.json
 policy/            never-touch.json
-tools/             validator, static engine checker, generators
-tests/             Python tests and shared vectors
-docs/              documentation
+tools/             validator, στατικός έλεγχος του engine, γεννήτριες
+tests/             tests σε Python και κοινά vectors
+docs/              έγγραφα
 ```
 
-Execution flow:
-
-text
+Η ροή μιας εκτέλεσης:
 
 ```text
 manifests/*.json + policy/never-touch.json
-        |   loading: schema, never-touch, audit lint (any error = entire set rejected)
+        |   φόρτωση: schema, never-touch, audit lint (σφάλμα = απορρίπτεται όλο το σύνολο)
         v
-   entry selection (profile, -Only, -Exclude, -OptIn, applicability, gates)
+   επιλογή entries (profile, -Only, -Exclude, -OptIn, applicability, πύλες)
         |
         v
-      plan  ---- approval (APPLY or -Yes -PlanId) ---->  apply: journal, change, read-back
+      plan  ---- έγκριση (APPLY ή -Yes -PlanId) ---->  apply: journal, αλλαγή, ανάγνωση πίσω
         |                                                |
         +--------------------> verify <------------------+
                                   |
-                                reports
+                               αναφορές
 ```
 
-The engine communicates with the system only through a function table called the provider. `Provider.Real.ps1` is the only file that touches the registry, services, tasks, AppX, features, user hives, and the audit runspace. `Provider.Fake.ps1` is an in-memory system: `selftest` runs the same engine code against it and never modifies the machine.
+Ο engine μιλά με το σύστημα μόνο μέσα από έναν πίνακα συναρτήσεων, τον provider. Το `Provider.Real.ps1` είναι το μόνο αρχείο που αγγίζει registry, υπηρεσίες, tasks, AppX, features, user hives και το runspace των audits. Το `Provider.Fake.ps1` είναι ένα σύστημα στη μνήμη: το `selftest` τρέχει τον ίδιο κώδικα engine πάνω του και δεν αλλάζει ποτέ το μηχάνημα.
 
-| File | Role |
-| --- | --- |
-| `Core.ps1` | Shared utilities: logging, state directory and ACL, code fingerprint |
-| `Policy.ps1` | Never-touch list and runtime audit linter |
-| `Manifest.ps1` | Manifest loading and rechecking of the validator's rules |
-| `Provider.ps1` | Boundary between the engine and the system: the function table |
-| `Provider.Real.ps1` | The real system (and the audit runspace) |
-| `Provider.Fake.ps1` | In-memory system for `selftest`, with fault injection |
-| `Journal.ps1` | Append-only HMAC journal and mutex |
-| `Plan.ps1` | Builds the plan: reads, changes nothing |
-| `Apply.ps1` | Applies the plan entry by entry and creates the restore point |
-| `Rollback.ps1` | Restores to a checkpoint |
-| `Verify.ps1` | State checks and audits |
-| `Report.ps1` | JSON, HTML, CSV, and XCCDF reports |
-| `Preflight.ps1` | PF01 through PF09 checks |
-| `Drift.ps1` | Drift task installation and execution |
-| `SelfTest.ps1` | Engine tests using the fake provider |
+| Αρχείο | Ρόλος |
+|---|---|
+| `Core.ps1` | Κοινά βοηθητικά: log, φάκελος κατάστασης και ACL, code fingerprint |
+| `Policy.ps1` | Η λίστα never-touch και ο lint των audits στο runtime |
+| `Manifest.ps1` | Φόρτωση manifests και επανέλεγχος όσων ελέγχει ο validator |
+| `Provider.ps1` | Το όριο ανάμεσα στον engine και το σύστημα: ο πίνακας των συναρτήσεων |
+| `Provider.Real.ps1` | Το πραγματικό σύστημα (και το runspace των audits) |
+| `Provider.Fake.ps1` | Σύστημα στη μνήμη για το `selftest`, με ένθεση σφαλμάτων |
+| `Journal.ps1` | Append-only journal με HMAC, και το mutex |
+| `Plan.ps1` | Χτίζει το plan: διαβάζει, δεν αλλάζει τίποτα |
+| `Apply.ps1` | Εφαρμόζει το plan ανά entry, και το σημείο επαναφοράς |
+| `Rollback.ps1` | Επαναφορά σε checkpoint |
+| `Verify.ps1` | Έλεγχος κατάστασης και audits |
+| `Report.ps1` | Αναφορές JSON, HTML, CSV και XCCDF |
+| `Preflight.ps1` | Οι έλεγχοι PF01 έως PF09 |
+| `Drift.ps1` | Εγκατάσταση και εκτέλεση του drift task |
+| `SelfTest.ps1` | Τα tests του engine πάνω στον fake provider |
 
-## Development and Testing
+## Ανάπτυξη και έλεγχοι
 
-Python 3 is required (tested with 3.13), along with `jsonschema` and `pytest`. The engine's PowerShell code is not executed in the development environment.
-
-text
+Απαιτείται Python 3 (έχει δοκιμαστεί με 3.13), με `jsonschema` και `pytest`. Το PowerShell του engine δεν εκτελείται εκεί που αναπτύσσεται.
 
 ```text
 pip install -r tools/requirements.txt pytest
@@ -606,74 +592,74 @@ python3 -I tools/sync_lint_vectors.py --check
 python3 -m pytest -q
 ```
 
-| Tool | What It Checks |
-| --- | --- |
-| `tools/validate_manifests.py` | Schema, rules R01 through R21, never-touch, and audit lint across all manifests |
-| `tools/check_engine.py` | PowerShell code as text: ASCII, 5.1 syntax, bracket balance, calls to nonexistent functions and parameters, variables read without being defined, values leaking to output, and disagreements between provider tables |
-| `tools/gen_reference.py` | Generates `docs/REFERENCE.md` from the manifests (`--check` to verify it) |
-| `tools/sync_lint_vectors.py` | Ensures the shared audit lint vectors are complete: every audit command in the manifests must be present there (`--check`) |
-| `python3 -m pytest` | Runs all of the above as tests. Additionally: tests that deliberately break a valid entry or a copy of the engine and require the checker to catch it, shared vectors, and equivalence between the two linters |
+| Εργαλείο | Τι ελέγχει |
+|---|---|
+| `tools/validate_manifests.py` | Schema, κανόνες R01 έως R21, never-touch και audit lint σε όλα τα manifests |
+| `tools/check_engine.py` | Τον κώδικα PowerShell ως κείμενο: ASCII, σύνταξη 5.1, ισορροπία αγκυλών, κλήσεις προς συναρτήσεις και παραμέτρους που δεν υπάρχουν, μεταβλητές που διαβάζονται χωρίς να οριστούν, τιμές που διαρρέουν στην έξοδο, διαφωνίες των provider tables |
+| `tools/gen_reference.py` | Παράγει το `docs/REFERENCE.md` από τα manifests (`--check` για έλεγχο) |
+| `tools/sync_lint_vectors.py` | Κρατά πλήρη τα κοινά vectors του audit lint: κάθε εντολή audit των manifests πρέπει να υπάρχει εκεί (`--check`) |
+| `python3 -m pytest` | Όλα τα παραπάνω ως tests. Επιπλέον: tests που σπάνε σκόπιμα ένα έγκυρο entry ή ένα αντίγραφο του engine και απαιτούν να το πιάσει ο έλεγχος, τα κοινά vectors και η ισοδυναμία των δύο linters |
 
-Static checks are a safety net, not proof. The `selftest` on Windows provides evidence for the engine's logic, while `docs/VERIFY-PROTOCOL.md` covers actual system writes.
+Οι στατικοί έλεγχοι είναι δίχτυ ασφαλείας, όχι απόδειξη. Την απόδειξη για τη λογική του engine τη δίνει το `selftest` στα Windows, και για τις πραγματικές εγγραφές το [`docs/VERIFY-PROTOCOL.md`](docs/VERIFY-PROTOCOL.md).
 
-**Conventions**
+**Συμβάσεις**
 
-- Every behavior change must include the corresponding manifest entry (or its modification) and the test that demonstrates it.
-- Engine files: Windows PowerShell 5.1 syntax, ASCII only (5.1 reads scripts without a BOM as ANSI), LF only, no tabs. The code fingerprint is a hash of the file bytes, and `.gitattributes` preserves LF in Windows checkouts.
-- Calls to the system must go exclusively through the provider (`Invoke-WhProv 'Name' …`). Every call that may return a collection must be wrapped in `@( )`.
-- Code in `SelfTest.ps1`: a false failure there blocks `apply` on every machine (D20), so additions must be made with particular care.
-- Every decision made without consulting the owner is recorded in `docs/DECISIONS.md`, together with the reason and how to change it.
+- Κάθε αλλαγή συμπεριφοράς έρχεται με το manifest entry (ή την αλλαγή του) και το test που την αποδεικνύει.
+- Αρχεία engine: σύνταξη Windows PowerShell 5.1, μόνο ASCII (το 5.1 διαβάζει script χωρίς BOM ως ANSI), μόνο LF, χωρίς tabs. Το code fingerprint είναι hash των bytes των αρχείων, και το `.gitattributes` κρατά LF και σε checkout στα Windows.
+- Οι κλήσεις προς το σύστημα περνούν μόνο από τον provider (`Invoke-WhProv 'Όνομα' …`). Κάθε κλήση που μπορεί να επιστρέψει συλλογή τυλίγεται σε `@( )`.
+- Κώδικας στο `SelfTest.ps1`: ένα ψευδές λάθος εκεί μπλοκάρει το `apply` σε κάθε μηχάνημα (D20), οπότε προστίθεται με ιδιαίτερη προσοχή.
+- Κάθε απόφαση που πάρθηκε χωρίς να ρωτηθεί ο κάτοχος καταγράφεται στο `docs/DECISIONS.md`, με λόγο και τρόπο αλλαγής.
 
-**Adding a New Entry**
+**Νέο entry**
 
-1. Choose a module and the next available ID. Write the entry with its rationale, impact, sources and evidence grades, and `notes` if it is `unverified`.
-2. Write the audit as a single-line, read-only command using single quotes.
-3. Run `python3 -I tools/validate_manifests.py`, then `python3 -I tools/sync_lint_vectors.py` and `python3 -I tools/gen_reference.py`.
-4. Run `python3 -m pytest -q`. The numbers in this README (totals, profiles, distributions) are maintained manually: update them if the new entry changes them.
-5. Test it in a VM using `docs/VERIFY-PROTOCOL.md` before marking it `verified`.
+1. Διάλεξε module και επόμενο id. Γράψε το entry με αιτιολόγηση, επίπτωση, πηγές με βαθμό και, για `unverified`, τα `notes`.
+2. Γράψε το audit ως μία γραμμή read-only με single quotes.
+3. `python3 -I tools/validate_manifests.py`, μετά `python3 -I tools/sync_lint_vectors.py` και `python3 -I tools/gen_reference.py`.
+4. `python3 -m pytest -q`. Οι αριθμοί σε αυτό το README (σύνολα, profiles, κατανομές) γράφονται με το χέρι: αν το entry τους αλλάζει, ενημέρωσέ τους.
+5. Δοκίμασέ το σε VM με το [`docs/VERIFY-PROTOCOL.md`](docs/VERIFY-PROTOCOL.md) πριν γίνει `verified`.
 
-## Troubleshooting
+## Αντιμετώπιση προβλημάτων
 
-| Symptom | Cause | What to Do |
-| --- | --- | --- |
-| `Stopped before doing anything. Nothing was changed.` | A preflight check failed | Check the PF code in the Security Model table |
-| `Self test FAILED (… checks). The engine will not change this system.` | The engine tests failed on this machine | Run `selftest` for the full list and provide its output together with the code fingerprint. `-SkipSelfTest` is not recommended |
-| `The journal failed verification…` | The journal was modified outside the tool or is corrupted | Keep a copy of `%ProgramData%\winharden`. Use `-TrustJournal` only if you are certain nobody has modified it |
-| `Another winharden run is in progress on this machine.` | A run is already in progress, possibly the drift task | Wait for it to finish |
-| `-Yes needs -PlanId …` | `-PlanId` is missing or does not match the current plan: the system or options have changed | Run `plan` again, review it, and provide the new ID |
-| `Nothing to change: …` | All selected entries are already compliant, not applicable, or blocked | Normal behavior. `apply` only runs `verify` and does not create a checkpoint |
-| `verify` displays only a few entries | Without `-Profile`, it checks only profile 1 | Run `verify -Profile N`, using the same N as the profile you applied |
-| `FAIL` with `Apply skips this entry: …` (e.g. `appx-006`, `appx-007`, `tel-008`) | A gate is closed: `apply` does not touch the entry | Use `-AcceptDataLoss` or `-AllowServicingAdjacent` with both `plan` and `apply`, or accept the FAIL |
-| `ERROR` or `FAIL` on `plt-001` through `plt-004` in a VM (e.g. `Cmdlet not supported on this platform`) | These entries are `attest`: they report platform status. The VM may not use UEFI, may lack TPM 2.0, or may not have encryption enabled | VM limitation, not an `apply` failure. These checks are performed on physical hardware |
-| `FAIL` on `plt-011` (memory integrity) after the value was written | The value was written, but the feature is not running yet: the result becomes visible after a reboot | Restart and run `verify` again. If it persists, check the entry's `impact`: incompatible drivers or unsupported hardware |
-| `FAILED    <entry>: … (reverted)` in `apply` | A step within the entry failed and the entire entry was rolled back | The reason is on the same line and in `logs\winharden.jsonl` |
-| Audits marked `skipped` | The command is language-dependent and Windows is not running in English, or the tool is running as SYSTEM | Normal behavior: the entry is evaluated using the state check |
+| Σύμπτωμα | Αιτία | Τι κάνεις |
+|---|---|---|
+| `Stopped before doing anything. Nothing was changed.` | Απέτυχε ένας έλεγχος preflight | Δες τον κωδικό PF στον πίνακα του [Μοντέλου ασφαλείας](#μοντέλο-ασφαλείας) |
+| `Self test FAILED (… checks). The engine will not change this system.` | Τα tests του engine απέτυχαν σε αυτό το μηχάνημα | Τρέξε `selftest` για την πλήρη λίστα και στείλε την έξοδο με το code fingerprint. Το `-SkipSelfTest` δεν συνιστάται |
+| `The journal failed verification…` | Το journal άλλαξε έξω από το εργαλείο ή είναι κατεστραμμένο | Κράτησε αντίγραφο του `%ProgramData%\winharden`. Χρησιμοποίησε `-TrustJournal` μόνο αν είσαι βέβαιος ότι κανείς δεν το άλλαξε |
+| `Another winharden run is in progress on this machine.` | Τρέχει ήδη μια εκτέλεση, ίσως το drift task | Περίμενε να τελειώσει |
+| `-Yes needs -PlanId …` | Το `-PlanId` λείπει ή δεν ταιριάζει με το τρέχον plan: το σύστημα ή οι επιλογές άλλαξαν | Τρέξε ξανά `plan`, έλεγξέ το και δώσε το νέο id |
+| `Nothing to change: …` | Όλα τα επιλεγμένα entries συμφωνούν ήδη, δεν ισχύουν ή είναι blocked | Φυσιολογικό. Το `apply` κάνει μόνο `verify` και δεν δημιουργεί checkpoint |
+| Το `verify` δείχνει λίγα entries | Ελέγχει μόνο το profile 1 αν δεν δοθεί `-Profile` | `verify -Profile N`, με το ίδιο N που εφάρμοσες |
+| `FAIL` με `Apply skips this entry: …` (π.χ. `appx-006`, `appx-007`, `tel-008`) | Κλειστή πύλη: το `apply` δεν αγγίζει το entry | `-AcceptDataLoss` ή `-AllowServicingAdjacent` στο `plan` και στο `apply`, ή αποδοχή του FAIL |
+| `ERROR` ή `FAIL` σε `plt-001` έως `plt-004` σε VM (π.χ. `Cmdlet not supported on this platform`) | Τα entries αυτά είναι `attest`: δείχνουν την κατάσταση της πλατφόρμας. Η VM δεν είναι UEFI, δεν έχει TPM 2.0 ή κρυπτογράφηση | Όριο της VM, όχι αποτυχία του `apply`. Ελέγχονται σε πραγματικό υλικό |
+| `FAIL` στο `plt-011` (memory integrity) αφού γράφτηκε η τιμή | Η τιμή γράφτηκε αλλά η λειτουργία δεν τρέχει ακόμη: το αποτέλεσμα φαίνεται μετά από επανεκκίνηση | Επανεκκίνηση και νέο `verify`. Αν παραμένει, δες το `impact` του entry: ασύμβατοι drivers ή υλικό χωρίς υποστήριξη |
+| `FAILED    <entry>: … (reverted)` στο `apply` | Ένα βήμα του entry απέτυχε και το entry επανήλθε ολόκληρο | Ο λόγος είναι στην ίδια γραμμή και στο `logs\winharden.jsonl` |
+| Audits `skipped` | Η εντολή εξαρτάται από τη γλώσσα και τα Windows δεν είναι στα αγγλικά, ή το εργαλείο τρέχει ως SYSTEM | Φυσιολογικό: το entry κρίνεται από τον έλεγχο κατάστασης |
 
-## Security and Vulnerability Reporting
+## Ασφάλεια και αναφορά προβλημάτων
 
-The tool runs as Administrator and modifies the system, so a mistake or vulnerability can have real consequences. `docs/THREAT-MODEL.md` describes what is protected, the risks introduced by the tool itself, and the residual risk.
+Το εργαλείο τρέχει ως Administrator και αλλάζει το σύστημα, οπότε ένα λάθος ή μια ευπάθεια έχει πραγματικό κόστος. Το [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md) περιγράφει τι προστατεύεται, τους κινδύνους του ίδιου του εργαλείου και το υπολειπόμενο ρίσκο.
 
-The project has not yet established a dedicated reporting channel: reports should be sent to the repository owner. For every issue, include:
+Το έργο δεν έχει ορίσει ακόμη κανάλι αναφοράς: οι αναφορές πηγαίνουν στον κάτοχο του repository. Για κάθε πρόβλημα βάλε:
 
-- The code fingerprint (displayed in the banner of every command except `help`, `list`, and `selftest`, and in every report).
-- The Windows build and whether the system was a VM.
-- The command output and, if available, the relevant portion of `logs\winharden.jsonl`.
+- το code fingerprint (το δείχνει το banner κάθε εντολής εκτός από `help`, `list` και `selftest`, και κάθε αναφορά),
+- το build των Windows και αν ήταν VM,
+- την έξοδο της εντολής και, αν υπάρχει, το σχετικό κομμάτι του `logs\winharden.jsonl`.
 
-Reports and logs are local files containing machine information, such as the computer name: review them before sending them to third parties. For a vulnerability in the tool itself, e.g. a way to execute unauthorized code as SYSTEM, send the details privately to the owner rather than opening a public issue.
+Οι αναφορές και το log είναι τοπικά αρχεία με στοιχεία του μηχανήματος, όπως το όνομα του υπολογιστή: έλεγξέ τα πριν τα στείλεις σε τρίτους. Για ευπάθεια στο ίδιο το εργαλείο, π.χ. τρόπο να τρέξει μη εγκεκριμένος κώδικας ως SYSTEM, στείλε τα στοιχεία ιδιωτικά στον κάτοχο και όχι σε δημόσιο issue.
 
-## Documentation
+## Έγγραφα
 
-| Document | Contents |
-| --- | --- |
-| `docs/REFERENCE.md` | Complete table of all entries. Generated from the manifests; do not edit manually |
-| `docs/DECISIONS.md` | Decisions D1 through D22 made without consulting the owner, with their rationale and how to change them |
-| `docs/THREAT-MODEL.md` | What is protected, risks introduced by the tool itself, and residual risk |
-| `docs/VERIFY-PROTOCOL.md` | How to test in a VM and how an entry becomes `verified` |
-| `docs/BACKLOG.md` | What was not implemented, what remains open, what was omitted, and why |
-| `docs/M4-CATALOG.md` | AppX application catalog and selection rules |
+| Έγγραφο | Περιεχόμενο |
+|---|---|
+| [`docs/REFERENCE.md`](docs/REFERENCE.md) | Πίνακας όλων των entries. Παράγεται από τα manifests, δεν επεξεργάζεται με το χέρι |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Οι αποφάσεις D1 έως D22 που πάρθηκαν χωρίς να ρωτηθεί ο κάτοχος, με λόγο και τρόπο αλλαγής |
+| [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md) | Τι προστατεύεται, κίνδυνοι του ίδιου του εργαλείου, υπολειπόμενο ρίσκο |
+| [`docs/VERIFY-PROTOCOL.md`](docs/VERIFY-PROTOCOL.md) | Πώς δοκιμάζεται σε VM και πώς ένα entry γίνεται `verified` |
+| [`docs/BACKLOG.md`](docs/BACKLOG.md) | Τι δεν έγινε, τι μένει ανοιχτό, τι παραλείφθηκε και γιατί |
+| [`docs/M4-CATALOG.md`](docs/M4-CATALOG.md) | Ο κατάλογος εφαρμογών AppX και οι κανόνες επιλογής του |
 
-## License and Liability
+## Άδεια και ευθύνη
 
-This project is licensed under the BSD 3-Clause License. See [LICENSE](LICENSE).
+Το παρόν έργο διατίθεται υπό την Άδεια Χρήσης BSD 3 ρητρών. Δείτε [LICENSE](LICENSE).
 
-**Liability.** The tool modifies system settings as Administrator and provides no guarantee of a particular outcome. Profile 3 changes may break legacy applications and drivers, and some changes (application removal, file cleanup) cannot be fully rolled back. Test it first in a VM with a snapshot and keep a backup of your data.
+**Ευθύνη.** Το εργαλείο αλλάζει ρυθμίσεις συστήματος ως Administrator και δεν δίνει εγγύηση για συγκεκριμένο αποτέλεσμα. Οι αλλαγές του profile 3 μπορεί να σπάσουν παλιά προγράμματα και drivers, και μερικές αλλαγές (αφαίρεση εφαρμογών, καθαρισμός αρχείων) δεν αναιρούνται πλήρως. Δοκίμασέ το πρώτα σε VM με snapshot και κράτα αντίγραφο ασφαλείας των δεδομένων σου.
